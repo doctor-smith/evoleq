@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
+import javafx.scene.layout.AnchorPane
 import javafx.scene.layout.FlowPane
 import javafx.stage.Screen
 import javafx.stage.Stage
@@ -39,7 +40,8 @@ class Appl : App(), IApp<Data> {
                 flow = { data ->
                     when (data.message) {
                         "initializing" -> data.app.waiting(Data(data.app, "", data.cnt))
-                        "clicked" -> data.app.updateApp(Data(data.app, "inc", data.cnt + 1))
+                        "started" -> data.app.updateApp(Data(data.app, "", data.cnt))
+                        "clicked" -> data.app.updateApp(Data(data.app, "", data.cnt + 1))
                         "stop" -> data.app.stopApp(Data(data.app, "", data.cnt))
                         else -> data.app.waiting(Data(data.app, "", data.cnt))
                     }
@@ -69,6 +71,7 @@ class Appl : App(), IApp<Data> {
             label,
             stop
         )
+        out.value = "started"
         stage.show()
     }
 
