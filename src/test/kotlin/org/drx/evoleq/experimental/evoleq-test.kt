@@ -1,6 +1,7 @@
 package org.drx.evoleq.experimental
 
 import kotlinx.coroutines.*
+import org.drx.evoleq.evolve
 import org.junit.Test
 
 typealias Data = Pair<Int,Int>
@@ -22,7 +23,7 @@ class EvolEqTest{
             }
         }
         GlobalScope.launch {
-            val newData = org.drx.evoleq.experimental.evolve<Data, Int, Int>(data, testObject, condition, update, f)
+            val newData = evolve<Data, Int, Int>(data, testObject, condition, update, f)
         }
         Thread.sleep(1_000)
     }

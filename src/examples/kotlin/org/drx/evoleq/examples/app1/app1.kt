@@ -2,7 +2,6 @@ package org.drx.evoleq.examples.app1
 
 import javafx.application.Application
 import javafx.application.Platform
-import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Scene
 import javafx.scene.control.Button
@@ -14,11 +13,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import org.drx.evoleq.experimental.evolve
+import org.drx.evoleq.evolve
 import tornadofx.App
 import tornadofx.action
-import tornadofx.observable
-import java.util.concurrent.Flow
 
 data class Data(
     val app: IApp<Data>,
@@ -34,17 +31,19 @@ class Appl : App(), IApp<Data> {
     override fun init() {
 
         GlobalScope.launch {
-            evolve<Data,Pair<String,Int>,String>(
-                data = Data(this@Appl,"initializing",0),
-                testObject = Pair("startup",0),
-                condition = {it.first != "stopped" && it.second < 100},
-                updateCondition = {data -> Pair(data.message,data.cnt)},
-                flow = {data -> when(data.message){
-                    "initializing" -> data.app.waiting(Data(data.app,"",data.cnt))
-                    "clicked" -> data.app.updateApp(Data(data.app,"inc",data.cnt+1))
-                    "stop"->data.app.stopApp(Data(data.app,"",data.cnt))
-                    else -> data.app.waiting(Data(data.app,"",data.cnt))
-                }}
+            evolve<Data, Pair<String, Int>, String>(
+                data = Data(this@Appl, "initializing", 0),
+                testObject = Pair("startup", 0),
+                condition = { it.first != "stopped" && it.second < 100 },
+                updateCondition = { data -> Pair(data.message, data.cnt) },
+                flow = { data ->
+                    when (data.message) {
+                        "initializing" -> data.app.waiting(Data(data.app, "", data.cnt))
+                        "clicked" -> data.app.updateApp(Data(data.app, "inc", data.cnt + 1))
+                        "stop" -> data.app.stopApp(Data(data.app, "", data.cnt))
+                        else -> data.app.waiting(Data(data.app, "", data.cnt))
+                    }
+                }
             )
         }
     }

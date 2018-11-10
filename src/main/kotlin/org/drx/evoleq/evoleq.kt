@@ -1,4 +1,4 @@
-package org.drx.evoleq.experimental
+package org.drx.evoleq
 
 import kotlinx.coroutines.Deferred
 
