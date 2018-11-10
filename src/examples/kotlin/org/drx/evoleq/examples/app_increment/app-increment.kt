@@ -1,4 +1,4 @@
-package org.drx.evoleq.examples.app1
+package org.drx.evoleq.examples.app_increment
 
 import javafx.application.Application
 import javafx.application.Platform
@@ -6,7 +6,6 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
-import javafx.scene.layout.AnchorPane
 import javafx.scene.layout.FlowPane
 import javafx.stage.Screen
 import javafx.stage.Stage
@@ -15,7 +14,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.drx.evoleq.evolve
-import tornadofx.App
+
 import tornadofx.action
 
 data class Data(
@@ -24,7 +23,7 @@ data class Data(
     val cnt: Int
 )
 
-class Appl : App(), IApp<Data> {
+class App : tornadofx.App(), IApp<Data> {
 
     private val out = SimpleStringProperty()
     private val input = SimpleStringProperty()
@@ -33,7 +32,7 @@ class Appl : App(), IApp<Data> {
 
         GlobalScope.launch {
             evolve<Data, Pair<String, Int>, String>(
-                data = Data(this@Appl, "initializing", 0),
+                data = Data(this@App, "initializing", 0),
                 testObject = Pair("startup", 0),
                 condition = { it.first != "stopped" && it.second < 100 },
                 updateCondition = { data -> Pair(data.message, data.cnt) },
@@ -79,8 +78,8 @@ class Appl : App(), IApp<Data> {
         System.exit(0)
     }
     override fun startApp(data: Data): Deferred<Data> = GlobalScope.async {
-        Application.launch(Appl::class.java)
-        Data(this@Appl,"started",data.cnt)
+        Application.launch(App::class.java)
+        Data(this@App,"started",data.cnt)
     }
 
     override fun updateApp(data: Data): Deferred<Data> = GlobalScope.async {
@@ -88,14 +87,14 @@ class Appl : App(), IApp<Data> {
             input.value = "${data.cnt}"
             out.value = ""
         }
-        Data(this@Appl,"updated",data.cnt)
+        Data(this@App,"updated",data.cnt)
     }
 
     override fun stopApp(data: Data): Deferred<Data> = GlobalScope.async{
         Platform.runLater {
             stop()
         }
-        Data(this@Appl,"stopped",data.cnt)
+        Data(this@App,"stopped",data.cnt)
     }
 
     override fun waiting(data: Data): Deferred<Data> = GlobalScope.async {
@@ -108,14 +107,14 @@ class Appl : App(), IApp<Data> {
         while(m == ""){
             Thread.sleep(10)
         }
-        Data(this@Appl, m,data.cnt)
+        Data(this@App, m,data.cnt)
 
     }
 
 }
 
 fun main(args: Array<String>) {
-    Application.launch(Appl::class.java, *args)
+    Application.launch(App::class.java, *args)
 }
 
 interface IApp<D> {
