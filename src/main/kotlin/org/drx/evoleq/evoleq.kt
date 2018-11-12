@@ -6,7 +6,7 @@ import kotlinx.coroutines.Deferred
 /**
  * Flow of the evolution equation
  */
-tailrec suspend fun <D,T,C> evolve(
+tailrec suspend fun <D,T,C > evolve(
     data: D,
     testObject: T,
     condition:(T)->Boolean,
