@@ -2,6 +2,7 @@ package org.drx.evoleq.examples.app_increment
 
 import javafx.application.Application
 import javafx.application.Platform
+import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Scene
 import javafx.scene.control.Button
@@ -34,7 +35,7 @@ class App : tornadofx.App(), IApp<Data> {
         val instance: App by lazy { Holder.INSTANCE }
     }
     private val out = SimpleStringProperty()
-    private val input = SimpleStringProperty()
+    private val input = SimpleObjectProperty<Data>()
 
     override fun init() {
         instance.out.value = "initializing"
@@ -71,7 +72,8 @@ class App : tornadofx.App(), IApp<Data> {
             instance.out.value = "clicked"
         }
         val label = Label("0")
-        label.textProperty().bind(instance.input)
+        instance.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
+        //label.textProperty().bind(instance.input)
         val stop = Button("Stop")
         stop.action {
             instance.out.value = "stop"
@@ -97,7 +99,7 @@ class App : tornadofx.App(), IApp<Data> {
 
     override fun updateApp(data: Data): Deferred<Data> = GlobalScope.async {
         Platform.runLater {
-            instance.input.value = "${data.cnt}"
+            instance.input.value = data
             instance.out.value = ""
         }
         Data(this@App,"updated",data.cnt)
