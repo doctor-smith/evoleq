@@ -34,34 +34,14 @@ class App : tornadofx.App(), IApp<Data> {
     companion object {
         val instance: App by lazy { Holder.INSTANCE }
     }
-    private val out = SimpleStringProperty()
+    private val out = SimpleObjectProperty<Data>()
     private val input = SimpleObjectProperty<Data>()
 
     override fun init() {
-        instance.out.value = "initializing"
-        /*
-        GlobalScope.launch {
-            evolve<Data, Pair<String, Int>, String>(
-                data = Data(App(), "start-app", 0),
-                testObject = Pair("startup", 0),
-                condition = { it.first != "stopped" && it.second < 100 },
-                updateCondition = { data -> Pair(data.message, data.cnt) },
-                flow = { data ->
-                    when (data.message) {
-                        "start-app" -> data.app.startApp(data)
-                        "initializing" -> data.app.waiting(Data(data.app, "", data.cnt))
-                        "started" -> data.app.updateApp(Data(data.app, "", data.cnt))
-                        "clicked" -> data.app.updateApp(Data(data.app, "", data.cnt + 1))
-                        "stop" -> data.app.stopApp(Data(data.app, "", data.cnt))
-                        else -> data.app.waiting(Data(data.app, "", data.cnt))
-                    }
-                }
-            )
-        }
-        */
+        instance.out.value = instance.input.value.copy(message = "initializing")
     }
     override fun start(stage: Stage) {
-        val visualBounds = Screen.getPrimary().getVisualBounds()
+        val visualBounds = Screen.getPrimary().visualBounds
         val width = visualBounds.width-400
         val height = visualBounds.height-400
         val scene = Scene(FlowPane(),width,height)
@@ -69,21 +49,21 @@ class App : tornadofx.App(), IApp<Data> {
         stage.title = "Example Application"
         val button = Button("CLick me!")
         button.action{
-            instance.out.value = "clicked"
+            instance.out.value = instance.input.value.copy(message = "clicked")
         }
         val label = Label("0")
         instance.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
         //label.textProperty().bind(instance.input)
         val stop = Button("Stop")
         stop.action {
-            instance.out.value = "stop"
+            instance.out.value = instance.input.value.copy(message = "stop")
         }
         (scene.root as FlowPane).children.addAll(
             button,
             label,
             stop
         )
-        instance.out.value = "started"
+        instance.out.value = instance.input.value.copy(message = "started")
         stage.show()
     }
 
@@ -92,6 +72,7 @@ class App : tornadofx.App(), IApp<Data> {
     }
     override fun startApp(data: Data): Deferred<Data> = GlobalScope.async {
         GlobalScope.launch {
+            input.value = data
             val x = Application.launch(App::class.java)
         }
         Data(this@App,"launching-app",data.cnt)
@@ -100,7 +81,7 @@ class App : tornadofx.App(), IApp<Data> {
     override fun updateApp(data: Data): Deferred<Data> = GlobalScope.async {
         Platform.runLater {
             instance.input.value = data
-            instance.out.value = ""
+            //instance.out.value = null
         }
         Data(this@App,"updated",data.cnt)
     }
@@ -113,18 +94,20 @@ class App : tornadofx.App(), IApp<Data> {
     }
 
     override fun waiting(data: Data): Deferred<Data> = GlobalScope.async {
-        Data(this@App, changes().await() ,data.cnt)
+        //Data(this@App, changes().await() ,data.cnt)
+        changes().await()
     }
 
-    private fun  changes(): Deferred<String> = GlobalScope.async {
-        var m:String = "NULL"
-        val listener = ChangeListener<String> {_,_,nv -> m = nv }
+    private fun  changes(): Deferred<Data> = GlobalScope.async {
+        var m:Data
+        var changed = false
+        val listener = ChangeListener<Data> {_,_,nv -> m = nv; changed = true }
         instance.out.addListener(listener)
-        while(m == "NULL"){
+        while(!changed){
             Thread.sleep(10)
         }
         instance.out.removeListener(listener)
-        m
+        instance.out.value
     }
 }
 
