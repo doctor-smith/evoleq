@@ -7,7 +7,7 @@ import kotlinx.coroutines.*
 /**
  * Flow of the evolution equation
  */
-suspend fun <D,T,C > evolve(
+suspend fun <D,T > evolve(
     data: D,
     testObject: T,
     condition:(T)->Boolean,
@@ -18,7 +18,7 @@ suspend fun <D,T,C > evolve(
             true ->  asyncCoroutine {
                 val newData = flow(data).await()
                 val newTestObject = updateCondition(newData)
-                evolve<D, T, C>(newData, newTestObject, condition, updateCondition, flow)
+                evolve(newData, newTestObject, condition, updateCondition, flow)
             }
     }
 

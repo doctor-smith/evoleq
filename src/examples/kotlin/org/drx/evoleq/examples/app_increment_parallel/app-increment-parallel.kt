@@ -120,7 +120,7 @@ class App : tornadofx.App(), IApp<AppData> {
 fun main(args: Array<String>) {
     runBlocking {
         //val terminalData =
-        evolve<Data,Pair<String,Long>,Int>(
+        evolve<Data,Pair<String,Long>>(
             data = Data(AppData(App.instance, "start-app", 0),Clock(0L)),
             testObject = Pair("startup", 0),
             condition = { it.first != "stopped" && it.second < 30 },
@@ -128,7 +128,7 @@ fun main(args: Array<String>) {
             flow = {  data ->  async {
                     println("Top level: "+Thread.currentThread().name)
                     val defAppData= async{
-                        evolve<AppData, Pair<String, Int>, String>(
+                        evolve(
                             data = data.appData,
                             testObject = Pair("startup", 0),
                             condition = { it.first != "stopped" && it.second < 100 },
@@ -150,7 +150,7 @@ fun main(args: Array<String>) {
                         )
                     }
                     val defClock = async{
-                        evolve<Clock,Long,Long>(
+                        evolve(
                             data = data.clock,
                             testObject = 0L,
                             condition = {time -> time < 5},

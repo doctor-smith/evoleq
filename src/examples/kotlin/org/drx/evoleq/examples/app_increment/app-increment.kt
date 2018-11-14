@@ -114,7 +114,7 @@ class App : tornadofx.App(), IApp<Data> {
 fun main(args: Array<String>) {
     runBlocking {
         //GlobalScope.launch {
-            evolve<Data, Pair<String, Int>, String>(
+            evolve(
                 data = Data(App.instance, "start-app", 0),
                 testObject = Pair("startup", 0),
                 condition = { it.first != "stopped" && it.second < 100 },
