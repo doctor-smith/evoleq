@@ -30,15 +30,15 @@ The most simple differential equation is given by the formula
  ```kotlin
 
 tailrec suspend fun <D,T> evolve(
-    data: D,
+    appData: D,
     testObject: T,
     condition:(T)->Boolean,
     updateCondition: (D)-> T,
     flow: (D)->Deferred<D>
     ): D = when ( condition( testObject ) ) {
-            false -> data
+            false -> appData
             true -> {
-                val newData = flow( data ).await()
+                val newData = flow( appData ).await()
                 val newTestObject = updateCondition( newData )
                 evolve(
                     newData, 
