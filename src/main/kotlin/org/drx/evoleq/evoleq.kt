@@ -13,19 +13,25 @@ suspend fun <D,T > evolve(
     condition:(T)->Boolean,
     updateCondition: (D)-> T,
     flow: (D)->Deferred<D>
-    ): D = when ( condition( testObject ) ) {
-            false -> data
-            true ->  asyncCoroutine {
-                val newData = flow(data).await()
-                val newTestObject = updateCondition(newData)
-                evolve(newData, newTestObject, condition, updateCondition, flow)
-            }
-    }
+): D = when ( condition( testObject ) ) {
+        false -> data
+        true ->  parallel {
+            val newData = flow(data).await()
+            val newTestObject = updateCondition(newData)
+            evolve(
+                newData,
+                newTestObject,
+                condition,
+                updateCondition,
+                flow
+            )
+        }
+}
 
-
-
-
-suspend fun <D> asyncCoroutine(block: suspend ()->D): D {
+/**
+ * Evolution type
+ */
+suspend fun <D> parallel(block: suspend ()->D): D {
     val property: SimpleObjectProperty<D> = SimpleObjectProperty()
     var updated = false
     property.addListener{ _, oV, nV ->
