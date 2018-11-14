@@ -22,25 +22,27 @@ suspend fun <D,T,C > evolve(
             }
     }
 
-suspend fun <C> asyncCoroutine(block: suspend ()->C): C {
-    val property = SimpleObjectProperty<C>()
+
+
+
+suspend fun <D> asyncCoroutine(block: suspend ()->D): D {
+    val property: SimpleObjectProperty<D> = SimpleObjectProperty()
     var updated = false
     property.addListener{ _, oV, nV ->
         if(nV != oV) {
             updated = true
         }
     }
-    coroutineScope{launch{
+    coroutineScope{ launch{
         property.value = block()
     }}
-    val result = GlobalScope.async {
+    return GlobalScope.async {
         while(!updated){
             delay(1)
         }
         val result = property.value
         result
     }.await()
-    return result
 }
 
 /*
