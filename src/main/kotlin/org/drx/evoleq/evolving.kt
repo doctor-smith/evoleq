@@ -11,8 +11,7 @@ interface Evolving<out D> {
 
 /**
  * Functoriality:
- * ====================================================================================================================
- * (D)->Evolving<D> is a functor
+ * ==============
  */
 suspend infix
 fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
@@ -21,17 +20,17 @@ fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Ev
 
 /**
  * Monad
- * =======================================
+ * =====
  */
 /**
  * Enter the monad
  */
-fun <D> eta_Evolving(data: D): Evolving<D> = Immediate{data}
+fun <D> etaEvolving(data: D): Evolving<D> = Immediate{ data }
 
 /**
  * Multiply evolvings
  */
-suspend fun <D> mu(evolving: Evolving<Evolving<D>>): Evolving<D> {
+suspend fun <D> muEvolving(evolving: Evolving<Evolving<D>>): Evolving<D> {
     return evolving.get()
 }
 
@@ -39,14 +38,14 @@ suspend fun <D> mu(evolving: Evolving<Evolving<D>>): Evolving<D> {
  * Fish operator on kleisli arrows
  */
 suspend operator
-fun <R,S,T> (suspend (R)->Evolving<S>).times( flow: suspend (S)->Evolving<T>) : suspend (R)->Evolving<T> = {
-    r -> mu ( this( r ) map flow  )
+fun <R,S,T> ( suspend (R)->Evolving<S> ).times( flow: suspend (S)->Evolving<T>) : suspend (R)->Evolving<T> = {
+    r -> muEvolving ( this( r ) map flow  )
 }
 
 
 /**
  * Implementations
- * =====================================
+ * ===============
  */
 /**
  * Evolution type parallel:

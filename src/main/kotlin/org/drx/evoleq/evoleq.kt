@@ -5,7 +5,7 @@ package org.drx.evoleq
 tailrec suspend fun <D, T> evolve(
     initialData: D,
     conditions: EvolutionConditions<D, T>,
-    flow: suspend (D) -> Evolving<D>
+    flow: (D) -> Evolving<D>
 ) : D = when( conditions.ok() ) {
     false -> initialData
     true -> {
