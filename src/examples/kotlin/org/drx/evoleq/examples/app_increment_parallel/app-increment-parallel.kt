@@ -78,7 +78,7 @@ class App : tornadofx.App(), IApp<AppData> {
     override fun startApp(appData: AppData): Evolving<AppData> = Parallel {
         GlobalScope.launch {
             input.value = appData
-            val x = launch(App::class.java)
+            launch(App::class.java)
         }
         AppData(this@App,"launching-app",appData.cnt)
     }
@@ -108,9 +108,8 @@ class App : tornadofx.App(), IApp<AppData> {
 
     private fun  changes(): Evolving<AppData> =
         Parallel {
-            var m: AppData
             var changed = false
-            val listener = ChangeListener<AppData> { _, _, nv -> m = nv; changed = true }
+            val listener = ChangeListener<AppData> { _, _, nv ->  changed = true }
             instance.out.addListener(listener)
             while (!changed) {
                 delay(10)
@@ -166,22 +165,22 @@ fun main(args: Array<String>) {
                         initialData = data.clock,
                         conditions = EvolutionConditions(
                             testObject = 0L,
-                            check = {time -> time < 50},
+                            check = {time -> time < 5},
                             updateCondition = {clock -> clock.time}
                         )
                     ){  clock -> Parallel {
                             println("Clock: "+Thread.currentThread().name)
                             println("Clock.time: ${clock.time}")
                             delay(1_000)
-                            clock.copy(time = clock.time+1)
+                            clock.copy( time = clock.time+1 )
                         }
                     }
-
                 }
                 Data( appData.get(), clock.get() )
             }
         }
     }
+    System.exit(0)
 }
 
 

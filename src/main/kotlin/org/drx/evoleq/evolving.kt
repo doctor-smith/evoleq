@@ -1,6 +1,7 @@
 package org.drx.evoleq
 
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.*
 
 
@@ -52,20 +53,22 @@ fun <R,S,T> (suspend (R)->Evolving<S>).times( flow: suspend (S)->Evolving<T>) : 
  * evolve async and parallel
  * - without blocking the current thread
  */
-class Parallel<D>( private val block: suspend () -> D ) : Evolving<D> {
+class Parallel<D>( val delay: Long = 1, private val block: suspend () -> D ) : Evolving<D> {
 
     private val property: SimpleObjectProperty<D> = SimpleObjectProperty()
     private var updated = false
     init {
-        property.addListener { _, oV, nV ->
+        val listener = ChangeListener<D>{_, oV, nV ->
             if (nV != oV) {
                 updated = true
             }
         }
+        property.addListener( listener )
         GlobalScope.launch {
             coroutineScope {
                 launch {
                     property.value = block()
+                    property.removeListener( listener )
                 }
             }
         }
