@@ -52,8 +52,30 @@ fun <R,S,T> (suspend (R)->Evolving<S>).times( flow: suspend (S)->Evolving<T>) : 
  * evolve async and parallel
  * - without blocking the current thread
  */
-class Parallel<out D>( private val block: suspend ()->D ) : Evolving<D> {
-    override suspend fun get(): D = parallel( block )
+class Parallel<D>( private val block: suspend () -> D ) : Evolving<D> {
+
+    private val property: SimpleObjectProperty<D> = SimpleObjectProperty()
+    private var updated = false
+    init {
+        property.addListener { _, oV, nV ->
+            if (nV != oV) {
+                updated = true
+            }
+        }
+        GlobalScope.launch {
+            coroutineScope {
+                launch {
+                    property.value = block()
+                }
+            }
+        }
+    }
+    override suspend fun get(): D {
+        while(!updated){
+            delay(1)
+        }
+        return property.value
+    }
 }
 /**
  * Evolution type function

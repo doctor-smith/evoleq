@@ -9,10 +9,7 @@ import javafx.scene.layout.FlowPane
 import javafx.stage.Screen
 import javafx.stage.Stage
 import kotlinx.coroutines.*
-import org.drx.evoleq.EvolutionConditions
-import org.drx.evoleq.Evolving
-import org.drx.evoleq.Parallel
-import org.drx.evoleq.evolve
+import org.drx.evoleq.*
 import tornadofx.ChangeListener
 import tornadofx.action
 
@@ -105,25 +102,29 @@ class App : tornadofx.App(), IApp<AppData> {
     override fun restartApp(appData: AppData): Evolving<AppData> = Parallel {
         val cnt = appData.cnt
         stop()
-        delay(5_000)
+        delay(1_000)
         AppData( App(),"start-app", cnt )
     }
 
-    private fun  changes(): Evolving<AppData> = Parallel {
-        var m:AppData
-        var changed = false
-        val listener = ChangeListener<AppData> { _, _, nv -> m = nv; changed = true }
-        instance.out.addListener(listener)
-        while(!changed){
-            delay(10)
+    private fun  changes(): Evolving<AppData> =
+        Parallel {
+            var m: AppData
+            var changed = false
+            val listener = ChangeListener<AppData> { _, _, nv -> m = nv; changed = true }
+            instance.out.addListener(listener)
+            while (!changed) {
+                delay(10)
+            }
+            instance.out.removeListener(listener)
+            instance.out.value
         }
-        instance.out.removeListener(listener)
-        instance.out.value
-    }
+
 }
 
 fun main(args: Array<String>) {
     runBlocking {
+        //Parallel<Data>{
+
         evolve(
             initialData = Data(
                 appData = AppData(
@@ -139,7 +140,7 @@ fun main(args: Array<String>) {
                 updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
             )
         ){  data -> Parallel {
-                val deferredAppData= Parallel {
+                val appData= Parallel {
                     evolve(
                         initialData = data.appData,
                         conditions = EvolutionConditions(
@@ -160,7 +161,7 @@ fun main(args: Array<String>) {
                         }
                     }
                 }
-                val deferredClock = Parallel {
+                val clock = Parallel {
                     evolve(
                         initialData = data.clock,
                         conditions = EvolutionConditions(
@@ -177,7 +178,7 @@ fun main(args: Array<String>) {
                     }
 
                 }
-                Data( deferredAppData.get(), deferredClock.get() )
+                Data( appData.get(), clock.get() )
             }
         }
     }
