@@ -29,25 +29,24 @@ The most simple differential equation is given by the formula
  
  ```kotlin
 
-tailrec suspend fun <D,T> evolve(
-    appData: D,
-    testObject: T,
-    condition:(T)->Boolean,
-    updateCondition: (D)-> T,
-    flow: (D)->Deferred<D>
-    ): D = when ( condition( testObject ) ) {
-            false -> appData
-            true -> {
-                val newData = flow( appData ).await()
-                val newTestObject = updateCondition( newData )
-                evolve(
-                    newData, 
-                    newTestObject, 
-                    condition, 
-                    updateCondition, 
-                    flow
-                )
-            }
+package org.drx.evoleq
+/**
+ * Evolution equation
+ */
+tailrec suspend fun <D, T> evolve(
+    initialData: D,
+    conditions: EvolutionConditions<D, T>,
+    flow: suspend (D) -> Evolving<D>
+) : D = when( conditions.ok() ) {
+    false -> initialData
+    true -> {
+        val evolvedData: D = flow ( initialData ).get()
+        evolve(
+            evolvedData,
+            conditions.update( evolvedData )
+        ){
+            data -> flow ( data )
+        }
     }
-
+}
 ```  
