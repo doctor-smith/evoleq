@@ -6,7 +6,7 @@ tailrec suspend fun <D, T> evolve(
     initialData: D,
     conditions: EvolutionConditions<D, T>,
     flow: (D) -> Evolving<D>
-) : D = when( conditions.ok()) {
+) : D = when( conditions.ok() ) {
     false -> initialData
     true -> {
         val evolvedData: D = flow ( initialData ).get()
