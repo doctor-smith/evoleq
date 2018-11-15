@@ -11,6 +11,8 @@ import javafx.stage.Screen
 import javafx.stage.Stage
 import kotlinx.coroutines.*
 import org.drx.evoleq.EvolutionConditions
+import org.drx.evoleq.Evolving
+import org.drx.evoleq.Parallel
 import org.drx.evoleq.evolve
 import tornadofx.ChangeListener
 
@@ -67,7 +69,7 @@ class App : tornadofx.App(), IApp<Data> {
     override fun stop() {
         System.exit(0)
     }
-    override fun startApp(data: Data): Deferred<Data> = GlobalScope.async {
+    override fun startApp(data: Data): Evolving<Data> = Parallel {
         GlobalScope.launch {
             input.value = data
             val x = Application.launch(App::class.java)
@@ -75,25 +77,25 @@ class App : tornadofx.App(), IApp<Data> {
         Data(this@App,"launching-app",data.cnt)
     }
 
-    override fun updateApp(data: Data): Deferred<Data> = GlobalScope.async {
+    override fun updateApp(data: Data): Evolving<Data> = Parallel {
         Platform.runLater {
             instance.input.value = data
         }
         Data(this@App,"updated",data.cnt)
     }
 
-    override fun stopApp(data: Data): Deferred<Data> = GlobalScope.async{
+    override fun stopApp(data: Data): Evolving<Data> = Parallel {
         Platform.runLater {
             stop()
         }
         Data(this@App,"stopped",data.cnt)
     }
 
-    override fun waiting(data: Data): Deferred<Data> = GlobalScope.async {
-        changes().await()
+    override fun waiting(data: Data): Evolving<Data> = Parallel {
+        changes().get()
     }
 
-    private fun  changes(): Deferred<Data> = GlobalScope.async {
+    private fun  changes(): Evolving<Data> = Parallel {
         var m:Data
         var changed = false
         val listener = ChangeListener<Data> {_,_,nv -> m = nv; changed = true }
@@ -109,7 +111,7 @@ class App : tornadofx.App(), IApp<Data> {
 fun main(args: Array<String>) {
     runBlocking {
         evolve(
-            data = Data(App.instance, "start-app", 0),
+            initialData = Data(App.instance, "start-app", 0),
             conditions = EvolutionConditions(
                 testObject = Pair("startup", 0),
                 check ={ it.first != "stopped" && it.second < 100 },
@@ -132,9 +134,9 @@ fun main(args: Array<String>) {
 
 
 interface IApp<D> {
-    fun startApp(data: D): Deferred<D>
-    fun stopApp(data: D): Deferred<D>
-    fun updateApp(data: D): Deferred<D>
-    fun waiting(data: D): Deferred<D>
+    fun startApp(data: D): Evolving<D>
+    fun stopApp(data: D): Evolving<D>
+    fun updateApp(data: D): Evolving<D>
+    fun waiting(data: D): Evolving<D>
 }
 

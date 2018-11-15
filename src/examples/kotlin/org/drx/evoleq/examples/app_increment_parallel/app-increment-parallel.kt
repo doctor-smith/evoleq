@@ -1,6 +1,5 @@
 package org.drx.evoleq.examples.app_increment_parallel
 
-import javafx.application.Application
 import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.Scene
@@ -11,6 +10,8 @@ import javafx.stage.Screen
 import javafx.stage.Stage
 import kotlinx.coroutines.*
 import org.drx.evoleq.EvolutionConditions
+import org.drx.evoleq.Evolving
+import org.drx.evoleq.Parallel
 import org.drx.evoleq.evolve
 import tornadofx.ChangeListener
 import tornadofx.action
@@ -77,38 +78,38 @@ class App : tornadofx.App(), IApp<AppData> {
     override fun stop() {
         Platform.exit()
     }
-    override fun startApp(appData: AppData): Deferred<AppData> = GlobalScope.async {
+    override fun startApp(appData: AppData): Evolving<AppData> = Parallel {
         GlobalScope.launch {
             input.value = appData
-            val x = Application.launch(App::class.java)
+            val x = launch(App::class.java)
         }
         AppData(this@App,"launching-app",appData.cnt)
     }
 
-    override fun updateApp(appData: AppData): Deferred<AppData> = GlobalScope.async {
+    override fun updateApp(appData: AppData): Evolving<AppData> = Parallel {
         Platform.runLater {
             instance.input.value = appData
         }
         AppData(this@App,"updated",appData.cnt)
     }
 
-    override fun stopApp(appData: AppData): Deferred<AppData> = GlobalScope.async{
+    override fun stopApp(appData: AppData): Evolving<AppData> = Parallel {
         stop()
         AppData(this@App,"stopped",appData.cnt)
     }
 
-    override fun waiting(appData: AppData): Deferred<AppData> = GlobalScope.async {
-        changes().await()
+    override fun waiting(appData: AppData): Evolving<AppData> = Parallel {
+        changes().get()
     }
 
-    override fun restartApp(appData: AppData): Deferred<AppData> = GlobalScope.async {
+    override fun restartApp(appData: AppData): Evolving<AppData> = Parallel {
         val cnt = appData.cnt
         stop()
         delay(5_000)
         AppData( App(),"start-app", cnt )
     }
 
-    private fun  changes(): Deferred<AppData> = GlobalScope.async {
+    private fun  changes(): Evolving<AppData> = Parallel {
         var m:AppData
         var changed = false
         val listener = ChangeListener<AppData> { _, _, nv -> m = nv; changed = true }
@@ -124,7 +125,7 @@ class App : tornadofx.App(), IApp<AppData> {
 fun main(args: Array<String>) {
     runBlocking {
         evolve(
-            data = Data(
+            initialData = Data(
                 appData = AppData(
                     app = App.instance,
                     message = "start-app",
@@ -137,10 +138,10 @@ fun main(args: Array<String>) {
                 check = { it.first != "stopped" && it.second < 30 },
                 updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
             )
-        ){  data -> async {
-                val deferredAppData= async {
+        ){  data -> Parallel {
+                val deferredAppData= Parallel {
                     evolve(
-                        data = data.appData,
+                        initialData = data.appData,
                         conditions = EvolutionConditions(
                             testObject = Pair("startup", 0),
                             check = { it.first != "stopped" && it.second < 100 },
@@ -159,15 +160,15 @@ fun main(args: Array<String>) {
                         }
                     }
                 }
-                val deferredClock = async {
+                val deferredClock = Parallel {
                     evolve(
-                        data = data.clock,
+                        initialData = data.clock,
                         conditions = EvolutionConditions(
                             testObject = 0L,
                             check = {time -> time < 50},
                             updateCondition = {clock -> clock.time}
                         )
-                    ){  clock -> async {
+                    ){  clock -> Parallel {
                             println("Clock: "+Thread.currentThread().name)
                             println("Clock.time: ${clock.time}")
                             delay(1_000)
@@ -176,7 +177,7 @@ fun main(args: Array<String>) {
                     }
 
                 }
-                Data( deferredAppData.await(), deferredClock.await() )
+                Data( deferredAppData.get(), deferredClock.get() )
             }
         }
     }
@@ -185,10 +186,10 @@ fun main(args: Array<String>) {
 
 
 interface IApp<D> {
-    fun startApp(data: D): Deferred<D>
-    fun stopApp(data: D): Deferred<D>
-    fun updateApp(data: D): Deferred<D>
-    fun waiting(data: D): Deferred<D>
-    fun restartApp(data: D): Deferred<D>
+    fun startApp(data: D): Evolving<D>
+    fun stopApp(data: D): Evolving<D>
+    fun updateApp(data: D): Evolving<D>
+    fun waiting(data: D): Evolving<D>
+    fun restartApp(data: D): Evolving<D>
 }
 
