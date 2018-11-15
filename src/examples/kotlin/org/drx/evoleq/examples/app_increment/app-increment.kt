@@ -3,7 +3,6 @@ package org.drx.evoleq.examples.app_increment
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
-import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
@@ -11,6 +10,7 @@ import javafx.scene.layout.FlowPane
 import javafx.stage.Screen
 import javafx.stage.Stage
 import kotlinx.coroutines.*
+import org.drx.evoleq.EvolutionConditions
 import org.drx.evoleq.evolve
 import tornadofx.ChangeListener
 
@@ -25,8 +25,6 @@ data class Data(
 /**
  * TODO AppIO Monad
  */
-//val out = SimpleStringProperty()
-//val input = SimpleStringProperty()
 
 class App : tornadofx.App(), IApp<Data> {
     private object Holder { val INSTANCE = App() }
@@ -53,7 +51,6 @@ class App : tornadofx.App(), IApp<Data> {
         }
         val label = Label("0")
         instance.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
-        //label.textProperty().bind(instance.input)
         val stop = Button("Stop")
         stop.action {
             instance.out.value = instance.input.value.copy(message = "stop")
@@ -81,7 +78,6 @@ class App : tornadofx.App(), IApp<Data> {
     override fun updateApp(data: Data): Deferred<Data> = GlobalScope.async {
         Platform.runLater {
             instance.input.value = data
-            //instance.out.value = null
         }
         Data(this@App,"updated",data.cnt)
     }
@@ -94,7 +90,6 @@ class App : tornadofx.App(), IApp<Data> {
     }
 
     override fun waiting(data: Data): Deferred<Data> = GlobalScope.async {
-        //Data(this@App, changes().await() ,data.cnt)
         changes().await()
     }
 
@@ -113,28 +108,25 @@ class App : tornadofx.App(), IApp<Data> {
 
 fun main(args: Array<String>) {
     runBlocking {
-        //GlobalScope.launch {
-            evolve(
-                data = Data(App.instance, "start-app", 0),
+        evolve(
+            data = Data(App.instance, "start-app", 0),
+            conditions = EvolutionConditions(
                 testObject = Pair("startup", 0),
-                condition = { it.first != "stopped" && it.second < 100 },
-                updateCondition = { data -> Pair(data.message, data.cnt) },
-                flow = { data ->
-                    println(data.message)
-                    when (data.message) {
-                        "start-app" -> data.app.startApp(data)
-                        "launching-app" ->data.app.waiting(Data(data.app, "", data.cnt))
-                        "initializing" -> data.app.waiting(Data(data.app, "", data.cnt))
-                        "started" -> data.app.updateApp(Data(data.app, "", data.cnt))
-                        "clicked" -> data.app.updateApp(Data(data.app, "", data.cnt + 1))
-                        "stop" -> data.app.stopApp(Data(data.app, "", data.cnt))
-                        else -> data.app.waiting(Data(data.app, "", data.cnt))
-                    }
-                }
+                check ={ it.first != "stopped" && it.second < 100 },
+                updateCondition = { data -> Pair(data.message, data.cnt) }
             )
-        //}
+        ){ data -> println(data.message)
+            when (data.message) {
+                "start-app" -> data.app.startApp(data)
+                "launching-app" ->data.app.waiting(Data(data.app, "", data.cnt))
+                "initializing" -> data.app.waiting(Data(data.app, "", data.cnt))
+                "started" -> data.app.updateApp(Data(data.app, "", data.cnt))
+                "clicked" -> data.app.updateApp(Data(data.app, "", data.cnt + 1))
+                "stop" -> data.app.stopApp(Data(data.app, "", data.cnt))
+                else -> data.app.waiting(Data(data.app, "", data.cnt))
+            }
+        }
     }
-    //Application.launch(App::class.java, *args)
 }
 
 

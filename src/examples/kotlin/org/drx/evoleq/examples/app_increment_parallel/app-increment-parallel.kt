@@ -2,7 +2,6 @@ package org.drx.evoleq.examples.app_increment_parallel
 
 import javafx.application.Application
 import javafx.application.Platform
-import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.Scene
 import javafx.scene.control.Button
@@ -11,12 +10,10 @@ import javafx.scene.layout.FlowPane
 import javafx.stage.Screen
 import javafx.stage.Stage
 import kotlinx.coroutines.*
+import org.drx.evoleq.EvolutionConditions
 import org.drx.evoleq.evolve
 import tornadofx.ChangeListener
-
 import tornadofx.action
-import java.lang.Thread.sleep
-import kotlin.coroutines.CoroutineContext
 
 data class AppData(
     val app: IApp<AppData>,
@@ -30,8 +27,6 @@ data class Data(val appData:AppData, val clock: Clock)
 /**
  * TODO AppIO Monad
  */
-//val out = SimpleStringProperty()
-//val input = SimpleStringProperty()
 
 class App : tornadofx.App(), IApp<AppData> {
     private object Holder { val INSTANCE = App() }
@@ -60,15 +55,19 @@ class App : tornadofx.App(), IApp<AppData> {
         }
         val label = Label("0")
         instance.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
-        //label.textProperty().bind(instance.input)
         val stop = Button("Stop")
         stop.action {
             instance.out.value = instance.input.value.copy(message = "stop")
         }
+        val restart = Button("Restart")
+        restart.action {
+            instance.out.value = instance.input.value.copy(message = "restart")
+        }
         (scene.root as FlowPane).children.addAll(
             button,
             label,
-            stop
+            stop,
+            restart
         )
         instance.out.value = instance.input.value.copy(message = "started")
         Platform.setImplicitExit(false);
@@ -89,7 +88,6 @@ class App : tornadofx.App(), IApp<AppData> {
     override fun updateApp(appData: AppData): Deferred<AppData> = GlobalScope.async {
         Platform.runLater {
             instance.input.value = appData
-            //instance.out.value = null
         }
         AppData(this@App,"updated",appData.cnt)
     }
@@ -100,8 +98,14 @@ class App : tornadofx.App(), IApp<AppData> {
     }
 
     override fun waiting(appData: AppData): Deferred<AppData> = GlobalScope.async {
-        //AppData(this@App, changes().await() ,appData.cnt)
         changes().await()
+    }
+
+    override fun restartApp(appData: AppData): Deferred<AppData> = GlobalScope.async {
+        val cnt = appData.cnt
+        stop()
+        delay(5_000)
+        AppData( App(),"start-app", cnt )
     }
 
     private fun  changes(): Deferred<AppData> = GlobalScope.async {
@@ -119,57 +123,62 @@ class App : tornadofx.App(), IApp<AppData> {
 
 fun main(args: Array<String>) {
     runBlocking {
-        //val terminalData =
-        evolve<Data,Pair<String,Long>>(
-            data = Data(AppData(App.instance, "start-app", 0),Clock(0L)),
-            testObject = Pair("startup", 0),
-            condition = { it.first != "stopped" && it.second < 30 },
-            updateCondition = { data -> Pair(data.appData.message, data.clock.time) },
-            flow = {  data ->  async {
-                    println("Top level: "+Thread.currentThread().name)
-                    val defAppData= async{
-                        evolve(
-                            data = data.appData,
+        evolve(
+            data = Data(
+                appData = AppData(
+                    app = App.instance,
+                    message = "start-app",
+                    cnt = 0
+                ),
+                clock = Clock(0L)
+            ),
+            conditions = EvolutionConditions<Data,Pair<String,Long>>(
+                testObject = Pair("startup", 0),
+                check = { it.first != "stopped" && it.second < 30 },
+                updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
+            )
+        ){  data -> async {
+                val deferredAppData= async {
+                    evolve(
+                        data = data.appData,
+                        conditions = EvolutionConditions(
                             testObject = Pair("startup", 0),
-                            condition = { it.first != "stopped" && it.second < 100 },
-                            updateCondition = { data -> Pair(data.message, data.cnt) },
-                            flow = { data ->
-                                println("App driver: "+Thread.currentThread().name)
-                                println(data.message)
-                                when (data.message) {
-                                    "start-app" -> data.app.startApp(data)
-                                    "launching-app" ->data.app.waiting(AppData(data.app, "", data.cnt))
-                                    "initializing" -> data.app.waiting(AppData(data.app, "", data.cnt))
-                                    "started" -> data.app.updateApp(AppData(data.app, "", data.cnt))
-                                    "clicked" -> data.app.updateApp(AppData(data.app, "", data.cnt + 1))
-                                    "stop" -> data.app.stopApp(AppData(data.app, "", data.cnt))
-
-                                    else -> data.app.waiting(AppData(data.app, "", data.cnt))
-                                }
-                            }
+                            check = { it.first != "stopped" && it.second < 100 },
+                            updateCondition = { data -> Pair(data.message, data.cnt) }
                         )
+                    ){  data -> println("App driver: "+Thread.currentThread().name); println(data.message)
+                        when (data.message) {
+                            "start-app" -> data.app.startApp(data)
+                            "restart" -> data.app.restartApp(data)
+                            "launching-app" ->data.app.waiting(AppData(data.app, "", data.cnt))
+                            "initializing" -> data.app.waiting(AppData(data.app, "", data.cnt))
+                            "started" -> data.app.updateApp(AppData(data.app, "", data.cnt))
+                            "clicked" -> data.app.updateApp(AppData(data.app, "", data.cnt + 1))
+                            "stop" -> data.app.stopApp(AppData(data.app, "", data.cnt))
+                            else -> data.app.waiting(AppData(data.app, "", data.cnt))
+                        }
                     }
-                    val defClock = async{
-                        evolve(
-                            data = data.clock,
-                            testObject = 0L,
-                            condition = {time -> time < 5},
-                            updateCondition = {clock -> clock.time},
-                            flow = { clock -> async {
-                                println("Clock: "+Thread.currentThread().name)
-                                println("Clock.time: ${clock.time}")
-                                delay(1_000)
-                                clock.copy(time = clock.time+1)
-                            }}
-                        )
-                    }
-                Data(defAppData.await(),defClock.await())
                 }
+                val deferredClock = async {
+                    evolve(
+                        data = data.clock,
+                        conditions = EvolutionConditions(
+                            testObject = 0L,
+                            check = {time -> time < 50},
+                            updateCondition = {clock -> clock.time}
+                        )
+                    ){  clock -> async {
+                            println("Clock: "+Thread.currentThread().name)
+                            println("Clock.time: ${clock.time}")
+                            delay(1_000)
+                            clock.copy(time = clock.time+1)
+                        }
+                    }
+
+                }
+                Data( deferredAppData.await(), deferredClock.await() )
             }
-        )
-
-
-
+        }
     }
 }
 
@@ -180,5 +189,6 @@ interface IApp<D> {
     fun stopApp(data: D): Deferred<D>
     fun updateApp(data: D): Deferred<D>
     fun waiting(data: D): Deferred<D>
+    fun restartApp(data: D): Deferred<D>
 }
 
