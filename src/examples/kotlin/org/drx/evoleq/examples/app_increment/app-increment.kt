@@ -7,6 +7,7 @@ import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.FlowPane
+import javafx.scene.layout.Pane
 import javafx.stage.Screen
 import javafx.stage.Stage
 import kotlinx.coroutines.*
@@ -42,22 +43,31 @@ class App : tornadofx.App(), IApp<Data> {
     }
     override fun start(stage: Stage) {
         val visualBounds = Screen.getPrimary().visualBounds
-        val width = visualBounds.width-400
-        val height = visualBounds.height-400
-        val scene = Scene(FlowPane(),width,height)
+        val width = 200.0
+        val height = 200.0
+        val scene = Scene(Pane(),width,height)
         stage.scene = scene
         stage.title = "Example Application"
         val button = Button("CLick me!")
+
         button.action{
             instance.out.value = instance.input.value.copy(message = "clicked")
         }
+
+        button.resize(200.0, 30.0)
+        button.layoutX = 0.0
         val label = Label("0")
+        label.layoutX = 100.0
+        label.resize(100.0,30.0)
         instance.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
         val stop = Button("Stop")
+        stop.resize(100.0, 30.0)
+        stop.layoutX = 150.0
+        stop.layoutY = 170.0
         stop.action {
             instance.out.value = instance.input.value.copy(message = "stop")
         }
-        (scene.root as FlowPane).children.addAll(
+        (scene.root as Pane).children.addAll(
             button,
             label,
             stop
