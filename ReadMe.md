@@ -50,3 +50,13 @@ tailrec suspend fun <D, T> evolve(
     }
 }
 ```  
+
+
+# Ideas
+
+- use App as a skin only. All processes are to be driven by the evolve-map
+- Provide channels for each component
+
+### Logarithmic vs exponential style
+- exp(a+b) = exp(a)*exp(b)
+- log(a) + log(b) = log(a*b)
