@@ -8,8 +8,10 @@ import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.FlowPane
 import javafx.scene.layout.Pane
+import javafx.scene.paint.Stop
 import javafx.stage.Screen
 import javafx.stage.Stage
+import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.EvolutionConditions
 import org.drx.evoleq.Evolving
@@ -21,13 +23,30 @@ import tornadofx.action
 
 data class Data(
     val app: IApp<Data>,
-    val message: String,
+    val message: Message,
     val cnt: Int
 )
 
-/**
- * TODO AppIO Monad
- */
+interface IApp<D> {
+    fun startApp(data: D): Evolving<D>
+    fun stopApp(data: D): Evolving<D>
+    fun updateApp(data: D): Evolving<D>
+    fun waiting(data: D): Evolving<D>
+}
+
+sealed class Message {
+    object StartApp : Message()
+    object StartUp : Message()
+    object LaunchingApp : Message()
+    object InitializingApp : Message()
+    object StartedApp : Message()
+    object ClickedIncButton : Message()
+    object StopApp : Message()
+    object UpdatedApp : Message()
+    object StoppedApp : Message()
+    object Wait : Message()
+    object Empty : Message()
+}
 
 class App : tornadofx.App(), IApp<Data> {
     private object Holder { val INSTANCE = App() }
@@ -39,9 +58,10 @@ class App : tornadofx.App(), IApp<Data> {
     private val input = SimpleObjectProperty<Data>()
 
     override fun init() {
-        instance.out.value = instance.input.value.copy(message = "initializing")
+        instance.out.value = instance.input.value.copy(message = Message.InitializingApp)
     }
     override fun start(stage: Stage) {
+        stage.initStyle(StageStyle.UNDECORATED)
         val visualBounds = Screen.getPrimary().visualBounds
         val width = 200.0
         val height = 200.0
@@ -51,7 +71,7 @@ class App : tornadofx.App(), IApp<Data> {
         val button = Button("CLick me!")
 
         button.action{
-            instance.out.value = instance.input.value.copy(message = "clicked")
+            instance.out.value = instance.input.value.copy(message = Message.ClickedIncButton)
         }
 
         button.resize(200.0, 30.0)
@@ -65,14 +85,14 @@ class App : tornadofx.App(), IApp<Data> {
         stop.layoutX = 150.0
         stop.layoutY = 170.0
         stop.action {
-            instance.out.value = instance.input.value.copy(message = "stop")
+            instance.out.value = instance.input.value.copy(message = Message.StopApp)
         }
         (scene.root as Pane).children.addAll(
             button,
             label,
             stop
         )
-        instance.out.value = instance.input.value.copy(message = "started")
+        instance.out.value = instance.input.value.copy(message = Message.StartedApp)
         stage.show()
     }
 
@@ -84,21 +104,21 @@ class App : tornadofx.App(), IApp<Data> {
             input.value = data
             val x = Application.launch(App::class.java)
         }
-        Data(this@App,"launching-app",data.cnt)
+        Data(this@App,Message.LaunchingApp,data.cnt)
     }
 
     override fun updateApp(data: Data): Evolving<Data> = Parallel {
         Platform.runLater {
             instance.input.value = data
         }
-        Data(this@App,"updated",data.cnt)
+        Data(this@App,Message.UpdatedApp,data.cnt)
     }
 
     override fun stopApp(data: Data): Evolving<Data> = Parallel {
         Platform.runLater {
             stop()
         }
-        Data(this@App,"stopped",data.cnt)
+        Data(this@App,Message.StoppedApp,data.cnt)
     }
 
     override fun waiting(data: Data): Evolving<Data> = Parallel {
@@ -121,32 +141,28 @@ class App : tornadofx.App(), IApp<Data> {
 fun main(args: Array<String>) {
     runBlocking {
         evolve(
-            initialData = Data(App.instance, "start-app", 0),
+            initialData = Data(App.instance, Message.StartApp as Message, 0),
             conditions = EvolutionConditions(
-                testObject = Pair("startup", 0),
-                check ={ it.first != "stopped" && it.second < 100 },
+                testObject = Pair(Message.StartUp as Message, 0),
+                check ={ when(it.first){
+                    is Message.StopApp -> false
+                    else ->true
+                }  && it.second < 100 },
                 updateCondition = { data -> Pair(data.message, data.cnt) }
             )
         ){ data -> println(data.message)
             when (data.message) {
-                "start-app" -> data.app.startApp(data)
-                "launching-app" ->data.app.waiting(Data(data.app, "", data.cnt))
-                "initializing" -> data.app.waiting(Data(data.app, "", data.cnt))
-                "started" -> data.app.updateApp(Data(data.app, "", data.cnt))
-                "clicked" -> data.app.updateApp(Data(data.app, "", data.cnt + 1))
-                "stop" -> data.app.stopApp(Data(data.app, "", data.cnt))
-                else -> data.app.waiting(Data(data.app, "", data.cnt))
+                is Message.StartApp -> data.app.startApp(data)
+                is Message.LaunchingApp ->data.app.waiting(Data(data.app, Message.Wait, data.cnt))
+                is Message.InitializingApp -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
+                is Message.StartedApp -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt))
+                is Message.ClickedIncButton -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt + 1))
+                is Message.StopApp -> data.app.stopApp(Data(data.app, Message.Empty, data.cnt))
+                else -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
             }
         }
     }
 }
 
 
-
-interface IApp<D> {
-    fun startApp(data: D): Evolving<D>
-    fun stopApp(data: D): Evolving<D>
-    fun updateApp(data: D): Evolving<D>
-    fun waiting(data: D): Evolving<D>
-}
 

@@ -8,6 +8,7 @@ import javafx.scene.control.Label
 import javafx.scene.layout.FlowPane
 import javafx.stage.Screen
 import javafx.stage.Stage
+import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import tornadofx.ChangeListener
@@ -15,16 +16,34 @@ import tornadofx.action
 
 data class AppData(
     val app: IApp<AppData>,
-    val message: String,
+    val message: Message,
     val cnt: Int
 )
 data class Clock(val time: Long)
 
 data class Data(val appData:AppData, val clock: Clock)
 
-/**
- * TODO AppIO Monad
- */
+sealed class Message {
+    object StartApp : Message()
+    object StartUp : Message()
+    object LaunchingApp : Message()
+    object InitializingApp : Message()
+    object StartedApp : Message()
+    object ClickedIncButton : Message()
+    object StopApp : Message()
+    object UpdatedApp : Message()
+    object StoppedApp : Message()
+    object Wait : Message()
+    object Empty : Message()
+}
+
+interface IApp<D> {
+    fun startApp(data: D): Evolving<D>
+    fun stopApp(data: D): Evolving<D>
+    fun updateApp(data: D): Evolving<D>
+    fun waiting(data: D): Evolving<D>
+    //fun restartApp(data: D): Evolving<D>
+}
 
 class App : tornadofx.App(), IApp<AppData> {
     private object Holder { val INSTANCE = App() }
@@ -38,9 +57,10 @@ class App : tornadofx.App(), IApp<AppData> {
 
 
     override fun init() {
-        instance.out.value = instance.input.value.copy(message = "initializing")
+        instance.out.value = instance.input.value.copy(message = Message.InitializingApp)
     }
     override fun start(stage: Stage) {
+        stage.initStyle(StageStyle.UNDECORATED)
         val visualBounds = Screen.getPrimary().visualBounds
         val width = visualBounds.width-400
         val height = visualBounds.height-400
@@ -49,25 +69,27 @@ class App : tornadofx.App(), IApp<AppData> {
         stage.title = "Example Application"
         val button = Button("CLick me!")
         button.action{
-            instance.out.value = instance.input.value.copy(message = "clicked")
+            instance.out.value = instance.input.value.copy(message = Message.ClickedIncButton)
         }
         val label = Label("0")
         instance.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
         val stop = Button("Stop")
         stop.action {
-            instance.out.value = instance.input.value.copy(message = "stop")
+            instance.out.value = instance.input.value.copy(message = Message.StopApp)
         }
+        /*
         val restart = Button("Restart")
         restart.action {
             instance.out.value = instance.input.value.copy(message = "restart")
         }
+        */
         (scene.root as FlowPane).children.addAll(
             button,
             label,
-            stop,
-            restart
+            stop
+            //,restart
         )
-        instance.out.value = instance.input.value.copy(message = "started")
+        instance.out.value = instance.input.value.copy(message = Message.StartedApp)
         Platform.setImplicitExit(false);
         stage.show()
     }
@@ -80,32 +102,32 @@ class App : tornadofx.App(), IApp<AppData> {
             input.value = appData
             launch(App::class.java)
         }
-        AppData(this@App,"launching-app",appData.cnt)
+        AppData(this@App,Message.LaunchingApp,appData.cnt)
     }
 
     override fun updateApp(appData: AppData): Evolving<AppData> = Parallel {
         Platform.runLater {
             instance.input.value = appData
         }
-        AppData(this@App,"updated",appData.cnt)
+        AppData(this@App,Message.UpdatedApp,appData.cnt)
     }
 
     override fun stopApp(appData: AppData): Evolving<AppData> = Parallel {
         stop()
-        AppData(this@App,"stopped",appData.cnt)
+        AppData(this@App,Message.StoppedApp,appData.cnt)
     }
 
     override fun waiting(appData: AppData): Evolving<AppData> = Parallel {
         changes().get()
     }
-
+/*
     override fun restartApp(appData: AppData): Evolving<AppData> = Parallel {
         val cnt = appData.cnt
         stop()
         delay(1_000)
         AppData( App(),"start-app", cnt )
     }
-
+*/
     private fun  changes(): Evolving<AppData> =
         Parallel {
             var changed = false
@@ -128,14 +150,14 @@ fun main(args: Array<String>) {
             initialData = Data(
                 appData = AppData(
                     app = App.instance,
-                    message = "start-app",
+                    message = Message.StartApp,
                     cnt = 0
                 ),
                 clock = Clock(0L)
             ),
-            conditions = EvolutionConditions<Data,Pair<String,Long>>(
-                testObject = Pair("startup", 0),
-                check = { it.first != "stopped" && it.second < 30 },
+            conditions = EvolutionConditions<Data,Pair<Message,Long>>(
+                testObject = Pair(Message.StartUp, 0),
+                check = { when(it.first) {is Message.StoppedApp -> false else -> true} && it.second < 30 },
                 updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
             )
         ){  data -> Parallel {
@@ -143,20 +165,25 @@ fun main(args: Array<String>) {
                     evolve(
                         initialData = data.appData,
                         conditions = EvolutionConditions(
-                            testObject = Pair("startup", 0),
-                            check = { it.first != "stopped" && it.second < 100 },
+                            testObject = Pair(Message.StartUp as Message, 0),
+                            check = { when(it.first) { Message.StoppedApp -> false else -> true} && it.second < 100 },
                             updateCondition = { data -> Pair(data.message, data.cnt) }
                         )
                     ){  data -> println("App driver: "+Thread.currentThread().name); println(data.message)
                         when (data.message) {
-                            "start-app" -> data.app.startApp(data)
-                            "restart" -> data.app.restartApp(data)
-                            "launching-app" ->data.app.waiting(AppData(data.app, "", data.cnt))
-                            "initializing" -> data.app.waiting(AppData(data.app, "", data.cnt))
-                            "started" -> data.app.updateApp(AppData(data.app, "", data.cnt))
-                            "clicked" -> data.app.updateApp(AppData(data.app, "", data.cnt + 1))
-                            "stop" -> data.app.stopApp(AppData(data.app, "", data.cnt))
-                            else -> data.app.waiting(AppData(data.app, "", data.cnt))
+                            Message.StartApp -> data.app.startApp(data)
+                            //"restart" -> data.app.restartApp(data)
+                            Message.LaunchingApp ->data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
+                            Message.InitializingApp -> data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
+                            Message.StartedApp -> data.app.updateApp(AppData(data.app, Message.Empty, data.cnt))
+                            Message.ClickedIncButton -> data.app.updateApp(AppData(data.app, Message.Empty, data.cnt + 1))
+                            Message.StopApp -> data.app.stopApp(AppData(data.app, Message.Empty, data.cnt))
+                            // just wait
+                            Message.Wait,
+                            Message.Empty,
+                            Message.StartUp,
+                            Message.UpdatedApp,
+                            Message.StoppedApp -> data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
                         }
                     }
                 }
@@ -185,11 +212,5 @@ fun main(args: Array<String>) {
 
 
 
-interface IApp<D> {
-    fun startApp(data: D): Evolving<D>
-    fun stopApp(data: D): Evolving<D>
-    fun updateApp(data: D): Evolving<D>
-    fun waiting(data: D): Evolving<D>
-    fun restartApp(data: D): Evolving<D>
-}
+
 
