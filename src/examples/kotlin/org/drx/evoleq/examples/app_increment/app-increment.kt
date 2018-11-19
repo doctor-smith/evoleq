@@ -3,11 +3,14 @@ package org.drx.evoleq.examples.app_increment
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
+import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.FlowPane
+import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
+import javafx.scene.layout.VBox
 import javafx.scene.paint.Stop
 import javafx.stage.Screen
 import javafx.stage.Stage
@@ -48,51 +51,32 @@ sealed class Message {
     object Empty : Message()
 }
 
+class IO<D> {
+    val output = SimpleObjectProperty<D>()
+    val input = SimpleObjectProperty<D>()
+}
+
 class App : tornadofx.App(), IApp<Data> {
     private object Holder { val INSTANCE = App() }
 
     companion object {
         val instance: App by lazy { Holder.INSTANCE }
     }
-    private val out = SimpleObjectProperty<Data>()
-    private val input = SimpleObjectProperty<Data>()
+    private val io = IO<Data>()
 
     override fun init() {
-        instance.out.value = instance.input.value.copy(message = Message.InitializingApp)
+        instance.io.output.value = instance.io.input.value.copy(message = Message.InitializingApp)
     }
     override fun start(stage: Stage) {
         stage.initStyle(StageStyle.UNDECORATED)
-        val visualBounds = Screen.getPrimary().visualBounds
+        //val visualBounds = Screen.getPrimary().visualBounds
         val width = 200.0
         val height = 200.0
-        val scene = Scene(Pane(),width,height)
+        val scene = Scene(AppContent(instance.io),width,height)
         stage.scene = scene
         stage.title = "Example Application"
-        val button = Button("CLick me!")
 
-        button.action{
-            instance.out.value = instance.input.value.copy(message = Message.ClickedIncButton)
-        }
-
-        button.resize(200.0, 30.0)
-        button.layoutX = 0.0
-        val label = Label("0")
-        label.layoutX = 100.0
-        label.resize(100.0,30.0)
-        instance.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
-        val stop = Button("Stop")
-        stop.resize(100.0, 30.0)
-        stop.layoutX = 150.0
-        stop.layoutY = 170.0
-        stop.action {
-            instance.out.value = instance.input.value.copy(message = Message.StopApp)
-        }
-        (scene.root as Pane).children.addAll(
-            button,
-            label,
-            stop
-        )
-        instance.out.value = instance.input.value.copy(message = Message.StartedApp)
+        instance.io.output.value = instance.io.input.value.copy(message = Message.StartedApp)
         stage.show()
     }
 
@@ -101,7 +85,7 @@ class App : tornadofx.App(), IApp<Data> {
     }
     override fun startApp(data: Data): Evolving<Data> = Parallel {
         GlobalScope.launch {
-            input.value = data
+            io.input.value = data
             val x = Application.launch(App::class.java)
         }
         Data(this@App,Message.LaunchingApp,data.cnt)
@@ -109,7 +93,7 @@ class App : tornadofx.App(), IApp<Data> {
 
     override fun updateApp(data: Data): Evolving<Data> = Parallel {
         Platform.runLater {
-            instance.input.value = data
+            instance.io.input.value = data
         }
         Data(this@App,Message.UpdatedApp,data.cnt)
     }
@@ -129,12 +113,12 @@ class App : tornadofx.App(), IApp<Data> {
         var m:Data
         var changed = false
         val listener = ChangeListener<Data> {_,_,nv -> m = nv; changed = true }
-        instance.out.addListener(listener)
+        instance.io.output.addListener(listener)
         while(!changed){
             Thread.sleep(10)
         }
-        instance.out.removeListener(listener)
-        instance.out.value
+        instance.io.output.removeListener(listener)
+        instance.io.output.value
     }
 }
 
@@ -164,5 +148,55 @@ fun main(args: Array<String>) {
     }
 }
 
+/**
+ * Components
+ * ====================================================================================================================
+ */
+class IncrementComponent(val io: IO<Data>) : HBox() {
+    val button = Button("Click me !")
+    val label = Label()
+    init {
+        button.action {
+            io.output.value = io.input.value.copy(message = Message.ClickedIncButton)
+        }
+
+        io.input.addListener{_,_,nv -> label.text = "${nv.cnt}"}
+
+        button.resize(100.0,30.0)
+        button.minHeight = 30.0
+        label.resize(100.0,30.0)
+        label.minHeight = 30.0
+        children.addAll(button, label)
+
+    }
+}
+
+class StopAppComponent(private val io: IO<Data>) : HBox(){
+    private val button = Button("Stop")
+    private val spacer = Label(" ")
+    init {
+        button.action {
+            io.output.value = io.input.value.copy(message = Message.StopApp)
+        }
+        button.minWidth = 100.0
+        button.minHeight = 30.0
+        button.resize(100.0,30.0)
+        spacer.minWidth = 100.0
+        spacer.resize(100.0,height)
+        children.addAll(spacer,button)
+    }
+}
+
+class AppContent(io : IO<Data>) : VBox() {
+    init {
+        val spacer = Label()
+        spacer.minHeight = 140.0
+        children.addAll(
+            IncrementComponent(io),
+            spacer,
+            StopAppComponent(io)
+        )
+    }
+}
 
 
