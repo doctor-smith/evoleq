@@ -42,7 +42,6 @@ interface IApp<D> {
     fun stopApp(data: D): Evolving<D>
     fun updateApp(data: D): Evolving<D>
     fun waiting(data: D): Evolving<D>
-    //fun restartApp(data: D): Evolving<D>
 }
 
 class App : tornadofx.App(), IApp<AppData> {
@@ -77,12 +76,7 @@ class App : tornadofx.App(), IApp<AppData> {
         stop.action {
             instance.out.value = instance.input.value.copy(message = Message.StopApp)
         }
-        /*
-        val restart = Button("Restart")
-        restart.action {
-            instance.out.value = instance.input.value.copy(message = "restart")
-        }
-        */
+
         (scene.root as FlowPane).children.addAll(
             button,
             label,
@@ -113,21 +107,21 @@ class App : tornadofx.App(), IApp<AppData> {
     }
 
     override fun stopApp(appData: AppData): Evolving<AppData> = Parallel {
-        stop()
+        var running = true
+        Platform.runLater {
+            stop()
+            running = false
+        }
+        while(running) {
+            delay(10)
+        }
         AppData(this@App,Message.StoppedApp,appData.cnt)
     }
 
     override fun waiting(appData: AppData): Evolving<AppData> = Parallel {
         changes().get()
     }
-/*
-    override fun restartApp(appData: AppData): Evolving<AppData> = Parallel {
-        val cnt = appData.cnt
-        stop()
-        delay(1_000)
-        AppData( App(),"start-app", cnt )
-    }
-*/
+
     private fun  changes(): Evolving<AppData> =
         Parallel {
             var changed = false

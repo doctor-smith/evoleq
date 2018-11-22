@@ -99,10 +99,15 @@ class App : tornadofx.App(), IApp<Data> {
     }
 
     override fun stopApp(data: Data): Evolving<Data> = Parallel {
+        var running = true
         Platform.runLater {
             stop()
+            running = false
         }
-        Data(this@App,Message.StoppedApp,data.cnt)
+        while(running) {
+            delay(10)
+        }
+        Data(this@App, Message.StoppedApp, data.cnt)
     }
 
     override fun waiting(data: Data): Evolving<Data> = Parallel {
@@ -129,7 +134,7 @@ fun main(args: Array<String>) {
             conditions = EvolutionConditions(
                 testObject = Pair(Message.StartUp as Message, 0),
                 check ={ when(it.first){
-                    is Message.StopApp -> false
+                    is Message.StoppedApp -> false
                     else ->true
                 }  && it.second < 100 },
                 updateCondition = { data -> Pair(data.message, data.cnt) }
@@ -145,6 +150,8 @@ fun main(args: Array<String>) {
                 else -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
             }
         }
+        println("App stopped ... exiting System")
+        System.exit(0)
     }
 }
 
