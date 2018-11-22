@@ -81,7 +81,7 @@ class App : tornadofx.App(), IApp<Data> {
     }
 
     override fun stop() {
-        System.exit(0)
+        Platform.exit()
     }
     override fun startApp(data: Data): Evolving<Data> = Parallel {
         GlobalScope.launch {
@@ -147,7 +147,12 @@ fun main(args: Array<String>) {
                 is Message.StartedApp -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt))
                 is Message.ClickedIncButton -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt + 1))
                 is Message.StopApp -> data.app.stopApp(Data(data.app, Message.Empty, data.cnt))
-                else -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
+                // just wait
+                is Message.Wait,
+                is Message.Empty,
+                is Message.StartUp,
+                is Message.UpdatedApp,
+                is Message.StoppedApp -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
             }
         }
         println("App stopped ... exiting System")
