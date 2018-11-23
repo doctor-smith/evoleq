@@ -9,10 +9,7 @@ import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import javafx.stage.StageStyle
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import tornadofx.ChangeListener
 import tornadofx.action
@@ -52,7 +49,9 @@ sealed class Message {
     object StoppedApp : Message()
     object Wait : Message()
     object Empty : Message()
-    class Continuation(val blocks: ArrayList<(Data)-> Evolving<Data>> = arrayListOf()) : Message()
+    class Continuation(val blocks: ArrayList<(Data)-> Evolving<Data>> = arrayListOf()) : Message()  {
+        constructor(process:(Data)->Evolving<Data>): this(arrayListOf({d:Data -> process(d)}))
+    }
     sealed class Dialog(val id: Long) : Message() {
         class Confirm(val statement: String,id: Long,val continuation: Continuation = Continuation()) : Dialog(id)
         class Ok(id: Long,val  continuation: Continuation = Continuation()) : Dialog(id)
@@ -231,7 +230,7 @@ class App : tornadofx.App(), IApp<Data>, StageController {
  */
 fun main(args: Array<String>) {
     runBlocking {
-        evolve(
+        evolve<Data,Pair<Message,Int>>(
             initialData = Data(App.instance, Message.StartApp as Message, 0),
             conditions = EvolutionConditions(
                 testObject = Pair(Message.StartUp as Message, 0),
@@ -246,41 +245,48 @@ fun main(args: Array<String>) {
         ) { data ->
             println(data.message)
             when (data.message) {
+                // application
                 is Message.StartApp -> data.app.startApp(data)
                 is Message.RestartApp -> data.app.restartApp(data)
                 is Message.LaunchingApp -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
                 is Message.InitializingApp -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
                 is Message.StartedApp -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt))
-                is Message.ClickedIncButton -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt + 1))
-                is Message.StopApp -> {
-                    val id = System.currentTimeMillis()
-                    data.app.updateApp(data.copy(
-                    message=Message.Dialog.Confirm(
-                        "Do you really want to close the application?",
-                        id,
-                        Message.Continuation(arrayListOf(
-                            {d ->d.app.updateApp(d.copy(
-                                message = Message.Dialog.Close(id,(d.message as Message.Continuation)))
-                            )},
-                            {d ->d.app.stopApp(Data(d.app, Message.Empty, data.cnt))}
-                        ))
-                    )))
-                }
-                is Message.Dialog.Cancel -> data.app.updateApp(data.copy(message = Message.Dialog.Close(data.message.id)))
-                is Message.Dialog.Ok -> data.app.updateApp(data.copy(message = data.message.continuation))
+                // else
+                is Message.UpdatedApp,
+                is Message.Wait,
+                is Message.StartUp,
+                is Message.Empty,
+                is Message.StoppedApp-> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
+
+                // continuation
                 is Message.Continuation -> data.message.blocks.first() (
                     data.copy(message = Message.Continuation(
                         data.message.blocks.tail())
                     )
                 )
+
+                // interaction
+                is Message.ClickedIncButton -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt + 1))
+                is Message.StopApp -> Parallel{
+                    val id = System.currentTimeMillis()
+                    val continuation = Parallel{
+                        process (
+                            { d: Data -> d.app.updateApp(d.copy(message = Message.Dialog.Close(id))) },
+                            { d: Data -> d.app.stopApp(d.copy(message = Message.Empty)) }
+                        )
+                    }.get()
+                    data.app.updateApp(data.copy(
+                    message=Message.Dialog.Confirm(
+                        "Do you really want to close the application?",
+                        id,
+                        Message.Continuation( continuation )
+                    ))).get()
+                }
+                is Message.Dialog.Cancel -> data.app.updateApp(data.copy(message = Message.Dialog.Close(data.message.id)))
+                is Message.Dialog.Ok -> data.app.updateApp(data.copy(message = data.message.continuation))
                 // else
-                is Message.UpdatedApp,
-                is Message.Wait,
                 is Message.Dialog.Confirm,
-                is Message.Dialog.Close,
-                is Message.StartUp,
-                is Message.Empty,
-                is Message.StoppedApp-> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
+                is Message.Dialog.Close -> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
             }
         }
         println("App stopped ... exiting System")
@@ -375,6 +381,7 @@ class ConfirmDialog(val confirm: Message.Dialog.Confirm ,private val io: IO<Data
  * Auxiliary
  * =====================================================================================================================
  */
+/*
 fun <T> ArrayList<T>.tail(): ArrayList<T> {
     val N = size
 
@@ -387,3 +394,4 @@ fun <T> ArrayList<T>.tail(): ArrayList<T> {
     IntRange(1,N-1).forEach { tail.add(this[it]) }
     return tail
 }
+        */
