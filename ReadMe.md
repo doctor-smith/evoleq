@@ -5,6 +5,8 @@ An approach to handling this situation is to use an event-based design.
 
 But it is completely unsatisfactory from an functional programmers perspective.
 
+
+
 ## How to bring change into the functional setup?
 Functions, objects, arrows, functors etc are all static things. So how can we model change within this setup?
 Well, let's take a look at mathematics! How did the mathematicians deal with change?
@@ -13,18 +15,38 @@ It is! Differential Equations or better: Evolution Equations.
 
 The most simple differential equation is given by the formula 
 
-```f' = f, f(0)= f_0 ```
+```
+f' = f, f(0)= f_0
+```
  
  The solution is with initial value f_0 is given by
  
- ```f(t)= f_0*e^t```
+ ```
+ f(t)= f_0*e^t
+ ```
  
  The flow of the d.e. is a map
  
- ```Phi: RxR->R: Phi(t,x)=x*e^t```
+ ```
+ Phi: RxR->R: Phi(t,x)=x*e^t
+ ```
  
  So the whole set of possible solutions can be described using just one function!
- 
+
+ The bad news: We cannot use differential equations.
+ The good news: Get inspiration from theory of dynamical system. There, T:M->M is a (continuous) map between topological spaces.
+ The flow of T on M is a function
+ ```
+ Phi: M x N -> M: (p,n) -> T^n (p)
+ ```
+ satisfying
+ ```
+ - Phi( _ , 0) = id_M
+ - Phi( _ , n) o Phi(_ ,m) = Phi(_, m+n)
+ ```
+
+ => Recursion will solve our problem
+
  The core of this paper:
  
  ```kotlin
@@ -51,6 +73,9 @@ tailrec suspend fun <D, T> evolve(
 }
 ```  
 
+### The data tape Evolving is monadic
+
+##
 
 # Ideas
 
