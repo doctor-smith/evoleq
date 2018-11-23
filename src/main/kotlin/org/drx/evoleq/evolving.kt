@@ -14,7 +14,7 @@ interface Evolving<out D> {
  * ==============
  */
 suspend infix
-fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
+fun <D1,D2> Evolving<D1>.map(f:  (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 
@@ -35,14 +35,30 @@ suspend fun <D> muEvolving(evolving: Evolving<Evolving<D>>): Evolving<D> {
 }
 
 /**
- * Fish operator on kleisli arrows
+ * Fish operator / multiplication on kleisli arrows
  */
 suspend operator
-fun <R,S,T> ( suspend (R)->Evolving<S> ).times( flow: suspend (S)->Evolving<T>) : suspend (R)->Evolving<T> = {
-    r -> muEvolving ( this( r ) map flow  )
+fun <R,S,T> ( (R)->Evolving<S> ).times( flow: (S)->Evolving<T>) : (R)->Evolving<T> = {
+    r -> Immediate{ muEvolving ( this( r ) map flow  ).get() }
 }
-
-
+suspend fun <S,T> process(first:(S)->Evolving<T>, vararg steps: (T)->Evolving<T>): (S)->Evolving<T> =
+    when(steps.isEmpty()) {
+        true -> first
+        false -> {
+            val next = steps.first()
+            val tail = arrayListOf(*steps).tail()
+            process(first * next, tail)
+        }
+    }
+tailrec suspend fun <S,T> process(first: (S)->Evolving<T>, steps: ArrayList<(T)->Evolving<T>>): (S)->Evolving<T> =
+    when (steps.isEmpty()) {
+        true -> first
+        false -> {
+            val next = steps.first()
+            val tail = steps.tail()
+            process(first * next, tail )
+        }
+    }
 /**
  * Implementations
  * ===============
@@ -52,7 +68,7 @@ fun <R,S,T> ( suspend (R)->Evolving<S> ).times( flow: suspend (S)->Evolving<T>) 
  * evolve async and parallel
  * - without blocking the current thread
  */
-class Parallel<D>( val delay: Long = 1, private val block: suspend () -> D ) : Evolving<D> {
+class Parallel<D>(private val delay: Long = 1, private val block: suspend () -> D ) : Evolving<D> {
 
     private val property: SimpleObjectProperty<D> = SimpleObjectProperty()
     private var updated = false
@@ -74,7 +90,7 @@ class Parallel<D>( val delay: Long = 1, private val block: suspend () -> D ) : E
     }
     override suspend fun get(): D {
         while(!updated){
-            delay(1)
+            delay(delay)  // reason why get has to be suspended
         }
         return property.value
     }
