@@ -28,4 +28,11 @@ class EvolvingTest {
         GlobalScope.launch { (f*g)("1") }.invokeOnCompletion {  }
     }
 
+    @Test
+    fun testBackPropagation() {
+        runBlocking {
+            /* TODO implement */
+        }
+    }
+
 }
