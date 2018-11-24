@@ -73,9 +73,47 @@ tailrec suspend fun <D, T> evolve(
 }
 ```  
 
-### The data tape Evolving is monadic
+### The data type Evolving is monadic
+Evolving is a monadic type.
 
-##
+- Processes
+- Process lenses
+- Gap
+
+## Advanced convenient usage
+### Side-effects / Evolving views
+
+```
+package org.drx.evoleq
+
+data class Gap<W,P>(
+    val from:(W)->Evolving<P>,
+    val to:(P)->Evolving<W>
+)
+
+interface Spatula<W,P> {
+    fun fill(gap: Gap<W,P>): (W)->Evolving<W>
+}
+
+class View(gap:Gap<W,P>,...args) : Spatula {
+    init {
+        val filler: (P)->Evolving<P> = Parallel {
+            ... UI side effects ...
+        }
+        fill(gap)
+    }
+
+    fun fill:(gap: Gap<W,P>): (W)->Evolving<W> = gap.from * filler * gap.to
+}
+
+```
+
+
+
+### Back Propagation
+
+
+
 
 # Ideas
 
