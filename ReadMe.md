@@ -112,13 +112,16 @@ class View(gap:Gap<W,P>,...args) : Spatula {
 
 ### Back Propagation
 
-
+There are several ways to construct backward evolution channels:
+- pass an interface to the evolving
+- pass a Port
+- pass an evolution equation 
 
 
 # Ideas
 
-- use App as a skin only. All processes are to be driven by the evolve-map
-- Provide channels for each component
+- [x] use App as a skin only. All processes are to be driven by the evolve-map
+- [x] Provide channels for each component
 
 ### Logarithmic vs exponential style
 - exp(a+b) = exp(a)*exp(b)
