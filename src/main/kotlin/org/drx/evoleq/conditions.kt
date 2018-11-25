@@ -34,12 +34,12 @@ class Counter<D>(private val to: Long) {
         testObject = 0L,
         check= {l -> l < to}
     ){
-        pair -> pair.second +1L
+        pair -> pair.second
     }
 }
 
-fun <D> countable(f: (D)->D): (Pair<D,Long>)->Pair<D,Long> = {
-    pair -> Pair(f(pair.first), pair.second)
+fun <D> counting(f: (D)->D): (Pair<D,Long>)->Pair<D,Long> = {
+    pair -> Pair(f(pair.first), pair.second +1)
 }
 
 
