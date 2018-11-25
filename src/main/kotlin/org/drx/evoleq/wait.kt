@@ -14,7 +14,7 @@ class WaitForProperty<D>(
 ) : WaitFor<D> {
     override suspend fun toChange(): Evolving<D> = Parallel {
         var changed = false
-        val listener = ChangeListener<D> {_,_,nv -> changed = true }
+        val listener = ChangeListener<D> {_,_,_ -> changed = true }
         property.addListener(listener)
         while( !changed ){
             delay( delay )
