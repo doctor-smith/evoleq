@@ -13,3 +13,5 @@ fun <T> ArrayList<T>.tail(): ArrayList<T> {
     return tail
 }
 
+
+fun <R,S,T> ((R)->S).then(f:(S)->T): (R)->T = {r -> f(this(r))}
