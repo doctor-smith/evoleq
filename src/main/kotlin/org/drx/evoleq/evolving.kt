@@ -17,7 +17,8 @@ suspend infix
 fun <D1,D2> Evolving<D1>.map(f:  (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
     override suspend fun get(): D2 = f ( this@map.get() )
 }
-
+suspend infix
+fun<D1,D2> Evolving<D1>.lift(f:  (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = {ev -> Immediate{(ev map f).get()}}
 /**
  * Monad
  * =====
@@ -59,6 +60,20 @@ tailrec suspend fun <S,T> process(first: (S)->Evolving<T>, steps: ArrayList<(T)-
             process(first * next, tail )
         }
     }
+
+/**
+ * Comonad
+ * =======
+ */
+fun <D> deltaEvolving(ev: Evolving<D>): Evolving<Evolving<D>> = etaEvolving(ev)
+/**
+ * Bird operator on cokleisli arrows
+ */
+suspend operator
+fun <R, S, T> ((Evolving<R>)->S).div(f:(Evolving<S>)->T): (Evolving<R>)->T = {
+    evR -> f(etaEvolving(this(evR)))
+}
+
 /**
  * Implementations
  * ===============
