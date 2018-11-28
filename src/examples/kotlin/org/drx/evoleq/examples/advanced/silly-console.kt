@@ -19,7 +19,7 @@ fun main(args: Array<String>) = runBlocking{
     val to = { w: W -> { p: P -> Immediate { w.copy(p = p, cnt = w.cnt +1) } } }
     val gap: Gap<W, P> = Gap(from, to)
 
-    class Console(gap: Gap<W, P>) : Spatula<W, P> {
+    class SillyConsole(gap: Gap<W, P>) : Spatula<W, P> {
         val fProp =  SimpleObjectProperty<(W)-> Evolving<W>>()
         var fSet = false
         init{
@@ -49,7 +49,7 @@ fun main(args: Array<String>) = runBlocking{
         }
     }
 
-    val console = Console(gap)
+    val console = SillyConsole(gap)
     val sentence = "Write 'quit' to quit"
 
     evolve(
