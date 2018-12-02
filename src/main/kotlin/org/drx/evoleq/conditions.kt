@@ -11,7 +11,7 @@ data class EvolutionConditions<in D, T>(
 )
 
 /**
- * Update the evolution contition
+ * Update the evolution condition
  */
 fun<D,T> EvolutionConditions<D,T>.update(data: D): EvolutionConditions<D,T> =
     copy( testObject = updateCondition( data ) )
