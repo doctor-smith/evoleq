@@ -151,7 +151,10 @@ fun main(args: Array<String>) {
             ),
             conditions = EvolutionConditions<Data,Pair<Message,Long>>(
                 testObject = Pair(Message.StartUp, 0),
-                check = { when(it.first) {is Message.StoppedApp -> false else -> true} && it.second < 30 },
+                check = { when(it.first) {
+                    is Message.StoppedApp -> false
+                    else -> true} && it.second < 30
+                },
                 updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
             )
         ){  data -> Parallel {
