@@ -1,4 +1,4 @@
-package org.drx.evoleq
+package org.drx.evoleq.evolving
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
@@ -90,7 +90,8 @@ fun <R, S, T> ((Evolving<R>)->S).div(f:(Evolving<S>)->T): (Evolving<R>)->T = {
  * evolve async and parallel
  * - without blocking the current thread
  */
-class Parallel<D>(private val delay: Long = 1, private val block: suspend () -> D ) : Evolving<D> {
+class Parallel<D>(private val delay: Long = 1, private val block: suspend () -> D ) :
+    Evolving<D> {
 
     private val property: SimpleObjectProperty<D> = SimpleObjectProperty()
     private var updated = false

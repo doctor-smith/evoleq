@@ -4,8 +4,8 @@ import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.Evolving
-import org.drx.evoleq.Immediate
+import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.flow.Evolver
 import org.drx.evoleq.flow.Flow
 

@@ -3,6 +3,7 @@ package org.drx.evoleq
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.conditions.ok
 import org.drx.evoleq.conditions.update
+import org.drx.evoleq.evolving.Evolving
 
 /**
  * Evolution equation

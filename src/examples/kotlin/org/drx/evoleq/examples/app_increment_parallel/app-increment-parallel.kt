@@ -12,8 +12,8 @@ import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.Evolving
-import org.drx.evoleq.Parallel
+import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.Parallel
 import tornadofx.ChangeListener
 import tornadofx.action
 
@@ -94,36 +94,40 @@ class App : tornadofx.App(), IApp<AppData> {
     override fun stop() {
         Platform.exit()
     }
-    override fun startApp(appData: AppData): Evolving<AppData> = Parallel {
-        GlobalScope.launch {
-            input.value = appData
-            launch(App::class.java)
+    override fun startApp(appData: AppData): Evolving<AppData> =
+        Parallel {
+            GlobalScope.launch {
+                input.value = appData
+                launch(App::class.java)
+            }
+            AppData(this@App, Message.LaunchingApp, appData.cnt)
         }
-        AppData(this@App, Message.LaunchingApp, appData.cnt)
-    }
 
-    override fun updateApp(appData: AppData): Evolving<AppData> = Parallel {
-        Platform.runLater {
-            instance.input.value = appData
+    override fun updateApp(appData: AppData): Evolving<AppData> =
+        Parallel {
+            Platform.runLater {
+                instance.input.value = appData
+            }
+            AppData(this@App, Message.UpdatedApp, appData.cnt)
         }
-        AppData(this@App, Message.UpdatedApp, appData.cnt)
-    }
 
-    override fun stopApp(appData: AppData): Evolving<AppData> = Parallel {
-        var running = true
-        Platform.runLater {
-            stop()
-            running = false
+    override fun stopApp(appData: AppData): Evolving<AppData> =
+        Parallel {
+            var running = true
+            Platform.runLater {
+                stop()
+                running = false
+            }
+            while (running) {
+                delay(10)
+            }
+            AppData(this@App, Message.StoppedApp, appData.cnt)
         }
-        while (running) {
-            delay(10)
-        }
-        AppData(this@App, Message.StoppedApp, appData.cnt)
-    }
 
-    override fun waiting(appData: AppData): Evolving<AppData> = Parallel {
-        changes().get()
-    }
+    override fun waiting(appData: AppData): Evolving<AppData> =
+        Parallel {
+            changes().get()
+        }
 
     private fun  changes(): Evolving<AppData> =
         Parallel {

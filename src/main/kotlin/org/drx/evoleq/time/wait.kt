@@ -3,8 +3,8 @@ package org.drx.evoleq.time
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.*
-import org.drx.evoleq.Evolving
-import org.drx.evoleq.Parallel
+import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.Parallel
 
 interface WaitFor<D> {
     suspend fun toChange(): Evolving<D>

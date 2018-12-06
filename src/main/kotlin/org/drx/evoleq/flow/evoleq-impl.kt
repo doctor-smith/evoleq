@@ -1,7 +1,7 @@
 package org.drx.evoleq.flow
 
-import org.drx.evoleq.Immediate
-import org.drx.evoleq.Parallel
+import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.conditions.Counter
 import org.drx.evoleq.conditions.counting
 import org.drx.evoleq.evolve
