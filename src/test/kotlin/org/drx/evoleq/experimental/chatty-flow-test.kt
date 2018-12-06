@@ -4,13 +4,13 @@ import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.experimental.flow.ChattyFlow
 import org.drx.evoleq.time.WaitForProperty
-import org.junit.Test
 
 class ChattyFlowTest {
     //@Test
     fun testIt()  {
-        val chattyFlow = object: ChattyFlow<String,Boolean,Int,String>(
+        val chattyFlow = object: ChattyFlow<String, Boolean, Int, String>(
             conditions = EvolutionConditions(
                 testObject = true,
                 check = { b -> b },

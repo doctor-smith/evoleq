@@ -1,4 +1,4 @@
-package org.drx.evoleq.experimental
+package org.drx.evoleq.experimental.flow
 
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
