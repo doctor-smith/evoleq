@@ -14,6 +14,7 @@ import org.drx.evoleq.gap.fill
 import org.drx.evoleq.math.times
 
 /**
+ * Base class for flows,
  * Standard implementation of Evolver
  */
 open class Flow<D, T>(
