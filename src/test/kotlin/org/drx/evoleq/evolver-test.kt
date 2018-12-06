@@ -2,8 +2,6 @@ package org.drx.evoleq
 
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.data.Evolving
-import org.drx.evoleq.data.Parallel
 import org.drx.evoleq.experimental.ChattyFlowBase
 import org.drx.evoleq.experimental.OneWayPipe
 import org.drx.evoleq.experimental.TwoWayFlangedData

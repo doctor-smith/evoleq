@@ -12,7 +12,7 @@ import javafx.stage.Stage
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.data.Parallel
+import org.drx.evoleq.Parallel
 import org.drx.evoleq.evolve
 import org.drx.evoleq.examples.propabilistic.gaussPolar
 import tornadofx.action

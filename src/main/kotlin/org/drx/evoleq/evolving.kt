@@ -1,4 +1,4 @@
-package org.drx.evoleq.data
+package org.drx.evoleq
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener

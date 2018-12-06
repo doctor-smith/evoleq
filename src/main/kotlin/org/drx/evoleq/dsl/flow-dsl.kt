@@ -1,7 +1,7 @@
 package org.drx.evoleq.dsl
 
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.Evolving
 import org.drx.evoleq.flow.Flow
 
 class FlowConfiguration<D,T>(

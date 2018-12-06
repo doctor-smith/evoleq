@@ -1,6 +1,6 @@
 package org.drx.evoleq.gap
 
-import org.drx.evoleq.data.Immediate
+import org.drx.evoleq.Immediate
 
 fun unitGap(): Gap<Unit, Unit> =
     Gap({ u: Unit -> Immediate { u } }, { u: Unit -> { v: Unit -> Immediate { v } } })

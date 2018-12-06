@@ -2,8 +2,8 @@ package org.drx.evoleq.experimental
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.data.Immediate
-import org.drx.evoleq.data.Parallel
+import org.drx.evoleq.Immediate
+import org.drx.evoleq.Parallel
 import org.drx.evoleq.time.WaitForProperty
 import org.junit.Test
 

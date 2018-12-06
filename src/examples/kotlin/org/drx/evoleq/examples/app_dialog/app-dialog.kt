@@ -12,9 +12,9 @@ import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.data.Evolving
-import org.drx.evoleq.data.Parallel
-import org.drx.evoleq.data.process
+import org.drx.evoleq.Evolving
+import org.drx.evoleq.Parallel
+import org.drx.evoleq.process
 import org.drx.evoleq.util.tail
 import tornadofx.ChangeListener
 import tornadofx.action
@@ -170,7 +170,7 @@ class App : tornadofx.App(), IApp<Data>, StageController {
         }
         if (data.message is Message.Continuation) {
             println("Return with continuation ... ")
-            //println("\n${data.message}\n")
+            //println("\n${math.message}\n")
             data
         } else {
             Platform.runLater {

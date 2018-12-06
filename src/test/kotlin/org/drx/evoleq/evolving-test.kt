@@ -2,9 +2,6 @@ package org.drx.evoleq
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
-import org.drx.evoleq.data.Immediate
-import org.drx.evoleq.data.Parallel
-import org.drx.evoleq.data.times
 import org.drx.evoleq.flow.Flow
 import org.drx.evoleq.flow.repeatImmediate
 import org.junit.Test

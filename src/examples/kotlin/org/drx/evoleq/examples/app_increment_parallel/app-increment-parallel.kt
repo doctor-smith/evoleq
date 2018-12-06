@@ -12,8 +12,8 @@ import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.data.Evolving
-import org.drx.evoleq.data.Parallel
+import org.drx.evoleq.Evolving
+import org.drx.evoleq.Parallel
 import tornadofx.ChangeListener
 import tornadofx.action
 
@@ -181,7 +181,7 @@ fun main(args: Array<String>) {
                         println("App driver: " + Thread.currentThread().name); println(data.message)
                         when (data.message) {
                             Message.StartApp -> data.app.startApp(data)
-                            //"restart" -> data.app.restartApp(data)
+                            //"restart" -> math.app.restartApp(math)
                             Message.LaunchingApp -> data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
                             Message.InitializingApp -> data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
                             Message.StartedApp -> data.app.updateApp(AppData(data.app, Message.Empty, data.cnt))

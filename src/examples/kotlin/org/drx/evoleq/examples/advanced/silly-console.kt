@@ -5,9 +5,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.data.Evolving
-import org.drx.evoleq.data.Immediate
-import org.drx.evoleq.data.Parallel
+import org.drx.evoleq.Evolving
+import org.drx.evoleq.Immediate
+import org.drx.evoleq.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.Spatula
 import org.drx.evoleq.gap.fill
