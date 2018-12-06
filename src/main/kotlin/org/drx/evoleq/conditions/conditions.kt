@@ -21,7 +21,9 @@ fun<D,T> EvolutionConditions<D, T>.update(data: D): EvolutionConditions<D, T> =
  */
 fun<D,T> EvolutionConditions<D, T>.ok(): Boolean = check( testObject )
 
-
+/**
+ * Run flow only once
+ */
 fun <D> once(): EvolutionConditions<D, Boolean> =
     EvolutionConditions(
         testObject = true,
@@ -29,13 +31,16 @@ fun <D> once(): EvolutionConditions<D, Boolean> =
         updateCondition = { d: D -> false }
     )
 
+/**
+ * Run flow for a given amount of times
+ */
 class Counter<D>(private val to: Long) {
     fun get(): EvolutionConditions<Pair<D, Long>, Long> =
         EvolutionConditions(
             testObject = 0L,
             check = { l -> l < to }
-        ) { pair ->
-            pair.second
+        ) {
+            pair -> pair.second
         }
 }
 
