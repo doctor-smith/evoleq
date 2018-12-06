@@ -24,8 +24,9 @@ configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
     sourceSets.create("examples"){
         java.srcDirs("src/examples/java")
-
-
+    }
+    sourceSets.create("experiments"){
+        java.srcDirs("src/experiments/java")
     }
 
     sourceSets{
@@ -33,6 +34,18 @@ configure<JavaPluginConvention> {
             java {
                 compileClasspath += sourceSets["main"].output
                 runtimeClasspath += sourceSets["main"].output
+            }
+        }
+        getByName("experiments"){
+            java {
+                compileClasspath += sourceSets["main"].output
+                runtimeClasspath += sourceSets["main"].output
+            }
+        }
+        getByName("test"){
+            java {
+                compileClasspath += sourceSets["experiments"].output
+                runtimeClasspath += sourceSets["experiments"].output
             }
         }
     }
@@ -50,6 +63,17 @@ kotlin{
                 }
             }
         }
+        getByName("experiments"){
+            kotlin.srcDirs("src/experiments/kotlin")
+            configurations {
+                dependencies{
+                    //implementation(Config.Dependencies.tornadofx)
+                    implementation(Config.Dependencies.kotlinStandardLibrary)
+                    implementation(Config.Dependencies.coroutines)
+                    //implementation("io.reactivex.rxjava2:rxkotlin:2.2.0")
+                }
+            }
+        }
     }
 
 
@@ -57,8 +81,3 @@ kotlin{
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
-
-
-/* compile(Config.Dependencies.tornadofx)
-                    compile(Config.Dependencies.kotlinStandardLibrary)
-                    compile(Config.Dependencies.coroutines) */
