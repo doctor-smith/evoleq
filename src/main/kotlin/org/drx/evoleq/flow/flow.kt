@@ -29,19 +29,38 @@ open class Flow<D, T>(
         }
 }
 
-
+/**
+ * Flow enters gap from the left
+ */
 suspend fun <D,T,P> Flow<D, T>.enter(gap: Gap<D, P>): Gap<D, P> =
-    Gap({ d -> Immediate { (this.flow * gap.from)(d).get() } }, gap.to)
+    Gap(
+        from = { d -> Immediate { (this.flow * gap.from)(d).get() } },
+        to = gap.to
+    )
 
+/**
+ * Fill gap with a flow
+ */
 suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P, T>, conditions: EvolutionConditions<D, T>): Flow<D, T> =
-    Flow(conditions) { data ->
-        Immediate { this@fill.fill(phi.flow)(data).get() }
-    }
-suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P, T>): Flow<D, T> =
-    Flow(this@fill.adapt(phi.conditions)) { data ->
-        Immediate { this@fill.fill(phi.flow)(data).get() }
+    Flow(
+        conditions = conditions
+    ) {
+        data -> Immediate { this@fill.fill(phi.flow)(data).get() }
     }
 
+/**
+ * Fill gap with a flow
+ */
+suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P, T>): Flow<D, T> =
+    Flow(
+        conditions = this@fill.adapt(phi.conditions)
+    ){
+        data -> Immediate { this@fill.fill(phi.flow)(data).get() }
+    }
+
+/**
+ * Adapt evolution conditions in a gap
+ */
 suspend fun <D,T,P> Gap<D, P>.adapt(conditions: EvolutionConditions<P, T>): EvolutionConditions<D, T> {
     val prop = SimpleObjectProperty<T>()
     fun update(data: D): T  {
@@ -65,6 +84,9 @@ suspend fun <D,T,P> Gap<D, P>.adapt(conditions: EvolutionConditions<P, T>): Evol
     )
 }
 
+/**
+ * Fill gap with a flow in a parallel manner
+ */
 suspend fun <D,T,P> Gap<D, P>.fillParallel(phi: Flow<P, T>, conditions: EvolutionConditions<D, T>): Flow<D, T> =
     Flow(conditions) { data ->
         Parallel { this@fillParallel.fill(phi.flow)(data).get() }
