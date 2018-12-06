@@ -12,7 +12,7 @@ import javafx.stage.Stage
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.Parallel
+import org.drx.evoleq.data.Parallel
 import org.drx.evoleq.evolve
 import org.drx.evoleq.examples.propabilistic.gaussPolar
 import tornadofx.action
@@ -37,19 +37,21 @@ class App: tornadofx.App() {
 
             val scale = 100.0
             GlobalScope.launch {
-            val list = Parallel {evolve<Pair<ArrayList<Double>,Long>,Long>(
-                initialData = Pair(arrayListOf<Double>(), 0L),
-                conditions = EvolutionConditions<Pair<ArrayList<Double>, Long>, Long>(
-                    testObject = 0,
-                    check = { index -> index <= numOfSamples },
-                    updateCondition = { pair -> pair.second }
-                )
-            ){
-                list ->  Parallel {
-                    list.first.add(gaussPolar(mu, sigma))
-                    list.copy(second = list.second +1)
+            val list = Parallel {
+                evolve<Pair<ArrayList<Double>, Long>, Long>(
+                    initialData = Pair(arrayListOf<Double>(), 0L),
+                    conditions = EvolutionConditions<Pair<ArrayList<Double>, Long>, Long>(
+                        testObject = 0,
+                        check = { index -> index <= numOfSamples },
+                        updateCondition = { pair -> pair.second }
+                    )
+                ) { list ->
+                    Parallel {
+                        list.first.add(gaussPolar(mu, sigma))
+                        list.copy(second = list.second + 1)
+                    }
                 }
-            } }.get()
+            }.get()
 
             list.first.sort()
 

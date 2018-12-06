@@ -2,9 +2,9 @@ package org.drx.evoleq.experimental
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.Immediate
-import org.drx.evoleq.Parallel
-import org.drx.evoleq.WaitForProperty
+import org.drx.evoleq.data.Immediate
+import org.drx.evoleq.data.Parallel
+import org.drx.evoleq.time.WaitForProperty
 import org.junit.Test
 
 class ChattyFlowTest {
@@ -16,7 +16,7 @@ class ChattyFlowTest {
                 check = { b -> b },
                 updateCondition = { s -> s.length < 100_000 }
             ),
-            flow = {s -> Immediate{delay(1);s+s} } ,
+            flow = {s -> Immediate { delay(1);s + s } } ,
             initialMessage = 0
         ) {
             override fun chattyCheck(t: Pair<Int, String>): Boolean {
@@ -29,7 +29,7 @@ class ChattyFlowTest {
             }
 
             override fun waitForInput()  {
-                Parallel{WaitForProperty(output()).toChange()}
+                Parallel { WaitForProperty(output()).toChange() }
             }
         }
         var d = "";

@@ -1,8 +1,8 @@
 package org.drx.evoleq.gap
 
-import org.drx.evoleq.Evolving
-import org.drx.evoleq.Immediate
-import org.drx.evoleq.times
+import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.data.Immediate
+import org.drx.evoleq.data.times
 
 /**
  *

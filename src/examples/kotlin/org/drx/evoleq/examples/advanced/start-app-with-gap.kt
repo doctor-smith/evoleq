@@ -1,6 +1,6 @@
 package org.drx.evoleq.examples.advanced
 
-import org.drx.evoleq.*
+import org.drx.evoleq.data.Immediate
 import org.drx.evoleq.gap.Gap
 
 interface AppStub {

@@ -1,6 +1,5 @@
 package org.drx.evoleq.examples.app_increment
 
-import javafx.application.Application
 import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.Scene
@@ -12,8 +11,8 @@ import javafx.stage.Stage
 import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.Evolving
-import org.drx.evoleq.Parallel
+import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.data.Parallel
 import org.drx.evoleq.evolve
 import tornadofx.ChangeListener
 
@@ -81,16 +80,16 @@ class App : tornadofx.App(), IApp<Data> {
     override fun startApp(data: Data): Evolving<Data> = Parallel {
         GlobalScope.launch {
             io.input.value = data
-            val x = Application.launch(App::class.java)
+            val x = launch(App::class.java)
         }
-        Data(this@App,Message.LaunchingApp,data.cnt)
+        Data(this@App, Message.LaunchingApp, data.cnt)
     }
 
     override fun updateApp(data: Data): Evolving<Data> = Parallel {
         Platform.runLater {
             instance.io.input.value = data
         }
-        Data(this@App,Message.UpdatedApp,data.cnt)
+        Data(this@App, Message.UpdatedApp, data.cnt)
     }
 
     override fun stopApp(data: Data): Evolving<Data> = Parallel {
@@ -99,7 +98,7 @@ class App : tornadofx.App(), IApp<Data> {
             stop()
             running = false
         }
-        while(running) {
+        while (running) {
             delay(10)
         }
         Data(this@App, Message.StoppedApp, data.cnt)
@@ -110,11 +109,11 @@ class App : tornadofx.App(), IApp<Data> {
     }
 
     private fun  changes(): Evolving<Data> = Parallel {
-        var m:Data
+        var m: Data
         var changed = false
-        val listener = ChangeListener<Data> {_,_,nv -> m = nv; changed = true }
+        val listener = ChangeListener<Data> { _, _, nv -> m = nv; changed = true }
         instance.io.output.addListener(listener)
-        while(!changed){
+        while (!changed) {
             Thread.sleep(10)
         }
         instance.io.output.removeListener(listener)

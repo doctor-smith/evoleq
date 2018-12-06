@@ -2,10 +2,13 @@ package org.drx.evoleq
 
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.data.Parallel
 import org.drx.evoleq.experimental.ChattyFlowBase
 import org.drx.evoleq.experimental.OneWayPipe
 import org.drx.evoleq.experimental.TwoWayFlangedData
 import org.drx.evoleq.experimental.TwoWayPipe
+import org.drx.evoleq.time.WaitForProperty
 import org.junit.Test
 
 class EvolverTest {
@@ -22,13 +25,14 @@ class EvolverTest {
                 updateCondition = { d -> d }
             )
 
-        val flow: (TwoWayFlangedData<Int,Int,String>) -> Evolving<TwoWayFlangedData<Int,Int,String>> = {
-            data -> Parallel {
+        val flow: (TwoWayFlangedData<Int,Int,String>) -> Evolving<TwoWayFlangedData<Int, Int, String>> = {
+            data ->
+            Parallel {
                 println("huhuhuhuhu")
-                data.flange.input((data.flange.output().value +1))
+                data.flange.input((data.flange.output().value + 1))
                 val newData = data.copy(data = "RUNNING")
                 WaitForProperty(data.flange.output()).toChange()
-            newData
+                newData
             }
         }
         pipe.io().input(0)

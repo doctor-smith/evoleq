@@ -12,6 +12,9 @@ import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.data.Parallel
+import org.drx.evoleq.data.process
 import org.drx.evoleq.util.tail
 import tornadofx.ChangeListener
 import tornadofx.action
@@ -52,7 +55,7 @@ sealed class Message {
     object Wait : Message()
     object Empty : Message()
     class Continuation(val blocks: ArrayList<(Data)-> Evolving<Data>> = arrayListOf()) : Message()  {
-        constructor(process:(Data)->Evolving<Data>): this(arrayListOf({d:Data -> process(d)}))
+        constructor(process:(Data)-> Evolving<Data>): this(arrayListOf({ d:Data -> process(d)}))
     }
     sealed class Dialog(val id: Long) : Message() {
         class Confirm(val statement: String,id: Long,val continuation: Continuation = Continuation()) : Dialog(id)
@@ -129,7 +132,7 @@ class App : tornadofx.App(), IApp<Data>, StageController {
     override fun startApp(data: Data): Evolving<Data> = Parallel {
         GlobalScope.launch {
             Thread(
-                kotlinx.coroutines.Runnable {
+                Runnable {
                     println("start app on thread: " + Thread.currentThread().name)
                     io.input.value = data
                     val x = launch(App::class.java)
@@ -159,21 +162,21 @@ class App : tornadofx.App(), IApp<Data>, StageController {
                     stages[id]?.close()
                     stages.remove(id)
                 }
-                if(data.message.continuation.blocks.size > 0) {
+                if (data.message.continuation.blocks.size > 0) {
                     println("Return with continuation after closing dialog ... \n")
-                    return@Parallel data.copy(message= data.message.continuation)
+                    return@Parallel data.copy(message = data.message.continuation)
                 }
             }
         }
         if (data.message is Message.Continuation) {
             println("Return with continuation ... ")
             //println("\n${data.message}\n")
-             data
+            data
         } else {
             Platform.runLater {
-            instance.io.input.value = data
-        }
-        Data(this@App, Message.UpdatedApp, data.cnt)
+                instance.io.input.value = data
+            }
+            Data(this@App, Message.UpdatedApp, data.cnt)
         }
     }
 
@@ -183,7 +186,7 @@ class App : tornadofx.App(), IApp<Data>, StageController {
             stop()
             running = false
         }
-        while(running) {
+        while (running) {
             delay(10)
         }
         Data(this@App, Message.StoppedApp, data.cnt)
@@ -269,20 +272,23 @@ fun main(args: Array<String>) {
 
                 // interaction
                 is Message.ClickedIncButton -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt + 1))
-                is Message.StopApp -> Parallel{
+                is Message.StopApp -> Parallel {
                     val id = System.currentTimeMillis()
-                    val continuation = Parallel{
-                        process (
+                    val continuation = Parallel {
+                        process(
                             { d: Data -> d.app.updateApp(d.copy(message = Message.Dialog.Close(id))) },
                             { d: Data -> d.app.stopApp(d.copy(message = Message.Empty)) }
                         )
                     }.get()
-                    data.app.updateApp(data.copy(
-                    message=Message.Dialog.Confirm(
-                        "Do you really want to close the application?",
-                        id,
-                        Message.Continuation( continuation )
-                    ))).get()
+                    data.app.updateApp(
+                        data.copy(
+                            message = Message.Dialog.Confirm(
+                                "Do you really want to close the application?",
+                                id,
+                                Message.Continuation(continuation)
+                            )
+                        )
+                    ).get()
                 }
                 is Message.Dialog.Cancel -> data.app.updateApp(data.copy(message = Message.Dialog.Close(data.message.id)))
                 is Message.Dialog.Ok -> data.app.updateApp(data.copy(message = data.message.continuation))

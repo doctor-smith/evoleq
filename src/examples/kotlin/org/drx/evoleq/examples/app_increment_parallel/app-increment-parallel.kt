@@ -12,6 +12,8 @@ import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.data.Parallel
 import tornadofx.ChangeListener
 import tornadofx.action
 
@@ -97,14 +99,14 @@ class App : tornadofx.App(), IApp<AppData> {
             input.value = appData
             launch(App::class.java)
         }
-        AppData(this@App,Message.LaunchingApp,appData.cnt)
+        AppData(this@App, Message.LaunchingApp, appData.cnt)
     }
 
     override fun updateApp(appData: AppData): Evolving<AppData> = Parallel {
         Platform.runLater {
             instance.input.value = appData
         }
-        AppData(this@App,Message.UpdatedApp,appData.cnt)
+        AppData(this@App, Message.UpdatedApp, appData.cnt)
     }
 
     override fun stopApp(appData: AppData): Evolving<AppData> = Parallel {
@@ -113,10 +115,10 @@ class App : tornadofx.App(), IApp<AppData> {
             stop()
             running = false
         }
-        while(running) {
+        while (running) {
             delay(10)
         }
-        AppData(this@App,Message.StoppedApp,appData.cnt)
+        AppData(this@App, Message.StoppedApp, appData.cnt)
     }
 
     override fun waiting(appData: AppData): Evolving<AppData> = Parallel {
@@ -126,7 +128,7 @@ class App : tornadofx.App(), IApp<AppData> {
     private fun  changes(): Evolving<AppData> =
         Parallel {
             var changed = false
-            val listener = ChangeListener<AppData> { _, _, nv ->  changed = true }
+            val listener = ChangeListener<AppData> { _, _, nv -> changed = true }
             instance.out.addListener(listener)
             while (!changed) {
                 delay(10)
@@ -160,8 +162,9 @@ fun main(args: Array<String>) {
                 },
                 updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
             )
-        ){  data -> Parallel {
-                val appData= Parallel {
+        ){  data ->
+            Parallel {
+                val appData = Parallel {
                     evolve(
                         initialData = data.appData,
                         conditions = EvolutionConditions(
@@ -174,14 +177,21 @@ fun main(args: Array<String>) {
                             },
                             updateCondition = { data -> Pair(data.message, data.cnt) }
                         )
-                    ){  data -> println("App driver: "+Thread.currentThread().name); println(data.message)
+                    ) { data ->
+                        println("App driver: " + Thread.currentThread().name); println(data.message)
                         when (data.message) {
                             Message.StartApp -> data.app.startApp(data)
                             //"restart" -> data.app.restartApp(data)
-                            Message.LaunchingApp ->data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
+                            Message.LaunchingApp -> data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
                             Message.InitializingApp -> data.app.waiting(AppData(data.app, Message.Wait, data.cnt))
                             Message.StartedApp -> data.app.updateApp(AppData(data.app, Message.Empty, data.cnt))
-                            Message.ClickedIncButton -> data.app.updateApp(AppData(data.app, Message.Empty, data.cnt + 1))
+                            Message.ClickedIncButton -> data.app.updateApp(
+                                AppData(
+                                    data.app,
+                                    Message.Empty,
+                                    data.cnt + 1
+                                )
+                            )
                             Message.StopApp -> data.app.stopApp(AppData(data.app, Message.Empty, data.cnt))
                             // just wait
                             Message.Wait,
@@ -200,15 +210,16 @@ fun main(args: Array<String>) {
                             check = { time -> time < 5 },
                             updateCondition = { clock -> clock.time }
                         )
-                    ){  clock -> Parallel {
-                            println("Clock: "+Thread.currentThread().name)
+                    ) { clock ->
+                        Parallel {
+                            println("Clock: " + Thread.currentThread().name)
                             println("Clock.time: ${clock.time}")
                             delay(1_000)
-                            clock.copy( time = clock.time+1 )
+                            clock.copy(time = clock.time + 1)
                         }
                     }
                 }
-                Data( appData.get(), clock.get() )
+                Data(appData.get(), clock.get())
             }
         }
     }

@@ -2,6 +2,11 @@ package org.drx.evoleq
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
+import org.drx.evoleq.data.Immediate
+import org.drx.evoleq.data.Parallel
+import org.drx.evoleq.data.times
+import org.drx.evoleq.flow.Flow
+import org.drx.evoleq.flow.repeatImmediate
 import org.junit.Test
 
 class EvolvingTest {
@@ -13,13 +18,17 @@ class EvolvingTest {
 
     @Test
     fun testTimes() {
-        val f = {s:String->Parallel {
-            delay(1_000)
-            s.length
-        }}
-        val g = {i:Int -> Parallel {
-            i.toDouble()
-        }}
+        val f = {s:String->
+            Parallel {
+                delay(1_000)
+                s.length
+            }
+        }
+        val g = {i:Int ->
+            Parallel {
+                i.toDouble()
+            }
+        }
         runBlocking {
             val h = Parallel { f * g }.get()
             val j = f*g
@@ -51,12 +60,12 @@ class EvolvingTest {
             /* TODO implement */
             val flow = Flow(
                 once()
-            ){
-                pair:Pair<Int,(Int)->Int> -> Immediate{
+            ) { pair: Pair<Int, (Int) -> Int> ->
+                Immediate {
 
-                    val x = repeatImmediate(5,pair.first,pair.second)
+                    val x = repeatImmediate(5, pair.first, pair.second)
 
-                    Pair(x,pair.second)
+                    Pair(x, pair.second)
                 }
             }
 

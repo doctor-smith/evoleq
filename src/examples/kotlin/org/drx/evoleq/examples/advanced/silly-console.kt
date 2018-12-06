@@ -5,6 +5,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.data.Immediate
+import org.drx.evoleq.data.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.Spatula
 import org.drx.evoleq.gap.fill
@@ -20,14 +23,14 @@ data class W(val p: P, val cnt: Int)
 fun main(args: Array<String>) = runBlocking{
 
     val from = { w: W -> Immediate { w.p } }
-    val to = { w: W -> { p: P -> Immediate { w.copy(p = p, cnt = w.cnt +1) } } }
+    val to = { w: W -> { p: P -> Immediate { w.copy(p = p, cnt = w.cnt + 1) } } }
     val gap: Gap<W, P> = Gap(from, to)
 
     class SillyConsole(gap: Gap<W, P>) : Spatula<W, P> {
         val fProp =  SimpleObjectProperty<(W)-> Evolving<W>>()
         var fSet = false
         init{
-            Parallel{
+            Parallel {
                 fProp.value = fill(gap)
                 fSet = true
             }
@@ -45,7 +48,7 @@ fun main(args: Array<String>) = runBlocking{
             return f
         }
         fun print(w:W): Evolving<W> = Parallel {
-            while(!fSet){
+            while (!fSet) {
                 delay(1)
             }
             val f = fProp.value

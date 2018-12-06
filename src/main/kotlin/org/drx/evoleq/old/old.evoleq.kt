@@ -3,7 +3,7 @@ package org.drx.evoleq.old
 import kotlinx.coroutines.Deferred
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.conditions.ok
-import org.drx.evoleq.parallel
+import org.drx.evoleq.data.parallel
 import org.drx.evoleq.conditions.update
 
 /**

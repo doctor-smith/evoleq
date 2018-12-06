@@ -1,4 +1,4 @@
-package org.drx.evoleq
+package org.drx.evoleq.data
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
@@ -15,11 +15,12 @@ interface Evolving<out D> {
  * ==============
  */
 suspend infix
-fun <D1,D2> Evolving<D1>.map(f:  (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
+fun <D1,D2> Evolving<D1>.map(f:  (D1) -> D2) : Evolving<D2> = object :
+    Evolving<D2> {
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 suspend infix
-fun<D1,D2> Evolving<D1>.lift(f:  (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = {ev -> Immediate{(ev map f).get()}}
+fun<D1,D2> Evolving<D1>.lift(f:  (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> Immediate { (ev map f).get() } }
 /**
  * Monad
  * =====
@@ -27,7 +28,7 @@ fun<D1,D2> Evolving<D1>.lift(f:  (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = 
 /**
  * Enter the monad
  */
-fun <D> etaEvolving(data: D): Evolving<D> = Immediate{ data }
+fun <D> etaEvolving(data: D): Evolving<D> = Immediate { data }
 
 /**
  * Multiply evolvings
@@ -40,10 +41,11 @@ suspend fun <D> muEvolving(evolving: Evolving<Evolving<D>>): Evolving<D> {
  * Fish operator / multiplication on kleisli arrows
  */
 suspend operator
-fun <R,S,T> ( (R)->Evolving<S> ).times( flow: (S)->Evolving<T>) : (R)->Evolving<T> = {
-    r -> Immediate{ muEvolving ( this( r ) map flow  ).get() }
+fun <R,S,T> ( (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : (R)-> Evolving<T> = {
+    r ->
+    Immediate { muEvolving(this(r) map flow).get() }
 }
-suspend fun <S,T> process(first:(S)->Evolving<T>, vararg steps: (T)->Evolving<T>): (S)->Evolving<T> =
+suspend fun <S,T> process(first:(S)-> Evolving<T>, vararg steps: (T)-> Evolving<T>): (S)-> Evolving<T> =
     when(steps.isEmpty()) {
         true -> first
         false -> {
@@ -52,13 +54,13 @@ suspend fun <S,T> process(first:(S)->Evolving<T>, vararg steps: (T)->Evolving<T>
             process(first * next, tail)
         }
     }
-tailrec suspend fun <S,T> process(first: (S)->Evolving<T>, steps: ArrayList<(T)->Evolving<T>>): (S)->Evolving<T> =
+tailrec suspend fun <S,T> process(first: (S)-> Evolving<T>, steps: ArrayList<(T)-> Evolving<T>>): (S)-> Evolving<T> =
     when (steps.isEmpty()) {
         true -> first
         false -> {
             val next = steps.first()
             val tail = steps.tail()
-            process(first * next, tail )
+            process(first * next, tail)
         }
     }
 
@@ -66,7 +68,8 @@ tailrec suspend fun <S,T> process(first: (S)->Evolving<T>, steps: ArrayList<(T)-
  * Comonad
  * =======
  */
-fun <D> deltaEvolving(ev: Evolving<D>): Evolving<Evolving<D>> = etaEvolving(ev)
+fun <D> deltaEvolving(ev: Evolving<D>): Evolving<Evolving<D>> =
+    etaEvolving(ev)
 /**
  * Bird operator on cokleisli arrows
  */

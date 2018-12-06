@@ -4,11 +4,15 @@ import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.data.Evolving
+import org.drx.evoleq.data.Immediate
+import org.drx.evoleq.flow.Evolver
+import org.drx.evoleq.flow.Flow
 
 
 abstract class ChattyFlow<D,T,I,O>(
     val conditions: EvolutionConditions<D, T>,
-    val flow: (D)->Evolving<D>,
+    val flow: (D)-> Evolving<D>,
     val initialMessage: I
 
 
@@ -28,20 +32,19 @@ abstract class ChattyFlow<D,T,I,O>(
         evolve(
             initialData = data,
             conditions = conditions
-        ){
-            data ->
-                runBlocking {
-                    waitForInput()
-                }
-                val input: I = pipe.oi().output().value
-                val newData = when(chattyCheck(Pair(input,data))){
-                    false -> Immediate{data}
-                    true -> flow(data)
-                }
-                runBlocking {
-                     chattyUpdate(Pair(input,newData.get()))
-                }
-                newData
+        ) { data ->
+            runBlocking {
+                waitForInput()
+            }
+            val input: I = pipe.oi().output().value
+            val newData = when (chattyCheck(Pair(input, data))) {
+                false -> Immediate { data }
+                true -> flow(data)
+            }
+            runBlocking {
+                chattyUpdate(Pair(input, newData.get()))
+            }
+            newData
         }
     }
 
