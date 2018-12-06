@@ -12,9 +12,9 @@ abstract class ChattyFlow<D,T,I,O>(
     val initialMessage: I
 
 
-) : Evolver<D>, TwoWayFlange<I,O> {
+) : Evolver<D>, TwoWayFlange<I, O> {
 
-    val pipe: TwoWayPipe<I, O> by lazy { TwoWayPipe<I,O>() }
+    val pipe: TwoWayPipe<I, O> by lazy { TwoWayPipe<I, O>() }
     init{
         input(initialMessage)
     }
@@ -59,9 +59,10 @@ abstract class ChattyFlow<D,T,I,O>(
 
 open class ChattyFlowBase<D,T,I,O> (
     private val chattyConditions: EvolutionConditions<TwoWayFlangedData<O, I, D>, TwoWayFlangedData<O, I, T>>,
-    private val chattyFlow: (TwoWayFlangedData<O,I,D>)-> Evolving<TwoWayFlangedData<O, I, D>>,
-    private val pipe: TwoWayPipe<I,O>
-) : Flow<TwoWayFlangedData<O, I, D>, TwoWayFlangedData<O, I, T>>(chattyConditions, chattyFlow), TwoWayFlange<I,O> {
+    private val chattyFlow: (TwoWayFlangedData<O, I, D>)-> Evolving<TwoWayFlangedData<O, I, D>>,
+    private val pipe: TwoWayPipe<I, O>
+) : Flow<TwoWayFlangedData<O, I, D>, TwoWayFlangedData<O, I, T>>(chattyConditions, chattyFlow),
+    TwoWayFlange<I, O> {
     override fun input(stuff: I) {
         pipe.io().input(stuff)
     }
@@ -74,7 +75,7 @@ open class ChattyFlowBase<D,T,I,O> (
     }
     */
 }
-data class TwoWayFlangedData<I,O,D>(val flange: TwoWayFlange<I,O>,val data: D)
+data class TwoWayFlangedData<I,O,D>(val flange: TwoWayFlange<I, O>, val data: D)
 
 class OneWayPipe<S>{
     private val input: SimpleObjectProperty<S> by lazy { SimpleObjectProperty<S>() }
@@ -92,18 +93,20 @@ interface TwoWayFlange<I,O> {
     fun output(): SimpleObjectProperty<O>
 }
 interface TwoWayFlanges<I,O> {
-    fun io(): TwoWayFlange<I,O>
-    fun oi(): TwoWayFlange<O,I>
+    fun io(): TwoWayFlange<I, O>
+    fun oi(): TwoWayFlange<O, I>
 }
 class TwoWayPipe<I,O>(
     private val io: OneWayPipe<I> = OneWayPipe(),
     private val oi: OneWayPipe<O> = OneWayPipe()
-): TwoWayFlanges<I,O>{
-    override fun io(): TwoWayFlange<I, O> = object: TwoWayFlange<I,O> {
+): TwoWayFlanges<I, O> {
+    override fun io(): TwoWayFlange<I, O> = object:
+        TwoWayFlange<I, O> {
         override fun input(stuff: I) = io.input(stuff)
         override fun output(): SimpleObjectProperty<O> = oi.output()
     }
-    override fun oi(): TwoWayFlange<O, I> = object: TwoWayFlange<O,I> {
+    override fun oi(): TwoWayFlange<O, I> = object:
+        TwoWayFlange<O, I> {
         override fun input(stuff: O) = oi.input(stuff)
         override fun output(): SimpleObjectProperty<I> = io.output()
     }
