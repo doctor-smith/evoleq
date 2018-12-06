@@ -91,7 +91,7 @@ suspend fun <D,T,P> Gap<D, P>.adapt(conditions: EvolutionConditions<P, T>): Evol
  */
 suspend fun <D,T,P> Gap<D, P>.fillParallel(phi: Flow<P, T>, conditions: EvolutionConditions<D, T>): Flow<D, T> =
     Flow(
-        conditions =conditions
+        conditions = conditions
     ) {
         data -> Parallel { this@fillParallel.fill(phi.flow)(data).get() }
     }
