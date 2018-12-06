@@ -5,6 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.evolve
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
@@ -19,7 +20,7 @@ open class Flow<D, T>(
 ) : Evolver<D> {
     override suspend fun evolve(data: D): Evolving<D> =
         Immediate {
-            org.drx.evoleq.evolve(
+            evolve(
                 initialData = data,
                 conditions = conditions
             ) {
