@@ -2,7 +2,7 @@ package org.drx.evoleq.gap
 
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.evolving.times
+import org.drx.evoleq.math.times
 
 /**
  *

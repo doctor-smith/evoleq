@@ -8,7 +8,7 @@ import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
-import org.drx.evoleq.evolving.times
+import org.drx.evoleq.math.times
 
 interface Evolver<D> {
     suspend fun evolve(d: D): Evolving<D>
