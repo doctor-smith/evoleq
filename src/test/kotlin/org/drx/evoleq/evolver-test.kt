@@ -10,7 +10,7 @@ import org.junit.Test
 
 class EvolverTest {
     @Test
-    fun testChattyFlow() = runBlocking {
+    fun testChattyFlowBase() = runBlocking {
 
         val pipe = TwoWayPipe<Int,Int>(OneWayPipe(), OneWayPipe())
         pipe.io().input(0)
