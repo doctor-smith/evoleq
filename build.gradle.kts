@@ -17,6 +17,7 @@ dependencies {
     compile(Config.Dependencies.coroutines)
 
     testCompile("junit", "junit", "4.12")
+    compile(kotlin("reflect"))
 }
 
 configure<JavaPluginConvention> {
