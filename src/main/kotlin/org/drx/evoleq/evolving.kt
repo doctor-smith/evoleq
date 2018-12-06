@@ -74,6 +74,9 @@ fun <R, S, T> ((Evolving<R>)->S).div(f:(Evolving<S>)->T): (Evolving<R>)->T = {
     evR -> f(etaEvolving(this(evR)))
 }
 
+//suspend fun <S,T> coklEvolving(f:(S)->T): (Evolving<S>)->T = {evolving -> f(evolving.get()) }
+
+
 /**
  * Implementations
  * ===============
