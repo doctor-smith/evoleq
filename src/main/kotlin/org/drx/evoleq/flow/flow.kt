@@ -13,7 +13,9 @@ import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.math.times
 
-
+/**
+ * Standard implementation of Evolver
+ */
 open class Flow<D, T>(
     val conditions: EvolutionConditions<D, T>,
     val flow: (D)-> Evolving<D>
@@ -88,8 +90,10 @@ suspend fun <D,T,P> Gap<D, P>.adapt(conditions: EvolutionConditions<P, T>): Evol
  * Fill gap with a flow in a parallel manner
  */
 suspend fun <D,T,P> Gap<D, P>.fillParallel(phi: Flow<P, T>, conditions: EvolutionConditions<D, T>): Flow<D, T> =
-    Flow(conditions) { data ->
-        Parallel { this@fillParallel.fill(phi.flow)(data).get() }
+    Flow(
+        conditions =conditions
+    ) {
+        data -> Parallel { this@fillParallel.fill(phi.flow)(data).get() }
     }
 
 
