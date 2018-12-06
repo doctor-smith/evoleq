@@ -1,8 +1,6 @@
-package org.drx.evoleq
+package org.drx.evoleq.dsl
 
 import kotlinx.coroutines.runBlocking
-import org.drx.evoleq.dsl.Configuration
-import org.drx.evoleq.dsl.configure
 import org.junit.Test
 
 class ConfigurationTest {

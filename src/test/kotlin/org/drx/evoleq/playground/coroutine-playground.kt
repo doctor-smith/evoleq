@@ -1,4 +1,4 @@
-package org.drx.evoleq
+package org.drx.evoleq.playground
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch

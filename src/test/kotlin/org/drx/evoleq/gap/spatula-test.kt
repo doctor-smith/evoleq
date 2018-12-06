@@ -1,11 +1,11 @@
-package org.drx.evoleq
+package org.drx.evoleq.gap
 
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.drx.evoleq.gap.Gap
-import org.drx.evoleq.gap.Spatula
-import org.drx.evoleq.gap.fill
+import org.drx.evoleq.Evolving
+import org.drx.evoleq.Immediate
+import org.drx.evoleq.Parallel
 import org.junit.Test
 
 class SpatulaTest {
@@ -21,13 +21,15 @@ class SpatulaTest {
         val gap: Gap<W, P> = Gap(from, to)
 
         class SideEffect(gap: Gap<W, P>) : Spatula<W, P> {
-            val fProp =  SimpleObjectProperty<(W)->Evolving<W>>()
+            val fProp =  SimpleObjectProperty<(W)-> Evolving<W>>()
             var fSet = false
-            init{Parallel{
-                println("init")
-                fProp.value = fill(gap)
-                fSet = true
-            }}
+            init{
+                Parallel {
+                    println("init")
+                    fProp.value = fill(gap)
+                    fSet = true
+                }
+            }
             override suspend fun fill(gap: Gap<W, P>): (W) -> Evolving<W> {
                 val filler: (P) -> Evolving<P> = { p ->
                     Parallel {
@@ -43,7 +45,7 @@ class SpatulaTest {
                 return f
             }
             fun print(w:W): Evolving<W> = Parallel {
-                while(!fSet){
+                while (!fSet) {
                     delay(1)
                 }
                 val f = fProp.value
