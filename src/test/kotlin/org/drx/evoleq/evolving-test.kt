@@ -4,7 +4,7 @@ import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
-import org.drx.evoleq.evolving.times
+import org.drx.evoleq.math.times
 import org.drx.evoleq.flow.Flow
 import org.drx.evoleq.flow.repeatImmediate
 import org.junit.Test

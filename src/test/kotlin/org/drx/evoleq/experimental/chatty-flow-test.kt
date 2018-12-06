@@ -8,7 +8,7 @@ import org.drx.evoleq.time.WaitForProperty
 import org.junit.Test
 
 class ChattyFlowTest {
-    @Test
+    //@Test
     fun testIt()  {
         val chattyFlow = object: ChattyFlow<String,Boolean,Int,String>(
             conditions = EvolutionConditions(
