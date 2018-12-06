@@ -3,6 +3,9 @@ package org.drx.evoleq
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.gap.Gap
+import org.drx.evoleq.gap.Spatula
+import org.drx.evoleq.gap.fill
 import org.junit.Test
 
 class SpatulaTest {

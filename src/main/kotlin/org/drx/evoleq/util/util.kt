@@ -1,4 +1,4 @@
-package org.drx.evoleq
+package org.drx.evoleq.util
 
 fun <T> ArrayList<T>.tail(): ArrayList<T> {
     val N = size

@@ -3,6 +3,7 @@ package org.drx.evoleq
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.*
+import org.drx.evoleq.util.tail
 
 
 interface Evolving<out D> {

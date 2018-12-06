@@ -1,7 +1,7 @@
 package org.drx.evoleq
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.experimental.ChattyFlowBase
 import org.drx.evoleq.experimental.OneWayPipe
 import org.drx.evoleq.experimental.TwoWayFlangedData
@@ -15,11 +15,12 @@ class EvolverTest {
         val pipe = TwoWayPipe<Int,Int>(OneWayPipe(), OneWayPipe())
         pipe.io().input(0)
 
-        val conditions = EvolutionConditions<TwoWayFlangedData<Int, Int, String>,TwoWayFlangedData<Int,Int,String>>(
-            testObject = TwoWayFlangedData(pipe.oi(),"WAIT"),
-            check = {twoWayFlangedData -> twoWayFlangedData.flange.output().value <= 5  },
-            updateCondition = {d -> d}
-        )
+        val conditions =
+            EvolutionConditions<TwoWayFlangedData<Int, Int, String>, TwoWayFlangedData<Int, Int, String>>(
+                testObject = TwoWayFlangedData(pipe.oi(), "WAIT"),
+                check = { twoWayFlangedData -> twoWayFlangedData.flange.output().value <= 5 },
+                updateCondition = { d -> d }
+            )
 
         val flow: (TwoWayFlangedData<Int,Int,String>) -> Evolving<TwoWayFlangedData<Int,Int,String>> = {
             data -> Parallel {

@@ -4,6 +4,10 @@ import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.*
+import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.gap.Gap
+import org.drx.evoleq.gap.Spatula
+import org.drx.evoleq.gap.fill
 import java.util.*
 
 /**
@@ -56,8 +60,8 @@ fun main(args: Array<String>) = runBlocking{
         initialData = W(P(sentence),0),
         conditions = EvolutionConditions(
             testObject = "",
-            check = {s:String -> s !="quit"},
-            updateCondition = {w: W -> w.p.message}
+            check = { s: String -> s != "quit" },
+            updateCondition = { w: W -> w.p.message }
         )
     ){
         w -> when(w.cnt){

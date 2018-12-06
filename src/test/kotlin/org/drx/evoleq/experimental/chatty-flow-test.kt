@@ -1,12 +1,11 @@
 package org.drx.evoleq.experimental
 
 import kotlinx.coroutines.*
-import org.drx.evoleq.EvolutionConditions
+import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.Immediate
 import org.drx.evoleq.Parallel
 import org.drx.evoleq.WaitForProperty
 import org.junit.Test
-import java.lang.Thread.sleep
 
 class ChattyFlowTest {
     @Test
@@ -14,8 +13,8 @@ class ChattyFlowTest {
         val chattyFlow = object: ChattyFlow<String,Boolean,Int,String>(
             conditions = EvolutionConditions(
                 testObject = true,
-                check = {b->b},
-                updateCondition = {s -> s.length < 100_000}
+                check = { b -> b },
+                updateCondition = { s -> s.length < 100_000 }
             ),
             flow = {s -> Immediate{delay(1);s+s} } ,
             initialMessage = 0

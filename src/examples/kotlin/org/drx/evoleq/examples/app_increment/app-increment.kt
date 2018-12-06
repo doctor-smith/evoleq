@@ -3,20 +3,15 @@ package org.drx.evoleq.examples.app_increment
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
-import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.Label
-import javafx.scene.layout.FlowPane
 import javafx.scene.layout.HBox
-import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
-import javafx.scene.paint.Stop
-import javafx.stage.Screen
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 import kotlinx.coroutines.*
-import org.drx.evoleq.EvolutionConditions
+import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.Evolving
 import org.drx.evoleq.Parallel
 import org.drx.evoleq.evolve
@@ -133,10 +128,12 @@ fun main(args: Array<String>) {
             initialData = Data(App.instance, Message.StartApp as Message, 0),
             conditions = EvolutionConditions(
                 testObject = Pair(Message.StartUp as Message, 0),
-                check ={ when(it.first){
-                    is Message.StoppedApp -> false
-                    else ->true
-                }  && it.second < 100 },
+                check = {
+                    when (it.first) {
+                        is Message.StoppedApp -> false
+                        else -> true
+                    } && it.second < 100
+                },
                 updateCondition = { data -> Pair(data.message, data.cnt) }
             )
         ){ data -> println(data.message)

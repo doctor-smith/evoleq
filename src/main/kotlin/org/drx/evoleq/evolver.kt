@@ -2,6 +2,9 @@ package org.drx.evoleq
 
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
+import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.gap.Gap
+import org.drx.evoleq.gap.fill
 
 interface Evolver<D> {
     suspend fun evolve(d: D): Evolving<D>
@@ -35,18 +38,19 @@ open class StubbyFlow<D,S,E,T>(
 
 }
 
-suspend fun <D,T,P> Flow<D,T>.enter(gap: Gap<D,P>): Gap<D,P> = Gap({d -> Immediate{(this.flow * gap.from)(d).get()}},gap.to)
+suspend fun <D,T,P> Flow<D,T>.enter(gap: Gap<D, P>): Gap<D, P> =
+    Gap({ d -> Immediate { (this.flow * gap.from)(d).get() } }, gap.to)
 
-suspend fun <D,T,P> Gap<D,P>.fill(phi: Flow<P,T>, conditions: EvolutionConditions<D, T>): Flow<D, T> =
+suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P,T>, conditions: EvolutionConditions<D, T>): Flow<D, T> =
     Flow( conditions ) {
             data -> Immediate{this@fill.fill( phi.flow ) (data).get()}
     }
-suspend fun <D,T,P> Gap<D,P>.fill(phi: Flow<P,T> ): Flow<D, T> =
+suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P,T> ): Flow<D, T> =
     Flow( this@fill.adapt( phi.conditions) ) {
             data -> Immediate{this@fill.fill( phi.flow ) (data).get()}
     }
 
-suspend fun <D,T,P> Gap<D,P>.adapt(conditions: EvolutionConditions<P,T>): EvolutionConditions<D,T> {
+suspend fun <D,T,P> Gap<D, P>.adapt(conditions: EvolutionConditions<P, T>): EvolutionConditions<D, T> {
     val prop = SimpleObjectProperty<T>()
     fun update(data: D): T  {
         var unset = true
@@ -65,10 +69,11 @@ suspend fun <D,T,P> Gap<D,P>.adapt(conditions: EvolutionConditions<P,T>): Evolut
     return EvolutionConditions(
         testObject = conditions.testObject,
         check = conditions.check,
-        updateCondition = {data -> update(data)}
-    )}
+        updateCondition = { data -> update(data) }
+    )
+}
 
-suspend fun <D,T,P> Gap<D,P>.fillParallel(phi: Flow<P,T>, conditions: EvolutionConditions<D,T>): Flow<D, T> =
+suspend fun <D,T,P> Gap<D, P>.fillParallel(phi: Flow<P,T>, conditions: EvolutionConditions<D, T>): Flow<D, T> =
     Flow( conditions ) {
             data -> Parallel{this@fillParallel.fill( phi.flow ) (data).get()}
     }

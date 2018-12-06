@@ -1,6 +1,6 @@
 package org.drx.evoleq.dsl
 
-import org.drx.evoleq.EvolutionConditions
+import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.Evolving
 import org.drx.evoleq.Flow
 

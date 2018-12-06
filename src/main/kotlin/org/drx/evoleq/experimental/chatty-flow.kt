@@ -3,10 +3,11 @@ package org.drx.evoleq.experimental
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
+import org.drx.evoleq.conditions.EvolutionConditions
 
 
 abstract class ChattyFlow<D,T,I,O>(
-    val conditions: EvolutionConditions<D,T>,
+    val conditions: EvolutionConditions<D, T>,
     val flow: (D)->Evolving<D>,
     val initialMessage: I
 

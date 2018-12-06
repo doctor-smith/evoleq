@@ -11,6 +11,7 @@ import javafx.stage.Stage
 import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
+import org.drx.evoleq.conditions.EvolutionConditions
 import tornadofx.ChangeListener
 import tornadofx.action
 
@@ -149,11 +150,13 @@ fun main(args: Array<String>) {
                 ),
                 clock = Clock(0L)
             ),
-            conditions = EvolutionConditions<Data,Pair<Message,Long>>(
+            conditions = EvolutionConditions<Data, Pair<Message, Long>>(
                 testObject = Pair(Message.StartUp, 0),
-                check = { when(it.first) {
-                    is Message.StoppedApp -> false
-                    else -> true} && it.second < 30
+                check = {
+                    when (it.first) {
+                        is Message.StoppedApp -> false
+                        else -> true
+                    } && it.second < 30
                 },
                 updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
             )
@@ -163,7 +166,12 @@ fun main(args: Array<String>) {
                         initialData = data.appData,
                         conditions = EvolutionConditions(
                             testObject = Pair(Message.StartUp as Message, 0),
-                            check = { when(it.first) { Message.StoppedApp -> false else -> true} && it.second < 100 },
+                            check = {
+                                when (it.first) {
+                                    Message.StoppedApp -> false
+                                    else -> true
+                                } && it.second < 100
+                            },
                             updateCondition = { data -> Pair(data.message, data.cnt) }
                         )
                     ){  data -> println("App driver: "+Thread.currentThread().name); println(data.message)
@@ -189,8 +197,8 @@ fun main(args: Array<String>) {
                         initialData = data.clock,
                         conditions = EvolutionConditions(
                             testObject = 0L,
-                            check = {time -> time < 5},
-                            updateCondition = {clock -> clock.time}
+                            check = { time -> time < 5 },
+                            updateCondition = { clock -> clock.time }
                         )
                     ){  clock -> Parallel {
                             println("Clock: "+Thread.currentThread().name)

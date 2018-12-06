@@ -1,4 +1,4 @@
-package org.drx.evoleq
+package org.drx.evoleq.conditions
 
 
 /**
@@ -13,29 +13,30 @@ data class EvolutionConditions<in D, T>(
 /**
  * Update the evolution condition
  */
-fun<D,T> EvolutionConditions<D,T>.update(data: D): EvolutionConditions<D,T> =
+fun<D,T> EvolutionConditions<D, T>.update(data: D): EvolutionConditions<D, T> =
     copy( testObject = updateCondition( data ) )
 
 /**
  * Check test-object
  */
-fun<D,T> EvolutionConditions<D,T>.ok(): Boolean = check( testObject )
+fun<D,T> EvolutionConditions<D, T>.ok(): Boolean = check( testObject )
 
 
-fun <D> once(): EvolutionConditions<D,Boolean> =
+fun <D> once(): EvolutionConditions<D, Boolean> =
     EvolutionConditions(
         testObject = true,
-        check = {b->b},
-        updateCondition = {d:D -> false}
+        check = { b -> b },
+        updateCondition = { d: D -> false }
     )
 
 class Counter<D>(private val to: Long) {
-    fun get(): EvolutionConditions<Pair<D, Long>, Long> = EvolutionConditions(
-        testObject = 0L,
-        check= {l -> l < to}
-    ){
-        pair -> pair.second
-    }
+    fun get(): EvolutionConditions<Pair<D, Long>, Long> =
+        EvolutionConditions(
+            testObject = 0L,
+            check = { l -> l < to }
+        ) { pair ->
+            pair.second
+        }
 }
 
 fun <D> counting(f: (D)->D): (Pair<D,Long>)->Pair<D,Long> = {

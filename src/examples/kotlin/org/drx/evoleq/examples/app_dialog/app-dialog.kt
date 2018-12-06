@@ -11,6 +11,8 @@ import javafx.stage.Stage
 import javafx.stage.StageStyle
 import kotlinx.coroutines.*
 import org.drx.evoleq.*
+import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.util.tail
 import tornadofx.ChangeListener
 import tornadofx.action
 

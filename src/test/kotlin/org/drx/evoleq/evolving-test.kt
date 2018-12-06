@@ -1,7 +1,7 @@
 package org.drx.evoleq
 
-import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
+import org.drx.evoleq.conditions.once
 import org.junit.Test
 
 class EvolvingTest {
