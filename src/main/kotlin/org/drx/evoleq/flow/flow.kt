@@ -22,8 +22,8 @@ open class Flow<D, T>(
             org.drx.evoleq.evolve(
                 initialData = data,
                 conditions = conditions
-            ) { data ->
-                flow(data)
+            ) {
+                data -> flow(data)
             }
         }
 }
