@@ -78,6 +78,18 @@ suspend operator
 fun <R, S, T> ((Evolving<R>)->S).div(f:(Evolving<S>)->T): (Evolving<R>)->T = {
         evR -> f(etaEvolving(this(evR)))
 }
+suspend operator
+fun <R, S, T> (suspend (Evolving<R>)->S).div(f:(Evolving<S>)->T):suspend (Evolving<R>)->T = {
+        evR -> f(etaEvolving(this(evR)))
+}
+suspend operator
+fun <R, S, T> ((Evolving<R>)->S).div(f:suspend (Evolving<S>)->T): suspend (Evolving<R>)->T = {
+        evR -> f(etaEvolving(this(evR)))
+}
+suspend operator
+fun <R, S, T> (suspend (Evolving<R>)->S).div(f: suspend (Evolving<S>)->T): suspend (Evolving<R>)->T = {
+        evR -> f(etaEvolving(this(evR)))
+}
 
 suspend fun <S,T> coklEvolving(f:(S)->T): suspend (Evolving<S>)->T {
     val mapper : suspend (Evolving<S>)->Evolving<T> = {ev-> ev.map (f)  }
