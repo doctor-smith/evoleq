@@ -24,3 +24,23 @@ tailrec suspend fun <D, T> evolve(
         }
     }
 }
+
+/**
+ * Evolution equation for sus
+ */
+tailrec suspend fun <D, T> evolveSuspended(
+    initialData: D,
+    conditions: EvolutionConditions<D, T>,
+    flow: suspend (D) -> Evolving<D>
+) : D = when( conditions.ok() ) {
+    false -> initialData
+    true -> {
+        val evolvedData: D = flow ( initialData ).get()
+        evolveSuspended(
+            evolvedData,
+            conditions.update( evolvedData )
+        ){
+            data  -> flow ( data )
+        }
+    }
+}
