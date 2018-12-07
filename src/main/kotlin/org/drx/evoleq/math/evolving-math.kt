@@ -62,24 +62,6 @@ fun <R,S,T> (  (R)-> Evolving<S>).times(flow: suspend (S)-> Evolving<T>) :suspen
         r ->
     Immediate { muEvolving(this(r) map flow).get() }
 }
-suspend fun <S,T> process(first:(S)-> Evolving<T>, vararg steps: (T)-> Evolving<T>): (S)-> Evolving<T> =
-    when(steps.isEmpty()) {
-        true -> first
-        false -> {
-            val next = steps.first()
-            val tail = arrayListOf(*steps).tail()
-            process(first * next, tail)
-        }
-    }
-tailrec suspend fun <S,T> process(first: (S)-> Evolving<T>, steps: ArrayList<(T)-> Evolving<T>>): (S)-> Evolving<T> =
-    when (steps.isEmpty()) {
-        true -> first
-        false -> {
-            val next = steps.first()
-            val tail = steps.tail()
-            process(first * next, tail)
-        }
-    }
 
 fun<S,T> klEvolving(f:(S)->T): (S)->Evolving<T> = {s->Immediate{f(s)}}
 
