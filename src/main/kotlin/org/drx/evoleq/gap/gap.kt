@@ -48,3 +48,12 @@ suspend fun <W, P> Gap<W, P>.fill(filler: (P)-> Evolving<P>): (W)-> Evolving<W> 
         }
     }
 }
+
+suspend fun <W, P> Gap<W, P>.fill(filler: suspend (P)-> Evolving<P>): (W)-> Evolving<W> {
+    return { w ->
+        Immediate {
+            val p = (from * filler)(w).get()
+            to(w)(p).get()
+        }
+    }
+}
