@@ -9,7 +9,9 @@ import org.drx.evoleq.flow.SuspendedFlow
 import org.drx.evoleq.flow.fill
 import org.drx.evoleq.gap.Gap
 
-
+/**
+ * Compose flows
+ */
 fun <D,S,E,T> Flow<D, S>.then(
     phi: Flow<E,T>,
     cond: EvolutionConditions<D,T>,
@@ -23,6 +25,9 @@ fun <D,S,E,T> Flow<D, S>.then(
     flow = {d ->combined(d)}
 }
 
+/**
+ * compose suspended flow with flow
+ */
 fun <D,S,E,T> SuspendedFlow<D, S>.then(
     phi: Flow<E,T>,
     cond: EvolutionConditions<D,T>,
@@ -35,6 +40,9 @@ fun <D,S,E,T> SuspendedFlow<D, S>.then(
     flow = {d ->combined(d)}
 }
 
+/**
+ * Compose flow with suspended flow
+ */
 fun <D,S,E,T> Flow<D, S>.then(
     phi: SuspendedFlow<E,T>,
     cond: EvolutionConditions<D,T>,
@@ -47,6 +55,9 @@ fun <D,S,E,T> Flow<D, S>.then(
     flow = {d ->combined(d)}
 }
 
+/**
+ * Compose suspended flows
+ */
 fun <D,S,E,T> SuspendedFlow<D, S>.then(
     phi: SuspendedFlow<E,T>,
     cond: EvolutionConditions<D,T>,
