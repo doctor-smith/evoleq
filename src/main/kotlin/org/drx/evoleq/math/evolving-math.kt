@@ -19,7 +19,10 @@ fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Ev
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 suspend infix
-fun<D1,D2> Evolving<D1>.lift(f:  (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> Immediate { (ev map f).get() } }
+fun<D1,D2> Evolving<D1>.lift(f: (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> Immediate { (ev map f).get() } }
+
+suspend infix
+fun<D1,D2> Evolving<D1>.lift(f: suspend (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> Immediate { (ev map f).get() } }
 /**
  * Monad
  * =====
@@ -95,6 +98,13 @@ fun <R, S, T> ((Evolving<R>)->S).div(f:(Evolving<S>)->T): (Evolving<R>)->T = {
 }
 
 suspend fun <S,T> coklEvolving(f:(S)->T): suspend (Evolving<S>)->T {
+    val mapper : suspend (Evolving<S>)->Evolving<T> = {ev-> ev.map (f)  }
+    val cokl: suspend (Evolving<S>)-> T =  { evolving -> mapper(evolving).get() }
+
+    return cokl
+}
+
+suspend fun <S,T> coklEvolving(f: suspend (S)->T): suspend (Evolving<S>)->T {
     val mapper : suspend (Evolving<S>)->Evolving<T> = {ev-> ev.map (f)  }
     val cokl: suspend (Evolving<S>)-> T =  { evolving -> mapper(evolving).get() }
 
