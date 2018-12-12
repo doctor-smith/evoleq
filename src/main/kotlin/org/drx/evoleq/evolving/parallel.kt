@@ -1,6 +1,7 @@
 package org.drx.evoleq.evolving
 
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.*
 
 /**
