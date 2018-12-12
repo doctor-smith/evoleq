@@ -67,7 +67,7 @@ kotlin{
             kotlin.srcDirs("src/experiments/kotlin")
             configurations {
                 dependencies{
-                    //implementation(Config.Dependencies.tornadofx)
+                    implementation(Config.Dependencies.tornadofx)
                     implementation(Config.Dependencies.kotlinStandardLibrary)
                     implementation(Config.Dependencies.coroutines)
                     //implementation("io.reactivex.rxjava2:rxkotlin:2.2.0")
