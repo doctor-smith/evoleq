@@ -41,4 +41,28 @@ class ConfigurationTest {
         }
         assert(ex.items.size == 3)
     }
+
+    @Test
+    fun inheritance() {
+        class Ex<out T>(val x: T)
+        class ExConfig(var x : Int? = null) : Configuration<Ex<Any>> {
+            override fun configure(): Ex<Any> {
+                return Ex(1)
+            }
+        }
+
+    }
+
+    @Test
+    fun configureConfiguration() {
+        class Ex<out T>(val x: T)
+        class ExConfig(var x : Int? = null) : Configuration<Ex<Any>> {
+            override fun configure(): Ex<Any> {
+                return Ex(1)
+            }
+        }
+        val c = setupConfiguration<Ex<*>,ExConfig>{
+            x=2
+        }
+    }
 }
