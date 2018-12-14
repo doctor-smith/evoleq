@@ -5,7 +5,7 @@ import org.junit.Test
 
 class ConfigurationMathTest {
     @Test
-    fun testInject() {
+    fun testConsumeConfig() {
         open class Ex(val x :Int )
         open class ExConf : Configuration<Ex> {
 
@@ -52,5 +52,8 @@ class ConfigurationMathTest {
         val cc1 = consumeConfig<ExConf,Ex1Conf>(cc){
             x = 3
         }
+
+        assert(cc1.x == 3)
+        assert(cc1.y == 0)
     }
 }
