@@ -14,7 +14,7 @@ import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Parallel
-import org.drx.evoleq.evolving.process
+import org.drx.evoleq.math.process
 import org.drx.evoleq.util.tail
 import tornadofx.ChangeListener
 import tornadofx.action
@@ -275,17 +275,17 @@ fun main(args: Array<String>) {
                 is Message.StopApp -> Parallel {
                     val id = System.currentTimeMillis()
                     val continuation = Parallel {
-                        process(
+                        /*process<Data,Data>(
                             { d: Data -> d.app.updateApp(d.copy(message = Message.Dialog.Close(id))) },
                             { d: Data -> d.app.stopApp(d.copy(message = Message.Empty)) }
-                        )
+                        )*/
                     }.get()
                     data.app.updateApp(
                         data.copy(
                             message = Message.Dialog.Confirm(
                                 "Do you really want to close the application?",
-                                id,
-                                Message.Continuation(continuation)
+                                id//,
+                                //Message.Continuation(continuation)
                             )
                         )
                     ).get()
