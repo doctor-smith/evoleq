@@ -13,6 +13,7 @@ object FxStart : FxMessage()
 object FxStop : FxMessage()
 object FxLaunch : FxMessage()
 data class FxShowStage<out K>(val key: K) : FxMessage()
+data class FxCloseStage<out K>(val key: K) : FxMessage()
 
 sealed class FxResponseMessage : Message()
 object FxInitRespose : FxResponseMessage()
@@ -20,6 +21,7 @@ object FxStartRespose : FxResponseMessage()
 object FxStopRespose : FxResponseMessage()
 object FxLaunchRespose : FxResponseMessage()
 data class FxShowStageResponse<out K, D>(val key: K, val stub: Stub<D> = InitAppStub()) : FxResponseMessage()
+data class FxCloseStageResponse<out K, D>(val key: K, val stub: Stub<D> = InitAppStub()) : FxResponseMessage()
 
 
 

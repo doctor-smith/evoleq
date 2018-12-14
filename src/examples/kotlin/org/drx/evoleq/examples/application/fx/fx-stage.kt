@@ -120,3 +120,36 @@ fxStageConfiguration(
     noinline config: S0.() -> Unit
 ): S where S0:FxStageConfiguration<D> =
     consumeConfig<S0,S>(stageConfig,config)
+/*
+inline fun <D, reified S0:FxStageConfiguration<D>, reified  S: FxStage<D>>
+fxStageConsumeConfig(noinline config: S0.() -> Unit) : Configuration<S>  {
+
+    val s0 = fxStageConfiguration(config)
+
+
+    val sC = object : Configuration<S> {
+        override fun configure(): S {
+
+        }
+    }
+}
+        */
+
+/*
+inline fun <D, reified S: FxStage<D>> fxStageConfiguration(noinline config: S.() -> S): Configuration<S> {
+    val c = FxStageConfiguration<D>()
+
+    val c0 = object: Configuration<FxStage<D>> {
+        override fun configure(): FxStage<D> = c.configure()
+    }
+
+    val c1 = object: Configuration<S> {
+        override fun configure(): S {
+            val x = c0.configure() as S
+            return x.config()
+        }
+
+    }
+    return c1
+}
+*/

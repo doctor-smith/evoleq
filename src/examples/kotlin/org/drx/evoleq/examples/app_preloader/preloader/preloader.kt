@@ -13,6 +13,7 @@ import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.examples.application.fx.FxComponent
+import org.drx.evoleq.examples.application.fx.fxNodeConfiguration
 import org.drx.evoleq.gap.Spatula
 
 class PreloaderKey
@@ -90,7 +91,9 @@ class PreLoaderConfiguration<D> : Configuration<PreLoader<D>> {
                     fullScreenExitHint = config.fullScreenExitHint
 
 
-                    label = Label("0")
+                    label = fxNodeConfiguration<String,Label> {
+                        node =Label("0")
+                    }.configure().node
                     (scene.root as Pane).children.add(label!!)
                 }
 

@@ -32,8 +32,33 @@ class TerminalBlockConfiguration<T> : Configuration<(T) -> Unit> {
     }
 }
 
+class TerminalBiBlockConfiguration<S,T> : Configuration<(S,T) -> Unit> {
+    var block:(S,T)->Unit = {_,_->}
+    override fun configure(): (S,T) -> Unit {
+        return block
+    }
+}
+
+
+
 fun <T> termBlock(config: TerminalBlockConfiguration<T>.()->Unit): TerminalBlockConfiguration<T> {
     val b = TerminalBlockConfiguration<T>()
+    b.config()
+    return b
+}
+fun <S,T> termBlock(config: TerminalBiBlockConfiguration<S,T>.()->Unit): TerminalBiBlockConfiguration<S,T> {
+    val b = TerminalBiBlockConfiguration<S,T>()
+    b.config()
+    return b
+}
+
+class FunctionConfiguration<S,T> : Configuration<(S)->T> {
+    var block : ((S)->T)? = null
+    override fun configure(): (S) -> T = block!!
+}
+
+fun <S,T> functionBlock(config: FunctionConfiguration<S,T>.()->Unit): FunctionConfiguration<S, T> {
+    val b = FunctionConfiguration<S,T>()
     b.config()
     return b
 }

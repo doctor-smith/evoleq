@@ -44,7 +44,7 @@ fun main() {
                 stub = { m: Message ->
                     when (m) {
                         is FxMessage -> when (m) {
-                            is FxStart, is FxInit, is FxLaunch, is FxShowStage<*> -> Immediate { m }
+                            is FxStart, is FxInit, is FxLaunch, is FxShowStage<*>, is FxCloseStage<*> -> Immediate { m }
                             is FxStop -> {
                                 delay(1_000)
                                 (configurations.registry[FxStopFunction::class] as BlockConfiguration).configure()()

@@ -9,3 +9,6 @@ consumeConfig(
     consumer.consume()
     return consumer
 }
+
+
+inline fun <C,D:C> D.inject(conf: D.(C.()->Unit)->D): D = this.conf{}

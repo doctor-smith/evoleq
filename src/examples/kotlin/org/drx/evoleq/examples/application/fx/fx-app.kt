@@ -6,6 +6,7 @@ import javafx.stage.Stage
 import org.drx.evoleq.dsl.Configurations
 import org.drx.evoleq.examples.application.ApplicationStub
 import org.drx.evoleq.dsl.block
+import org.drx.evoleq.dsl.functionBlock
 import org.drx.evoleq.dsl.termBlock
 import org.drx.evoleq.examples.application.dsl.ConfigurationEntry
 import kotlin.reflect.KClass
@@ -52,6 +53,15 @@ class FxApp<D>  : tornadofx.App() {
             val f: (Stage) -> Unit = { stage -> close(stage) }
             block = f
         }
+        CONFIGURATIONS.registry[RegisterStageFunction::class] = termBlock<KClass<*>,Stage>{
+            val f: (KClass<*>,Stage) -> Unit = {key, stage -> register(key,stage) }
+            block = f
+        }
+        CONFIGURATIONS.registry[UnregisterStageFunction::class] = functionBlock<KClass<*>,Stage>{
+            val f: (KClass<*>) -> Stage = { key -> unregister(key) }
+            block = f
+        }
+
         // apply init block
         initBlock()
         // set value of stub property
@@ -66,19 +76,25 @@ class FxApp<D>  : tornadofx.App() {
      * Stage Management
      * ================================================================================================================
      */
-    private val stages: ArrayList<Stage> by lazy { ArrayList<Stage>() }
+    private val stages: HashMap<KClass<*>,Stage> by lazy { HashMap<KClass<*>,Stage>() }
+    fun register(key: KClass<*>,stage:  Stage) { stages[key] = stage }
+    fun unregister(key: KClass<*>): Stage{
+        val stage = stages[key]!!
+        stages.remove(key)
+        return stage
+    }
     fun show(stage: Stage) {
         Platform.runLater {
             stage.show()
             //stage.icons
         }
-        stages.add(stage)
+
     }
     fun close(stage: Stage) {
         Platform.runLater {
             stage.close()
         }
-        stages.remove(stage)
+
     }
 
     /**

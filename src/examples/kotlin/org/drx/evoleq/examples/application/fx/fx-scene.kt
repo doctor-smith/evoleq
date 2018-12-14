@@ -17,23 +17,8 @@ abstract class FxScene<D>(parent: Parent) : Scene(parent), FxComponent<D>
 open class FxSceneConfiguration<D> : Configuration<FxScene<D>> {
 
     var parent: Parent? = null
-
-    //var width: Double = 0.0
-
-    var content: Node? = null
-
-
     // stub
     var stub: (D)-> Evolving<D> = { d -> Immediate{d} }
-
-
-    // custom configuration
-
-    inline fun <reified S: FxSceneConfiguration<D>> customConfiguration(conf: S.()->Unit = {}): S {
-        val s = S::class.createInstance()
-        s.conf()
-        return s
-    }
 
     override fun configure(): FxScene<D> = object: FxScene<D>(parent!!) {
 
@@ -50,3 +35,10 @@ open class FxSceneConfiguration<D> : Configuration<FxScene<D>> {
     }
 }
 
+// custom configuration
+
+inline fun <D,reified S: FxSceneConfiguration<D>> customConfiguration(conf: S.()->Unit = {}): S {
+    val s = S::class.createInstance()
+    s.conf()
+    return s
+}

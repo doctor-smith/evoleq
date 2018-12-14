@@ -17,6 +17,8 @@ object FxStopFunction : FxBlock()
 sealed class StageManagerBlock
 object ShowStageFunction : StageManagerBlock()
 object CloseStageFunction : StageManagerBlock()
+object RegisterStageFunction : StageManagerBlock()
+object UnregisterStageFunction : StageManagerBlock()
 
 /**
  * app block keys

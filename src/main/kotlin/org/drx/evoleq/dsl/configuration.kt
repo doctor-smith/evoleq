@@ -23,3 +23,8 @@ inline fun <D, reified C: Configuration<D>> setupConfiguration(noinline sideEffe
     c.sideEffect()
     return c
 }
+
+inline fun <reified C> C.reconfigure(block:C.()->C): C {
+    return this.block()
+}
+
