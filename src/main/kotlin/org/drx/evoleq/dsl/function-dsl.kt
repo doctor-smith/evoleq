@@ -62,3 +62,14 @@ fun <S,T> functionBlock(config: FunctionConfiguration<S,T>.()->Unit): FunctionCo
     b.config()
     return b
 }
+
+class BiFunctionConfiguration<R,S,T> : Configuration<(R,S)->T> {
+    var block : ((R,S)->T)? = null
+    override fun configure(): (R,S) -> T = block!!
+}
+
+fun <R,S,T> functionBlock(config: BiFunctionConfiguration<R,S,T>.()->Unit): BiFunctionConfiguration<R,S, T> {
+    val b = BiFunctionConfiguration<R,S,T>()
+    b.config()
+    return b
+}
