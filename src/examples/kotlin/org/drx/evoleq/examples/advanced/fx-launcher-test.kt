@@ -1,4 +1,4 @@
-package org.drx.evoleq.experimental.app.fx
+package org.drx.evoleq.examples.advanced
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.Scene
@@ -12,6 +12,7 @@ import org.drx.evoleq.dsl.Configurations
 import org.drx.evoleq.evolve
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.examples.application.fx.FxApplicationLauncher
 
 
 class App : tornadofx.App() /*,AppStub*/ {
