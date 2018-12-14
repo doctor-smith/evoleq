@@ -8,6 +8,8 @@ open class Configurations {
     inline fun <reified K,C : Configuration<*>> register(c: C ) {registry[K::class] = c}
 
     inline fun <reified K> get(): Configuration<*> = registry[K::class] as Configuration<*>
+
+    inline fun <reified K> get(key: K): Configuration<*> = registry[K::class] as Configuration<*>
 }
 class SpatulasConfigurations : Configurations() {
 
