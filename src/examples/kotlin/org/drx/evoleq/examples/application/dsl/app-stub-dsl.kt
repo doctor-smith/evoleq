@@ -1,9 +1,9 @@
-package org.drx.evoleq.experimental.dsl
+package org.drx.evoleq.examples.application.dsl
 
 import org.drx.evoleq.dsl.Configuration
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.experimental.app.ApplicationStub
+import org.drx.evoleq.examples.application.ApplicationStub
 
 class ApplicationStubConfiguration<D> : Configuration<ApplicationStub<D>>{
     var stub:suspend (D)-> Evolving<D> = {d -> Immediate{d} }
