@@ -7,6 +7,7 @@ import org.drx.evoleq.examples.application.dsl.ConfigurationEntry
 
 open class Message
 object EmptyMessage : Message()
+data class NotSupported(val receivedMessage: Message) : Message()
 
 sealed class FxMessage : Message()
 sealed class FxRequestMessage : FxMessage()
