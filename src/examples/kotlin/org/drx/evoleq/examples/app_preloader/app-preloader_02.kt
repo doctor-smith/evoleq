@@ -3,13 +3,18 @@
 package org.drx.evoleq.examples.app_preloader
 
 import javafx.application.Platform
+import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.Scene
+import javafx.scene.control.Button
 import javafx.scene.layout.Pane
+import javafx.scene.layout.VBox
+import javafx.scene.text.Text
 import javafx.stage.Stage
 import kotlinx.coroutines.*
 import org.drx.evoleq.dsl.conditions
 import org.drx.evoleq.dsl.suspendedFlow
 import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.examples.app_preloader.preloader.PreLoader
 import org.drx.evoleq.examples.app_preloader.preloader.PreloaderKey
 import org.drx.evoleq.examples.app_preloader.preloader.preLoader
@@ -21,6 +26,8 @@ import org.drx.evoleq.examples.application.dsl.entry
 import org.drx.evoleq.examples.application.dsl.fxAppConfiguration
 import org.drx.evoleq.examples.application.fx.*
 import org.drx.evoleq.examples.application.message.*
+import org.drx.evoleq.time.WaitForProperty
+import tornadofx.action
 import kotlin.reflect.KClass
 
 data class AppData(
@@ -31,6 +38,14 @@ data class AppData(
 data class  Update(val value: Int = 0): Message()
 
 class MainSceneKey
+
+/**
+ * Stub keys
+ */
+class PreLoaderStubKey
+class MainStageStubKey
+class SetupContentRequest : Message()
+class SetupContentResponse : Message()
 
 val appConfig2 = fxAppConfiguration<AppData> {
     stubConfig = appStubConfiguration {
@@ -66,8 +81,29 @@ val appConfig2 = fxAppConfiguration<AppData> {
             entry{
                 key = MainSceneKey::class
                 config = fxStageConfiguration<Message, FxStageConfiguration<Message>> {
-                    stub = {m -> Immediate{m}}
-                    scene = Scene(Pane(), 100.0,100.0)
+                    val out = SimpleObjectProperty<Message>()
+
+                    val content = VBox()
+                    scene = Scene(content, 400.0,600.0)
+                    x = 300.0
+                    y = 100.0
+
+                    content.children.add(Text("Hi there, I am the main scene"))
+
+                    stub = {m -> when (m) {
+                        is SetupContentRequest -> {
+                            Platform.runLater {
+                                val closeButton = Button("Close")
+                                closeButton.action {
+                                    out.value = FxStop
+                                }
+
+                                content.children.add(closeButton)
+                            }
+                            Immediate{SetupContentResponse()}
+                        }
+                        else ->  Parallel{WaitForProperty(out).toChange().get()}
+                    }}
                 }
             }
         )
@@ -76,6 +112,7 @@ val appConfig2 = fxAppConfiguration<AppData> {
         stub = {appData ->
             val message = appData.message
             when(message) {
+                // Requests
                 is FxRequestMessage -> when(message) {
                     is FxInit, FxStart, FxStop, FxLaunch -> Immediate{appData}
                     // Show stage
@@ -107,21 +144,27 @@ val appConfig2 = fxAppConfiguration<AppData> {
                             }
                             is MainSceneKey -> {
                                 val conf = FxApp.CONFIGURATIONS.get(MainSceneKey())
+                                val stageProperty = SimpleObjectProperty<Stage>()
                                 Platform.runLater {
                                     val stage = conf.configure() as Stage
+                                    stageProperty.value = stage
                                     register(MainSceneKey::class, stage)
                                     show(stage)
                                 }
+
                                 Immediate {
                                     appData.copy(
-                                        message = FxShowStageResponse<MainSceneKey, Message>(
-                                            MainSceneKey()
+                                        message = FxShowStageResponse(
+                                            MainSceneKey(),
+                                            WaitForProperty(stageProperty).toChange().get() as Stub<Message>
                                         )
                                     )
                                 }
                             }
                             else -> {
-                                Immediate { appData }
+                                Immediate { appData.copy(
+                                    message = NotSupported(receivedMessage = message)
+                                )}
                             }
                         }
                     }
@@ -166,6 +209,7 @@ fun main() {
                 val message = appData.message
                 println("@appFlow: $message")
                 when(message){
+                    // Requests
                     is FxRequestMessage -> when(message) {
                         // Launch
                         is FxLaunch -> Immediate {
@@ -179,7 +223,7 @@ fun main() {
                         }
                         is FxInit -> Immediate {
                             println("initializing ... ")
-                            val s = appData.stubs[PreloaderKey::class]!! as Stub<Message>
+                            val s = appData.stubs[PreLoaderStubKey::class]!! as Stub<Message>
                             IntRange(1, 99).forEach {
                                 val m = s.stub(Update(it)).get()
                                 //println("@appFlow.preLoader: $m")
@@ -194,24 +238,27 @@ fun main() {
                         is FxShowStage<*>,
                         is FxCloseStage<*> -> Immediate{appData}
                     }
+                    // Responses
                     is FxResponseMessage -> when(message) {
                         is FxLaunchResponse ->
                             appData.appStub.stub(appData.copy(message = FxShowStage(PreloaderKey())))
 
-                        // Init
-
                         is FxInitResponse ->
                             appData.appStub.stub(appData.copy(message = FxShowStage(MainSceneKey())))
 
-
-                        // Show stage responses
                         is FxShowStageResponse<*, *> -> when (message.key) {
                             is PreloaderKey -> Immediate {
-                                appData.stubs[PreloaderKey::class] = message.stub
+                                appData.stubs[PreLoaderStubKey::class] = message.stub
                                 appData.copy(message = FxInit)
                             }
-                            is MainSceneKey ->
+                            is MainSceneKey -> {
+                                appData.stubs[PreLoaderStubKey::class] = message.stub
+                                GlobalScope.launch { coroutineScope{
+                                    val stub = message.stub as Stub<Message>
+                                    val response = stub.stub(SetupContentRequest())
+                                }}
                                 appData.appStub.stub(appData.copy(message = FxCloseStage(PreloaderKey())))
+                            }
 
                             else -> Immediate { appData }
                         }
@@ -230,7 +277,7 @@ fun main() {
 
 
 
-
+                    // other
                     else ->Immediate{
                         //delay(10_000)
                         appData.copy(message = FxStop)
