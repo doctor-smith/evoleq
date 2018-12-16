@@ -273,16 +273,7 @@ fun main() {
                         is FxCloseStageResponse<*, *> -> when (message.key) {
                             is PreloaderKey -> Immediate {
                                 appData.stubs.remove(PreloaderKey::class)
-                                /*
-                                val m1 = async{
-                                    var m: Message? = null
-                                    while (m == null) {
-                                        m = appData.battery[MainStageStubKey::class]
-                                        appData.battery.remove(MainStageStubKey::class)
-                                        delay(1)
-                                    }
-                                    m!!}.await()
-                                    */
+
                                 val m = appData.battery.waitForValueToBeSet(MainStageStubKey::class).get()
                                 appData.battery.remove(MainStageStubKey::class)
                                 appData.copy(
