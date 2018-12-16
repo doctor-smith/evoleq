@@ -27,13 +27,15 @@ import org.drx.evoleq.examples.application.dsl.fxAppConfiguration
 import org.drx.evoleq.examples.application.fx.*
 import org.drx.evoleq.examples.application.message.*
 import org.drx.evoleq.time.WaitForProperty
+import org.drx.evoleq.time.waitForValueToBeSet
 import tornadofx.action
 import kotlin.reflect.KClass
 
 data class AppData(
     val appStub: ApplicationStub<AppData> = InitAppStub(),
     val message: Message,
-    val stubs: HashMap<KClass<*>, Stub<*>> = HashMap()
+    val stubs: HashMap<KClass<*>, Stub<*>> = HashMap(),
+    val battery: HashMap<KClass<*>, Message> = HashMap()
 )
 data class  Update(val value: Int = 0): Message()
 
@@ -208,9 +210,9 @@ fun main() {
             flow = {appData ->
                 val message = appData.message
                 println("@appFlow: $message")
-                when(message){
+                when(message) {
                     // Requests
-                    is FxRequestMessage -> when(message) {
+                    is FxRequestMessage -> when (message) {
                         // Launch
                         is FxLaunch -> Immediate {
                             val appStub =
@@ -236,10 +238,10 @@ fun main() {
                         is FxStart,
                         is FxStop,
                         is FxShowStage<*>,
-                        is FxCloseStage<*> -> Immediate{appData}
+                        is FxCloseStage<*> -> Immediate { appData }
                     }
                     // Responses
-                    is FxResponseMessage -> when(message) {
+                    is FxResponseMessage -> when (message) {
                         is FxLaunchResponse ->
                             appData.appStub.stub(appData.copy(message = FxShowStage(PreloaderKey())))
 
@@ -252,11 +254,15 @@ fun main() {
                                 appData.copy(message = FxInit)
                             }
                             is MainSceneKey -> {
-                                appData.stubs[PreLoaderStubKey::class] = message.stub
-                                GlobalScope.launch { coroutineScope{
-                                    val stub = message.stub as Stub<Message>
-                                    val response = stub.stub(SetupContentRequest())
-                                }}
+                                appData.stubs[MainStageStubKey::class] = message.stub
+                                //GlobalScope.launch {
+                                    coroutineScope {
+                                        val stub = message.stub as Stub<Message>
+
+                                        appData.battery[MainStageStubKey::class] =
+                                                stub.stub(SetupContentRequest()).get() as SetupContentResponse
+                                    }
+                                //}
                                 appData.appStub.stub(appData.copy(message = FxCloseStage(PreloaderKey())))
                             }
 
@@ -267,14 +273,38 @@ fun main() {
                         is FxCloseStageResponse<*, *> -> when (message.key) {
                             is PreloaderKey -> Immediate {
                                 appData.stubs.remove(PreloaderKey::class)
-                                delay(3_000)
-                                appData.copy(message = FxStop)
+                                /*
+                                val m1 = async{
+                                    var m: Message? = null
+                                    while (m == null) {
+                                        m = appData.battery[MainStageStubKey::class]
+                                        appData.battery.remove(MainStageStubKey::class)
+                                        delay(1)
+                                    }
+                                    m!!}.await()
+                                    */
+                                val m = appData.battery.waitForValueToBeSet(MainStageStubKey::class).get()
+                                appData.battery.remove(MainStageStubKey::class)
+                                appData.copy(
+                                    message = DriveStub(
+                                        appData.stubs[MainStageStubKey::class] as Stub<Message>,
+                                        m
+                                    )
+                                )
                             }
                             else -> Immediate { appData }
                         }
-                        is FxStartResponse, is FxStopResponse -> Immediate{appData}
+                        is FxStartResponse, is FxStopResponse -> Immediate { appData }
                     }
 
+                    is DriveStub<*> -> when (message.initialData) {
+                        is SetupContentResponse -> Parallel {
+                            val stub = message.stub as Stub<Message>
+                            val m = stub.stub(EmptyMessage).get()
+                            appData.copy(message = m)
+                        }
+                        else-> Immediate{ appData.copy(message = FxStop ) }
+                    }
 
 
                     // other

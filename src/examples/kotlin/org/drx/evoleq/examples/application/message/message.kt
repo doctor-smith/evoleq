@@ -34,3 +34,8 @@ data class RegisterConfiguration(val entry: ConfigurationEntry): ConfigRequestMe
 class RegisterConfigurations(vararg entries: ConfigurationEntry): ConfigRequestMessage()
 
 sealed class ConfigResponseMessage : ConfigMessage()
+
+
+sealed class StubMessage : Message()
+data class DriveStub<out D>(val stub: Stub<out D>,val initialData: D) : StubMessage()
+class DriveStubs(vararg stubs: DriveStub<*>)

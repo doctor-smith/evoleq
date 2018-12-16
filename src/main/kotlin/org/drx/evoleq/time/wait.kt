@@ -25,3 +25,14 @@ class WaitForProperty<D>(
         property.value
     }
 }
+
+fun <K,V> Map<K,V>.waitForValueToBeSet(key: K): Evolving<V> =
+    Parallel{
+        GlobalScope.async {
+            var v: V? = this@waitForValueToBeSet[key]
+            while(v == null){
+                delay(1)
+            }
+            v!!
+        }.await()
+    }
