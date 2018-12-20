@@ -9,12 +9,16 @@ import javafx.scene.layout.Pane
 import javafx.stage.Modality
 import javafx.stage.Stage
 import javafx.stage.StageStyle
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.examples.application.Stub
 import org.drx.evoleq.examples.application.fx.FxComponent
 import org.drx.evoleq.examples.application.fx.fxNodeConfiguration
 import org.drx.evoleq.gap.Spatula
+import kotlin.reflect.KClass
 
 class PreloaderKey
 abstract class PreLoader<D> : Stage(), FxComponent<D>
@@ -54,7 +58,8 @@ class PreLoaderConfiguration<D> : Configuration<PreLoader<D>> {
     override fun configure(): PreLoader<D> {
         return object : PreLoader<D>() {
 
-
+            val stubs: HashMap<KClass<*>, Stub<*>> by lazy{ HashMap<KClass<*>, Stub<*>>() }
+            override fun stubs(): HashMap<KClass<*>, Stub<*>> = stubs
 
             init{
                 Platform.runLater {
@@ -90,11 +95,12 @@ class PreLoaderConfiguration<D> : Configuration<PreLoader<D>> {
                     fullScreenExitKeyCombination = config.fullScreenExitKeyCombination
                     fullScreenExitHint = config.fullScreenExitHint
 
-
+                    GlobalScope.launch {
                     label = fxNodeConfiguration<String,Label> {
                         node =Label("0")
                     }.configure().node
                     (scene.root as Pane).children.add(label!!)
+                    }
                 }
 
             }
