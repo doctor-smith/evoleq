@@ -1,13 +1,11 @@
 package org.drx.evoleq.examples.application.fx
 
 import javafx.application.Platform
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.stage.Stage
-import org.drx.evoleq.dsl.Configurations
+import org.drx.evoleq.dsl.*
 import org.drx.evoleq.examples.application.ApplicationStub
-import org.drx.evoleq.dsl.block
-import org.drx.evoleq.dsl.functionBlock
-import org.drx.evoleq.dsl.termBlock
 import org.drx.evoleq.examples.application.dsl.ConfigurationEntry
 import kotlin.reflect.KClass
 
@@ -15,7 +13,7 @@ class FxApp<D>  : tornadofx.App() {
 
     private val configurations: Configurations by lazy{ CONFIGURATIONS }
     private val stubProperty: SimpleObjectProperty<ApplicationStub<*>> by lazy { STUB_PROPERTY }
-
+    //private toolkitInitializedProoperty: SimpleBooleanProperty by lazy {}
     val stub: ApplicationStub<D> = configurations.get<StubBlock>().configure() as ApplicationStub<D>
     private val initBlock: ()->Unit = configurations.get<InitBlock>().configure() as ()->Unit
     // Fx stuff
@@ -64,12 +62,13 @@ class FxApp<D>  : tornadofx.App() {
 
         // apply init block
         initBlock()
-        // set value of stub property
-        stubProperty.value = stub
+
     }
     companion object Launcher {
         val CONFIGURATIONS: Configurations by lazy {Configurations()}
+        val FX_CONFIGURATIONS: SuspendedConfigurations by lazy {SuspendedConfigurations()}
         val STUB_PROPERTY: SimpleObjectProperty<ApplicationStub<*>> by lazy { SimpleObjectProperty<ApplicationStub<*>>() }
+        val TOOLKIT_INIT_PROPERTY: SimpleObjectProperty<Boolean> by lazy { SimpleObjectProperty<Boolean>() }
     }
 
     /**
@@ -107,6 +106,9 @@ class FxApp<D>  : tornadofx.App() {
     }
 
     override fun start(stage: Stage) {
+        TOOLKIT_INIT_PROPERTY.value = true
+        // set value of stub property
+        stubProperty.value = stub
         stage.fxStartBlock()
     }
     override fun stop() {
