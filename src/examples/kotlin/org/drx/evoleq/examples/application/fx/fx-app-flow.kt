@@ -39,6 +39,7 @@ fun <D> launchFxAppFlow(
             to = {appStub -> { Immediate{ appStub } }}
         )
     )
+/*
 fun main() {
     val b = runBlocking {
         val f = launchFxAppFlow(fxAppConfiguration<Int> {
@@ -57,3 +58,4 @@ fun main() {
         System.exit(0)
     }
 }
+*/
