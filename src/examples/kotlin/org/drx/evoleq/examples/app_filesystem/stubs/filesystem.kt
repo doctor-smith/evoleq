@@ -2,16 +2,23 @@ package org.drx.evoleq.examples.app_filesystem.stubs
 
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.examples.app_filesystem.data.FileModel
 import org.drx.evoleq.examples.app_filesystem.data.Folder
 import org.drx.evoleq.examples.app_filesystem.data.RootFolder
 import org.drx.evoleq.examples.app_filesystem.data.addAll
 import org.drx.evoleq.examples.app_filesystem.message.*
 import org.drx.evoleq.examples.application.Stub
 import java.io.File
+import kotlin.reflect.KClass
 
 class FileSystemStubKey
 
 class FileSystemStub : Stub<FileSystemMessage> {
+
+    val stubs: HashMap<KClass<*>, Stub<*>> by lazy{ HashMap<KClass<*>, Stub<*>>() }
+    override fun stubs(): HashMap<KClass<*>, Stub<*>> = stubs
+
     override suspend fun stub(message: FileSystemMessage): Evolving<FileSystemMessage> = when (message) {
         is FileSystemRequest -> when (message) {
             is LoadFolder -> {
@@ -33,7 +40,8 @@ class FileSystemStub : Stub<FileSystemMessage> {
                 val file = File(message.path)
                 val folder = RootFolder(
                     name = file.name,
-                    parentFolder = null
+                    parentFolder = null,
+                    path = message.path
                 )
                 folder.addAll(*file.listFiles()
                     .map{ file -> when(file.isFile){
@@ -44,9 +52,29 @@ class FileSystemStub : Stub<FileSystemMessage> {
                 )
                 Immediate{LoadedRootFolder(folder)}
             }
-
+            is CreateFile -> Parallel{
+                val name = message.name
+                val parent = message.parent
+                val file = File(parent.path() + "/" + name)
+                file.createNewFile()
+                CreatedFileResponse(org.drx.evoleq.examples.app_filesystem.data.File(name,parent))
+            }
+            is CreateFolder -> Parallel{
+                val name = message.name
+                val parent = message.parent
+                val file = File(parent.path() + "/" + name)
+                file.mkdir()
+                CreatedFolderResponse(org.drx.evoleq.examples.app_filesystem.data.Folder(name,parent))
+            }
 
         }
         is FileSystemResponse -> Immediate{message}
     }
+}
+
+
+fun FileModel.path(): String = when(this){
+    is RootFolder -> this.path
+    is Folder -> parent!!.path() +"/"+ this@path.name
+    is org.drx.evoleq.examples.app_filesystem.data.File -> parent!!.path() + this@path.name
 }

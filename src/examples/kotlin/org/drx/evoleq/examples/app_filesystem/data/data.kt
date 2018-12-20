@@ -17,7 +17,8 @@ data class Folder(
 data class RootFolder(
     val name: String,
     val parentFolder: FolderModel?,
-    val children: ArrayList<FileModel> = arrayListOf()
+    val children: ArrayList<FileModel> = arrayListOf(),
+    val path: String
 ) : FolderModel(parentFolder)
 
 
