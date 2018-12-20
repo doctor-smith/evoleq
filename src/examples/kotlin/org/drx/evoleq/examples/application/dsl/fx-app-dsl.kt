@@ -1,10 +1,8 @@
 package org.drx.evoleq.examples.application.dsl
 
 import javafx.stage.Stage
-import org.drx.evoleq.dsl.Configuration
-import org.drx.evoleq.dsl.Configurations
-import org.drx.evoleq.dsl.block
-import org.drx.evoleq.dsl.configure
+import org.drx.evoleq.coroutines.suspended
+import org.drx.evoleq.dsl.*
 import org.drx.evoleq.examples.application.ApplicationStub
 import org.drx.evoleq.examples.application.fx.*
 import kotlin.reflect.KClass
@@ -14,9 +12,14 @@ open class FxAppConfiguration<D> : Configuration<ApplicationStub<D>> {
     /**
      * Setup configurations
      */
-    val configurations: Configurations by lazy { Configurations() }
+    private val configurations: Configurations by lazy { Configurations() }
     fun registerConfigurations(vararg configs: ConfigurationEntry) {
         configs.forEach { it -> configurations.registry[it.key]= it.config }
+    }
+    //val fxConfigurations: SuspendedConfigurations by lazy { SuspendedConfigurations() }
+    val fxConfigurationEntries: ArrayList<SuspendedConfigurationEntry> = arrayListOf()
+    fun registerFxConfigurations(vararg configs: SuspendedConfigurationEntry) {
+        configs.forEach { it -> fxConfigurationEntries.add(it) }
     }
     /**
      * Stub / Launch
@@ -59,6 +62,21 @@ class ConfigurationEntryConfiguration : Configuration<ConfigurationEntry> {
 }
 
 fun entry(configure: ConfigurationEntryConfiguration.()->Unit): ConfigurationEntry = configure(configure)
+
+class SuspendedConfigurationEntry(val key: KClass<*>, val config: SuspendedConfiguration<*>)
+
+class SuspendedConfigurationEntryConfiguration : Configuration<SuspendedConfigurationEntry> {
+    var key: KClass<*>? = null
+    var config: SuspendedConfiguration<*>? = null
+
+    override fun configure(): SuspendedConfigurationEntry =
+        SuspendedConfigurationEntry(key!!, config!!)
+}
+
+fun fxEntry(configure: SuspendedConfigurationEntryConfiguration.()->Unit): SuspendedConfigurationEntry = configure(configure)
+
+
+//suspend fun entryS(configure: suspend ConfigurationEntryConfiguration.()->Unit): ConfigurationEntry = configure(configure)
 
 fun <D> fxApp(configure: FxAppConfiguration<D>.()->Unit) = configure(configure) //: FxApp<D>
 

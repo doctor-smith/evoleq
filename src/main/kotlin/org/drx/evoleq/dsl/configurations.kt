@@ -14,3 +14,13 @@ open class Configurations {
 class SpatulasConfigurations : Configurations() {
 
 }
+
+open class SuspendedConfigurations {
+    val registry : HashMap<KClass<*>,SuspendedConfiguration<*>>  by lazy {HashMap<KClass<*>,SuspendedConfiguration<*>>()}
+
+    inline fun <reified K,C : SuspendedConfiguration<*>> register(c: C ) {registry[K::class] = c}
+
+    inline fun <reified K> get(): SuspendedConfiguration<*> = registry[K::class] as SuspendedConfiguration<*>
+
+    inline fun <reified K> get(key: K): SuspendedConfiguration<*> = registry[K::class] as SuspendedConfiguration<*>
+}
