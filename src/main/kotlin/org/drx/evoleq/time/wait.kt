@@ -36,3 +36,15 @@ fun <K,V> Map<K,V>.waitForValueToBeSet(key: K): Evolving<V> =
             v!!
         }.await()
     }
+
+class Keeper<D>(var d: D?)
+fun<D> Keeper<D>.waitForValueToBeSet(): Evolving<D> =
+Parallel{
+    GlobalScope.async {
+        var v: D? = d
+        while(v == null){
+            delay(1)
+        }
+        v!!
+    }.await()
+}
