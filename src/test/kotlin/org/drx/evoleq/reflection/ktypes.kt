@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.util
+package org.drx.evoleq.reflection
 
-fun <T> ArrayList<T>.tail(): ArrayList<T> {
-    val N = size
+import org.junit.Test
 
-    if(N <= 1){
-        return arrayListOf()
+class TypesTest{
+    @Test
+    fun test() {
+        println(Int::class.typeParameters)
     }
-    val tail = arrayListOf<T>()
-    IntRange(1,N-1).forEach { tail.add(this[it]) }
-    return tail
 }
-

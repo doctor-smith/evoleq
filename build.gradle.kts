@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     java
     kotlin("jvm") version Config.Versions.kotlin
+    id ("com.github.hierynomus.license") version "0.15.0"
 }
 
 group = "org.drx"
