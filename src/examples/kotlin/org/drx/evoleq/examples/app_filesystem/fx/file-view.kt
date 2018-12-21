@@ -14,7 +14,6 @@ import javafx.scene.text.Text
 import kotlinx.coroutines.*
 import org.drx.evoleq.dsl.conditions
 import org.drx.evoleq.dsl.suspendedFlow
-import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.examples.app_filesystem.data.*
@@ -26,7 +25,6 @@ import org.drx.evoleq.examples.app_filesystem.stubs.path
 import org.drx.evoleq.examples.application.Stub
 import org.drx.evoleq.examples.application.fx.*
 import org.drx.evoleq.examples.application.message.*
-import org.drx.evoleq.gap.Spatula
 import org.drx.evoleq.time.WaitForProperty
 import tornadofx.action
 
@@ -46,7 +44,7 @@ val mainStageConf = fxStageLazyConfiguration<Message,FxStageLazyConfiguration<Me
     y = 100.0
     minWidth = 400.0
     minHeight = 300.0
-    //isResizable = true
+    isResizable = true
 
     title = "FileSystem Main Stage"
     stub = {message: Message -> Immediate{ message } }
@@ -80,16 +78,11 @@ val mainSceneConf = fxSceneLazyConfiguration<Message, FxSceneLazyConfiguration<M
                     GlobalScope.launch {
                         val conf = folderViewConf
                         val node = conf.configure().get()
-
                         Platform.runLater {
                             (parent!! as VBox).children.add(node.node)
                         }
                         node.stubs()[FileSystemStubKey::class] = stubs[FileSystemStubKey::class]!!
-                        //node.node.nameProperty().value= message.folder.name
-                        //val name =  message.folder.name//node.stub(SetValueOfStringProperty(node.node.nameProperty(), message.folder.name)).get()
-
                         val folder = message.folder
-                        println("folder content: size = ${folder.children.size}")
                         val flow = suspendedFlow<Message,Boolean> {
                             conditions = conditions {
                                 testObject = true
@@ -116,7 +109,6 @@ val mainSceneConf = fxSceneLazyConfiguration<Message, FxSceneLazyConfiguration<M
                             }
                         }
                         m = flow.evolve(SetValueOfStringProperty(node.node.nameProperty(), message.folder.name)).get()
-
                     }
 
                     while(m!= Stop){Thread.sleep(1)}
@@ -183,7 +175,6 @@ val folderViewConf = fxNodeLazyConfiguration<Message,FolderViewContainer> {
             button.text = "v"
             val stub =stubs[FileSystemStubKey::class]!! as FileSystemStub
             GlobalScope.launch {
-            //println(container.files.size)
                 container.files.forEach { file ->
 
                     when (file) {
@@ -215,7 +206,20 @@ val folderViewConf = fxNodeLazyConfiguration<Message,FolderViewContainer> {
             container.children.remove(bottomBox)
         }
     }
-    nameLabel.setOnMouseClicked{_->
+    val dragging = container.draggable(
+        onDragDetectedAction = {
+
+        },
+        onDragAction = {
+
+        },
+        onReleaseAction = {
+            translateX = 0.0
+            translateY = 0.0
+        }
+    )
+    nameLabel.setOnMouseReleased{_->
+        if(!dragging.value){
         val stub = stubs[AppStubKey::class]!! as Stub<Message>
         val fileStub = stubs[FileSystemStubKey::class]!! as Stub<FileSystemMessage>
         Parallel{
@@ -240,12 +244,10 @@ val folderViewConf = fxNodeLazyConfiguration<Message,FolderViewContainer> {
             m = stub.stub(FxCloseStage(AddFileDialogKey())).get()
             container.output.value = Wait
         }
+        }
 
     }
 
-    container.setOnMouseDragged {
-        it.consume()
-    }
     topBox.children.addAll(
         button,
         nameLabel
