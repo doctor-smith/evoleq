@@ -1,8 +1,13 @@
+
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
     kotlin("jvm") version Config.Versions.kotlin
+    distribution
+    jFrog() version Config.Versions.jFrog
+    `maven-publish`
+    hierynomousLicense() version Config.Versions.hierynomousLicense
 }
 
 group = "org.drx"
@@ -17,14 +22,16 @@ dependencies {
     compile(Config.Dependencies.coroutines)
 
     testCompile("junit", "junit", "4.12")
+    compile(kotlin("reflect"))
 }
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
     sourceSets.create("examples"){
         java.srcDirs("src/examples/java")
-
-
+    }
+    sourceSets.create("experiments"){
+        java.srcDirs("src/experiments/java")
     }
 
     sourceSets{
@@ -32,6 +39,18 @@ configure<JavaPluginConvention> {
             java {
                 compileClasspath += sourceSets["main"].output
                 runtimeClasspath += sourceSets["main"].output
+            }
+        }
+        getByName("experiments"){
+            java {
+                compileClasspath += sourceSets["main"].output
+                runtimeClasspath += sourceSets["main"].output
+            }
+        }
+        getByName("test"){
+            java {
+                compileClasspath += sourceSets["experiments"].output
+                runtimeClasspath += sourceSets["experiments"].output
             }
         }
     }
@@ -49,15 +68,33 @@ kotlin{
                 }
             }
         }
+        getByName("experiments"){
+            kotlin.srcDirs("src/experiments/kotlin")
+            configurations {
+                dependencies{
+                    implementation(Config.Dependencies.tornadofx)
+                    implementation(Config.Dependencies.kotlinStandardLibrary)
+                    implementation(Config.Dependencies.coroutines)
+                }
+            }
+        }
     }
-
-
 }
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
+distributions {
+    getByName("main"){
+        baseName = "evoleq"
+        version = "1.0.0-beta"
+        contents {
+            from("src/main")
+        }
+    }
+}
 
-/* compile(Config.Dependencies.tornadofx)
-                    compile(Config.Dependencies.kotlinStandardLibrary)
-                    compile(Config.Dependencies.coroutines) */
+
+bintray{
+
+}

@@ -1,3 +1,6 @@
+import org.gradle.plugin.use.PluginDependenciesSpec
+import org.gradle.plugin.use.PluginDependencySpec
+
 object Config {
 
     object Versions {
@@ -20,6 +23,10 @@ object Config {
         val androidPlugin = "3.2.1"
 
         val junit = "4.12"
+
+        val hierynomousLicense = "0.15.0"
+
+        val jFrog = "1.7.3"
 
     }
 
@@ -54,4 +61,14 @@ object Config {
 
     }
 
+
+
+
+
 }
+
+fun PluginDependenciesSpec.hierynomousLicense() : PluginDependencySpec =
+    id("com.github.hierynomus.license")
+
+fun PluginDependenciesSpec.jFrog() : PluginDependencySpec =
+    id("com.jfrog.bintray")
