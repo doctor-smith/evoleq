@@ -1,9 +1,15 @@
 object Config {
 
+    object Evoleq {
+        val group = "org.drx"
+        val version = "1.0.0-beta"
+        val artifactId = "evoleq"
+    }
+
     object Versions {
 
-        val kotlin = "1.3.0"
-        val coroutines = "1.0.0"
+        val kotlin = "1.3.10"
+        val coroutines = "1.1.0"
 
         val pipeline = "1.0.4"
 
@@ -20,6 +26,8 @@ object Config {
         val androidPlugin = "3.2.1"
 
         val junit = "4.12"
+
+
 
     }
 
@@ -44,6 +52,8 @@ object Config {
 
     object Repositories {
         val drxMavenSnapshots = "http://drx.maven.net:8081/repository/snapshots"
+
+        val drxBintray = "https://dl.bintray.com/drx/maven"
 
         val gradlePluginsM2 = "https://plugins.gradle.org/m2/"
 
