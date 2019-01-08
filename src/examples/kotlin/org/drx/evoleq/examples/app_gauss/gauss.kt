@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.examples
+package org.drx.evoleq.examples.app_gauss
 
 import javafx.application.Application.launch
 import javafx.application.Platform

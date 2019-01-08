@@ -21,7 +21,7 @@ import org.drx.evoleq.conditions.update
 import org.drx.evoleq.evolving.Evolving
 
 /**
- * Evolution equation
+ * Evolution
  */
 tailrec suspend fun <D, T> evolve(
     initialData: D,
@@ -41,7 +41,7 @@ tailrec suspend fun <D, T> evolve(
 }
 
 /**
- * Evolution equation for sus
+ * Evolution
  */
 tailrec suspend fun <D, T> evolveSuspended(
     initialData: D,

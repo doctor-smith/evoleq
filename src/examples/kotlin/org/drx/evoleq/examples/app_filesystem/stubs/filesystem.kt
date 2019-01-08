@@ -42,13 +42,18 @@ class FileSystemStub : Stub<FileSystemMessage> {
                     name = file.name,
                     parentFolder = message.parent
                 )
-                folder.addAll(*file.listFiles()
-                    .map{ file -> when(file.isFile){
-                            true -> org.drx.evoleq.examples.app_filesystem.data.File(file.name, null)
-                            false -> Folder(file.name, null)
-                    }}
-                    .toTypedArray()
-                )
+                val files = file.listFiles()
+                if(files != null) {
+                    folder.addAll(*files
+                        .map { file ->
+                            when (file.isFile) {
+                                true -> org.drx.evoleq.examples.app_filesystem.data.File(file.name, null)
+                                false -> Folder(file.name, null)
+                            }
+                        }
+                        .toTypedArray()
+                    )
+                }
                 Immediate{LoadedFolder(folder)}
             }
             is LoadRootFolder -> {

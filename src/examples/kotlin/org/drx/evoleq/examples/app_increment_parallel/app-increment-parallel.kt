@@ -226,7 +226,7 @@ fun main(args: Array<String>) {
                         initialData = data.clock,
                         conditions = EvolutionConditions(
                             testObject = 0L,
-                            check = { time -> time < 5 },
+                            check = { time -> time < 15 },
                             updateCondition = { clock -> clock.time }
                         )
                     ) { clock ->

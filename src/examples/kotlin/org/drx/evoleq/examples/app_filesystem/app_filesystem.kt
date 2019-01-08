@@ -18,7 +18,6 @@ package org.drx.evoleq.examples.app_filesystem
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import org.drx.evoleq.annotations.Caller
 import org.drx.evoleq.dsl.conditions
 import org.drx.evoleq.dsl.suspendedFlow
 import org.drx.evoleq.evolving.Immediate
@@ -43,7 +42,7 @@ data class Data(
     val rootFolder: RootFolder
 )
 val stubs: HashMap<KClass<*>, Stub<*>> by lazy{ HashMap<KClass<*>, Stub<*>>() }
-val rootPath = "/home/drx/IdeaProjects/evoleq/src/examples/resources/app_filesystem"
+val rootPath = "/"
 fun main() {
     stubs[FileSystemStubKey::class] = FileSystemStub()
     val initialData = Data(
@@ -53,7 +52,6 @@ fun main() {
     )
     runBlocking{
         println("start")
-        @Caller("flow")
         val flow = suspendedFlow<Data,Boolean> {
             /* TODO find better conditions */
             conditions = conditions{
