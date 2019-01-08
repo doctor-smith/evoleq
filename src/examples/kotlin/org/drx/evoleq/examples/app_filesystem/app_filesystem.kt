@@ -42,7 +42,7 @@ data class Data(
     val rootFolder: RootFolder
 )
 val stubs: HashMap<KClass<*>, Stub<*>> by lazy{ HashMap<KClass<*>, Stub<*>>() }
-val rootPath = "/"
+val rootPath = "."
 fun main() {
     stubs[FileSystemStubKey::class] = FileSystemStub()
     val initialData = Data(

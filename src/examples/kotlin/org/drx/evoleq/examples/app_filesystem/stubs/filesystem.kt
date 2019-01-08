@@ -59,7 +59,7 @@ class FileSystemStub : Stub<FileSystemMessage> {
             is LoadRootFolder -> {
                 val file = File(message.path)
                 val folder = RootFolder(
-                    name = file.name,
+                    name = file.absolutePath.replace("/.",""),//name,
                     parentFolder = null,
                     path = message.path
                 )
