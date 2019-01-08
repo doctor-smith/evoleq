@@ -19,10 +19,7 @@ import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Scene
-import javafx.scene.control.Button
-import javafx.scene.control.CheckBox
-import javafx.scene.control.Label
-import javafx.scene.control.TextField
+import javafx.scene.control.*
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.text.Text
@@ -80,7 +77,10 @@ class MainSceneStubKey
 val mainSceneConf = fxSceneLazyConfiguration<Message, FxSceneLazyConfiguration<Message>>{
     val box = VBox()
     box.children.add(Text("Files and Folders"))
-    this@fxSceneLazyConfiguration.parent = box
+    val scrollPane : ScrollPane = ScrollPane()
+    scrollPane.setPrefSize(400.0,400.0)
+    scrollPane.content = box
+    this@fxSceneLazyConfiguration.parent = scrollPane
 }.fxStub {
     stub = {message: Message ->
 
@@ -94,7 +94,7 @@ val mainSceneConf = fxSceneLazyConfiguration<Message, FxSceneLazyConfiguration<M
                         val conf = folderViewConf
                         val node = conf.configure().get()
                         Platform.runLater {
-                            (parent!! as VBox).children.add(node.node)
+                            ((parent!! as ScrollPane).content as VBox).children.add(node.node)
                         }
                         node.stubs()[FileSystemStubKey::class] = stubs[FileSystemStubKey::class]!!
                         val folder = message.folder
