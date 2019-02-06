@@ -54,14 +54,12 @@ fun main() {
         println("start")
         val flow = suspendedFlow<Data,Boolean> {
             /* TODO find better conditions */
-            conditions = conditions{
-                testObject = true
-                check = {b ->b}
-                updateCondition = { data -> data.message != Stop}
+            conditions<Data,Boolean>{
+                testObject (true)
+                check {b ->b}
+                updateCondition { data -> data.message != Stop}
             }
-            flow = {data: Data ->
-
-                when(data.message) {
+            flow{data: Data -> when(data.message) {
 
                 is DriveStub<*> -> Parallel{
                     println("@flow.driveStub: ")
