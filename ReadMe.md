@@ -4,10 +4,10 @@ Think of your applications asynchronous, concurrent components being arranged in
 Think of your applications being designed in a really composable way 
 
 
-# The Core
+## The Core
 
-The functional heart of the library
-
+The functional heart of the library consists of just one powerful function (and a variation for suspended flows).
+### The main function
 ```kotlin
 package org.drx.evoleq
 
@@ -36,7 +36,7 @@ tailrec suspend fun <D, T> evolve(
     }
 }
 ```  
-The main data type
+### The main data type
 ```kotlin
 package org.drx.evoleq.evolving
 
@@ -45,6 +45,8 @@ interface Evolving<out D> {
 }
 
 ```
+
+It is obvious that the Evolving type is monadic. 
 
 
 
