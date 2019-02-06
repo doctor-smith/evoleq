@@ -26,5 +26,13 @@ class FlowConfiguration<D,T> : Configuration<Flow<D, T>> {
     var flow: ((D)-> Evolving<D>)? = null
 
     override fun configure(): Flow<D, T> = Flow(conditions!!, flow!!)
+
+    fun conditions(conditions: EvolutionConditions<D, T>) {
+        this.conditions = conditions
+    }
+
+    fun flow(flow:(D)-> Evolving<D>) {
+        this.flow = flow
+    }
 }
 fun <D,T> flow(configure: FlowConfiguration<D,T>.()->Unit) : Flow<D, T> = org.drx.evoleq.dsl.configure(configure)

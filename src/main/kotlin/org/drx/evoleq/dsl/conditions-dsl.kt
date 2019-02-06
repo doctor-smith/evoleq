@@ -29,5 +29,18 @@ class EvolutionConditionsConfiguration<D, T> : Configuration<EvolutionConditions
             check = check!!,
             updateCondition = updateCondition!!
         )
+
+    fun testObject(testObject: T) {
+        this.testObject = testObject
+    }
+
+    fun check(check: (T)->Boolean) {
+        this.check = check
+    }
+
+    fun updateCondition(update: (D)->T) {
+        updateCondition = update
+    }
+
 }
 fun <D,T> conditions(configure: EvolutionConditionsConfiguration<D,T>.()->Unit) : EvolutionConditions<D, T> = configure(configure)

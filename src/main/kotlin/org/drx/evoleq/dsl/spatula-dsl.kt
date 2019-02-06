@@ -28,6 +28,10 @@ class SpatulaConfiguration<W,P> : Configuration<Spatula<W, P>> {
     override fun configure(): Spatula<W, P> = object: Spatula<W,P> {
         override suspend fun fill(gap: Gap<W, P>): (W) -> Evolving<W> = gap.fill(filler!!)
     }
+
+    fun filler(filler: (P)-> Evolving<P>) {
+        this.filler = filler
+    }
 }
 fun <W,P> spatula(configure: SpatulaConfiguration<W,P>.()->Unit): Spatula<W,P> = configure(configure)
 fun <W,P> spatulaConfiguration(configure: SpatulaConfiguration<W,P>.()->Unit): SpatulaConfiguration<W,P> = setupConfiguration ( configure )
