@@ -151,7 +151,7 @@ publishing {
 
             pom.withXml {
                 val root = asNode()
-                root.appendNode("description", "Evoleq")
+                root.appendNode("description", "A declarative approach to application design based on the theory of dynamical systems")
                 root.appendNode("name", Config.Evoleq.artifactId)
                 root.appendNode("url", "https://bitbucket.org/dr-smith/evoleq.git")
                 root.children().addAll(maven.pom().dependencies)
@@ -189,10 +189,10 @@ bintray {
     pkg (delegateClosureOf<BintrayExtension.PackageConfig>{
         repo = "maven"
         name = "evoleq"
-        description = ""
+        description = "A declarative approach to application design using the theory of dynamical systems"
         //userOrg = user
         vcsUrl = "https://bitbucket.org/dr-smith/evoleq.git"
-        setLabels("kotlin", "coroutine", "dynamical system", "recursive store", "evolution equation")
+        setLabels("kotlin", "coroutine", "dynamical system", "recursive store", "evolution equation", "declarative", "functional")
         setLicenses("Apache-2.0")
 
         version (delegateClosureOf<BintrayExtension.VersionConfig>{
