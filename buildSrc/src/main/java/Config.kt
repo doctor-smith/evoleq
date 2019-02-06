@@ -8,8 +8,8 @@ object Config {
 
     object Versions {
 
-        val kotlin = "1.3.10"
-        val coroutines = "1.1.0"
+        val kotlin = "1.3.20"
+        val coroutines = "1.1.1"
 
         val pipeline = "1.0.4"
 
@@ -17,7 +17,7 @@ object Config {
         val retrolambda = "3.7.0" //"+"
         val javafxports = "8.60.9"
 
-        val tornadofx  = "1.7.17"
+        val tornadofx  = "1.7.18"
         val tornadofxAndroidCompat = "1.0.1"
 
         val grpc = "1.15.1"
