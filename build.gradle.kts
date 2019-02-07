@@ -1,5 +1,7 @@
 import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer
+import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer.id
 
 plugins {
     java
@@ -133,8 +135,10 @@ task("writeNewPom") {
 }
 
 publishing {
-    (publications) {
-        "EvoleqPublication"(MavenPublication::class) {
+    /*(publications) {
+        "EvoleqPublication"(MavenPublication::class) {*/
+    publications {
+        create<MavenPublication>("EvoleqPublication"){
             artifactId = Config.Evoleq.artifactId
             groupId = Config.Evoleq.group
             from (components["java"])
@@ -155,6 +159,16 @@ publishing {
                 root.appendNode("name", Config.Evoleq.artifactId)
                 root.appendNode("url", "https://bitbucket.org/dr-smith/evoleq.git")
                 root.children().addAll(maven.pom().dependencies)
+            }
+
+            pom {
+                developers{
+                    developer{
+                        id.set("drx")
+                        name.set("Dr. Florian Schmidt")
+                        email.set("schmidt@alpha-structure.com")
+                    }
+                }
             }
 
 /*

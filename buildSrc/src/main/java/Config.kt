@@ -2,7 +2,7 @@ object Config {
 
     object Evoleq {
         val group = "org.drx"
-        val version = "1.0.0-beta"
+        val version = "1.0.0"
         val artifactId = "evoleq"
     }
 
