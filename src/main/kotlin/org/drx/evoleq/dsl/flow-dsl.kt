@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,5 +26,13 @@ class FlowConfiguration<D,T> : Configuration<Flow<D, T>> {
     var flow: ((D)-> Evolving<D>)? = null
 
     override fun configure(): Flow<D, T> = Flow(conditions!!, flow!!)
+
+    fun conditions(conditions: EvolutionConditions<D, T>) {
+        this.conditions = conditions
+    }
+
+    fun flow(flow:(D)-> Evolving<D>) {
+        this.flow = flow
+    }
 }
 fun <D,T> flow(configure: FlowConfiguration<D,T>.()->Unit) : Flow<D, T> = org.drx.evoleq.dsl.configure(configure)

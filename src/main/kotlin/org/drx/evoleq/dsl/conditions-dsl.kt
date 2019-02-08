@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,5 +29,18 @@ class EvolutionConditionsConfiguration<D, T> : Configuration<EvolutionConditions
             check = check!!,
             updateCondition = updateCondition!!
         )
+
+    fun testObject(testObject: T) {
+        this.testObject = testObject
+    }
+
+    fun check(check: (T)->Boolean) {
+        this.check = check
+    }
+
+    fun updateCondition(update: (D)->T) {
+        updateCondition = update
+    }
+
 }
 fun <D,T> conditions(configure: EvolutionConditionsConfiguration<D,T>.()->Unit) : EvolutionConditions<D, T> = configure(configure)

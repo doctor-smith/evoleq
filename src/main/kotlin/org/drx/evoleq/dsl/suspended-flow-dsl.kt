@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,5 +26,13 @@ class SuspendedFlowConfiguration<D,T> : Configuration<SuspendedFlow<D, T>> {
     var flow: (suspend (D)-> Evolving<D>)? = null
 
     override fun configure(): SuspendedFlow<D, T> = SuspendedFlow(conditions!!, flow!!)
+
+    fun conditions(conditions: EvolutionConditions<D, T>) {
+        this.conditions = conditions
+    }
+
+    fun flow(flow: suspend (D)-> Evolving<D>) {
+        this.flow = flow
+    }
 }
 fun <D,T> suspendedFlow(configure: SuspendedFlowConfiguration<D,T>.()->Unit) : SuspendedFlow<D, T> = configure(configure)

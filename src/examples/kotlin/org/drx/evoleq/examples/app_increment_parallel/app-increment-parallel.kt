@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,7 +226,7 @@ fun main(args: Array<String>) {
                         initialData = data.clock,
                         conditions = EvolutionConditions(
                             testObject = 0L,
-                            check = { time -> time < 5 },
+                            check = { time -> time < 15 },
                             updateCondition = { clock -> clock.time }
                         )
                     ) { clock ->

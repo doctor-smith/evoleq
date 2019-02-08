@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.drx.evoleq.gap
 import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
 
-open class Filling<P>(private val filler: suspend (P)->Evolving<P>) {
+interface Filling<P> {
+    val filler: suspend (P)->Evolving<P>
     suspend fun <W> fill(gap: Gap<W,P>): suspend (W)->Evolving<W> = suspended( gap.fill(filler) )
 }

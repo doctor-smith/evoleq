@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.drx.evoleq.examples.app_filesystem
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import org.drx.evoleq.annotations.Caller
 import org.drx.evoleq.dsl.conditions
 import org.drx.evoleq.dsl.suspendedFlow
 import org.drx.evoleq.evolving.Immediate
@@ -43,7 +42,7 @@ data class Data(
     val rootFolder: RootFolder
 )
 val stubs: HashMap<KClass<*>, Stub<*>> by lazy{ HashMap<KClass<*>, Stub<*>>() }
-val rootPath = "/home/drx/IdeaProjects/evoleq/src/examples/resources/app_filesystem"
+val rootPath = "."
 fun main() {
     stubs[FileSystemStubKey::class] = FileSystemStub()
     val initialData = Data(
@@ -53,17 +52,14 @@ fun main() {
     )
     runBlocking{
         println("start")
-        @Caller("flow")
         val flow = suspendedFlow<Data,Boolean> {
             /* TODO find better conditions */
-            conditions = conditions{
-                testObject = true
-                check = {b ->b}
-                updateCondition = { data -> data.message != Stop}
+            conditions<Data,Boolean>{
+                testObject (true)
+                check {b ->b}
+                updateCondition { data -> data.message != Stop}
             }
-            flow = {data: Data ->
-
-                when(data.message) {
+            flow{data: Data -> when(data.message) {
 
                 is DriveStub<*> -> Parallel{
                     println("@flow.driveStub: ")

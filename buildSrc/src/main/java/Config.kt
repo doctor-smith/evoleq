@@ -1,12 +1,15 @@
-import org.gradle.plugin.use.PluginDependenciesSpec
-import org.gradle.plugin.use.PluginDependencySpec
-
 object Config {
+
+    object Evoleq {
+        val group = "org.drx"
+        val version = "1.0.1"
+        val artifactId = "evoleq"
+    }
 
     object Versions {
 
-        val kotlin = "1.3.0"
-        val coroutines = "1.0.0"
+        val kotlin = "1.3.20"
+        val coroutines = "1.1.1"
 
         val pipeline = "1.0.4"
 
@@ -14,7 +17,7 @@ object Config {
         val retrolambda = "3.7.0" //"+"
         val javafxports = "8.60.9"
 
-        val tornadofx  = "1.7.17"
+        val tornadofx  = "1.7.18"
         val tornadofxAndroidCompat = "1.0.1"
 
         val grpc = "1.15.1"
@@ -24,9 +27,7 @@ object Config {
 
         val junit = "4.12"
 
-        val hierynomousLicense = "0.15.0"
 
-        val jFrog = "1.7.3"
 
     }
 
@@ -52,6 +53,8 @@ object Config {
     object Repositories {
         val drxMavenSnapshots = "http://drx.maven.net:8081/repository/snapshots"
 
+        val drxBintray = "https://dl.bintray.com/drx/maven"
+
         val gradlePluginsM2 = "https://plugins.gradle.org/m2/"
 
         val jitpackIo = "https://jitpack.io"
@@ -61,14 +64,4 @@ object Config {
 
     }
 
-
-
-
-
 }
-
-fun PluginDependenciesSpec.hierynomousLicense() : PluginDependencySpec =
-    id("com.github.hierynomus.license")
-
-fun PluginDependenciesSpec.jFrog() : PluginDependencySpec =
-    id("com.jfrog.bintray")

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,10 @@ class SpatulaConfiguration<W,P> : Configuration<Spatula<W, P>> {
 
     override fun configure(): Spatula<W, P> = object: Spatula<W,P> {
         override suspend fun fill(gap: Gap<W, P>): (W) -> Evolving<W> = gap.fill(filler!!)
+    }
+
+    fun filler(filler: (P)-> Evolving<P>) {
+        this.filler = filler
     }
 }
 fun <W,P> spatula(configure: SpatulaConfiguration<W,P>.()->Unit): Spatula<W,P> = configure(configure)

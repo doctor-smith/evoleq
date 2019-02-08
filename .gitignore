@@ -4,6 +4,7 @@ gradlew
 .gradle
 build
 .idea
+gradle.properties
 
 
 

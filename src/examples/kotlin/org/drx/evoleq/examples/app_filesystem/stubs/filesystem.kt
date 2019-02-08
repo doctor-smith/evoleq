@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,19 +42,24 @@ class FileSystemStub : Stub<FileSystemMessage> {
                     name = file.name,
                     parentFolder = message.parent
                 )
-                folder.addAll(*file.listFiles()
-                    .map{ file -> when(file.isFile){
-                            true -> org.drx.evoleq.examples.app_filesystem.data.File(file.name, null)
-                            false -> Folder(file.name, null)
-                    }}
-                    .toTypedArray()
-                )
+                val files = file.listFiles()
+                if(files != null) {
+                    folder.addAll(*files
+                        .map { file ->
+                            when (file.isFile) {
+                                true -> org.drx.evoleq.examples.app_filesystem.data.File(file.name, null)
+                                false -> Folder(file.name, null)
+                            }
+                        }
+                        .toTypedArray()
+                    )
+                }
                 Immediate{LoadedFolder(folder)}
             }
             is LoadRootFolder -> {
                 val file = File(message.path)
                 val folder = RootFolder(
-                    name = file.name,
+                    name = file.absolutePath.replace("/.",""),//name,
                     parentFolder = null,
                     path = message.path
                 )

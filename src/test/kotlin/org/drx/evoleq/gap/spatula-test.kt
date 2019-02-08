@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2018 Dr. Florian Schmidt
+ * Copyright (c) 2018-2019 Dr. Florian Schmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,13 @@ package org.drx.evoleq.gap
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.conditions.once
+import org.drx.evoleq.dsl.conditions
+import org.drx.evoleq.dsl.flow
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.flow.Flow
 import org.junit.Test
 
 class SpatulaTest {
@@ -72,6 +76,51 @@ class SpatulaTest {
         val se = SideEffect(gap)
         val p = se.print(W(P("nice message"))).get().p
         println(p.message)
+    }
+
+
+    @Test
+    fun callSpatula() {
+
+        class Data(val f: ((Int) -> Evolving<Int>)? = null, val gap: Gap<Int,String>)
+        open class FillGap<W,P>
+        class FillGapRequest<W,P>(val gap: Gap<W,P>) : FillGap<W,P>()
+        class FillGapResponse<W,P>(val f: (W) -> Evolving<W>)  : FillGap<W,P>()
+        class SideEffect : Spatulas<String> {
+            override suspend fun <W> spatula(w: W): Spatula<W, String> {
+                return object: Spatula<W,String> {
+                    override suspend fun fill(gap: Gap<W, String>): (W) -> Evolving<W> {
+                        return {w -> Immediate{w}}
+                    }
+                }
+            }
+        }
+
+        val connect = flow<FillGap<Int,String>,Boolean>{
+            conditions(once())
+            flow{
+                fillGap -> when(fillGap) {
+                    is FillGapRequest<*,*> -> Immediate{FillGapResponse<Int,String>(
+                        SideEffect().spatula(0).fill(fillGap.gap as Gap<Int,String>)
+                    )}
+                    is FillGapResponse<*,*> -> Immediate{fillGap}
+                    else -> Immediate{fillGap}
+                }
+            }
+        }
+        fun <W,P> connect(spatula: Spatula<W,P>): Flow<FillGap<W,P>,Boolean> = flow{
+            conditions(once())
+            flow{
+                when (it) {
+                    is FillGapRequest<W,P> -> Immediate{
+                        FillGapResponse<W,P>(
+                            spatula.fill(it.gap)
+                        )
+                    }
+                    else -> Immediate{it}
+                }
+            }
+        }
     }
 
 }
