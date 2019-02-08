@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.experimental.dsl
+package org.drx.evoleq.examples.ml
 
-import org.drx.evoleq.dsl.Configuration
-import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.gap.Filling
+import javafx.stage.Stage
 
-class FillingConfiguration<P> : Configuration<Filling<P>> {
 
-    var filler: (suspend (P)-> Evolving<P>)? = null
+/**
+ *
+ */
+class App : tornadofx.App() {
+    override fun start(stage: Stage) {
 
-    override fun configure(): Filling<P> = Filling(filler!!)
+    }
 }
