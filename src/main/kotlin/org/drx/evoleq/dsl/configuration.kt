@@ -15,7 +15,6 @@
  */
 package org.drx.evoleq.dsl
 
-import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
 import kotlin.reflect.full.createInstance
 
