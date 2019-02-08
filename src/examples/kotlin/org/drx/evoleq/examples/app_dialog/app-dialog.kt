@@ -207,6 +207,9 @@ class App : tornadofx.App(), IApp<Data>, StageController {
         Data(this@App, Message.StoppedApp, data.cnt)
     }
 
+    /**
+     * Does not work like that
+     */
     override fun restartApp(data: Data): Evolving<Data> = Parallel {
         var running = true
 
@@ -358,7 +361,7 @@ class StopAppComponent(private val io: IO<Data>) : HBox() {
         }
         spacer.minWidth = 100.0
         spacer.resize(100.0, height)
-        children.addAll(spacer, button)
+        children.addAll(/*spacer,*/ button)
     }
 }
 
@@ -396,25 +399,3 @@ class ConfirmDialog(val confirm: Message.Dialog.Confirm ,private val io: IO<Data
         )
     }
 }
-
-
-
-
-/**
- * Auxiliary
- * =====================================================================================================================
- */
-/*
-fun <T> ArrayList<T>.tail(): ArrayList<T> {
-    val N = size
-
-    if(N <= 1){
-        //println("tail(): size = ${N-1}")
-        return arrayListOf()
-    }
-    //println("tail(): size = ${N-1}")
-    val tail = arrayListOf<T>()
-    IntRange(1,N-1).forEach { tail.add(this[it]) }
-    return tail
-}
-        */

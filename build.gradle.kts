@@ -12,8 +12,8 @@ plugins {
     id ("com.jfrog.bintray") version "1.8.0"
 }
 
-group = Config.Evoleq.group
-version = Config.Evoleq.version//"1.0.0-beta"//-SNAPSHOT"
+group = Config.ProjectData.group
+version = Config.ProjectData.version//+"-SNAPSHOT"
 
 repositories {
     mavenLocal()
@@ -130,7 +130,6 @@ task("writeNewPom") {
                 }
             }
         }.writeTo("$buildDir/pom.xml")
-        //println("$buildDir")
     }
 }
 
@@ -139,8 +138,8 @@ publishing {
         "EvoleqPublication"(MavenPublication::class) {*/
     publications {
         create<MavenPublication>("EvoleqPublication"){
-            artifactId = Config.Evoleq.artifactId
-            groupId = Config.Evoleq.group
+            artifactId = Config.ProjectData.artifactId
+            groupId = Config.ProjectData.group
             from (components["java"])
 
             artifact (tasks.getByName("sourcesJar")) {
@@ -151,12 +150,10 @@ publishing {
                 classifier = "javadoc"
             }
 
-
-
             pom.withXml {
                 val root = asNode()
                 root.appendNode("description", "A declarative approach to application design based on the theory of dynamical systems")
-                root.appendNode("name", Config.Evoleq.artifactId)
+                root.appendNode("name", Config.ProjectData.artifactId)
                 root.appendNode("url", "https://bitbucket.org/dr-smith/evoleq.git")
                 root.children().addAll(maven.pom().dependencies)
             }
@@ -170,20 +167,7 @@ publishing {
                     }
                 }
             }
-
-/*
-            pom.withXml {
-                asNode().appendNode("dependencies").let { depNode ->
-                    configurations.compile.allDependencies.forEach {
-                        depNode.appendNode("dependency").apply {
-                            appendNode("groupId", it.group)
-                            appendNode("artifactId", it.name)
-                            appendNode("version", it.version)
-                        }
-                    }
-                }
-            }
-*/
+            
         }
     }
 }
@@ -198,7 +182,6 @@ bintray {
     publish = true
     override = true
 
-    //setPublications("EvoleqPublication")
 
     pkg (delegateClosureOf<BintrayExtension.PackageConfig>{
         repo = "maven"
@@ -210,7 +193,7 @@ bintray {
         setLicenses("Apache-2.0")
 
         version (delegateClosureOf<BintrayExtension.VersionConfig>{
-            name = Config.Evoleq.version
+            name = Config.ProjectData.version
             //desc = "build ${build.number}"
             //released  = Date(System.currentTimeMillis())
             gpg (delegateClosureOf<BintrayExtension.GpgConfig>{
@@ -220,16 +203,3 @@ bintray {
     })
 
 }
-/*
-fun MavenPom.addDependencies() = withXml {
-    asNode().appendNode("dependencies").let { depNode ->
-        configurations.compile.allDependencies.forEach {
-            depNode.appendNode("dependency").apply {
-                appendNode("groupId", it.group)
-                appendNode("artifactId", it.name)
-                appendNode("version", it.version)
-            }
-        }
-    }
-}
-*/
