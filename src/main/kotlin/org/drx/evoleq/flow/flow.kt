@@ -20,14 +20,17 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolve
-import org.drx.evoleq.evolveSuspended
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.math.times
+import org.drx.evoleq.stub.DefaultIdentificationKey
+import org.drx.evoleq.stub.Stub
+import kotlin.reflect.KClass
 
 /**
  * Base class for flows,
@@ -117,4 +120,7 @@ suspend fun <D,T,P> Gap<D, P>.fillParallel(phi: Flow<P, T>, conditions: Evolutio
     }
 
 
-
+fun <D,T> Flow<D,T>.toStub(id: KClass<*> = DefaultIdentificationKey::class): Stub<D> = stub<D>{
+    id(id)
+    evolve{ data -> this@toStub.evolve(data) }
+}
