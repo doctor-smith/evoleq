@@ -15,10 +15,15 @@
  */
 package org.drx.evoleq.gap
 
+import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.dsl.gap
+import org.drx.evoleq.dsl.initialSideEffect
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.sideeffect.InitialSideEffect
+import org.drx.evoleq.sugar.close
+import org.drx.evoleq.sugar.with
 import org.junit.Test
 
 class GapTest {
@@ -71,5 +76,26 @@ class GapTest {
         val newHistory = result.history
         assert(newHistory.size == 1)
         assert(newHistory.first() == data)
+    }
+
+    @Test fun sideEffectGap() = runBlocking{
+        val property = SimpleObjectProperty<String>()
+        val sideEffect: InitialSideEffect<String?> = initialSideEffect { property.value }
+        class Data(val x: Int, val s: String)
+
+        val gap = gap<Data,String?>{
+            from{ Immediate{null} }
+            to{
+                data, s -> Immediate{Data(data.x, s!!)}
+            }
+        }
+
+        val closed = close (gap) with { Immediate{ sideEffect() } }
+
+        property.value = "set"
+
+        val result = closed(Data(0,"")).get()
+
+        assert(result.s == "set")
     }
 }
