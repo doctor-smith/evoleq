@@ -15,10 +15,12 @@
  */
 package org.drx.evoleq.dsl
 
+import javafx.beans.property.Property
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.coroutines.suspended
@@ -29,11 +31,10 @@ import org.drx.evoleq.flow.enter
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.message.Message
-import org.drx.evoleq.stub.DefaultIdentificationKey
-import org.drx.evoleq.stub.ParentStubKey
-import org.drx.evoleq.stub.Stub
+import org.drx.evoleq.stub.*
 import org.drx.evoleq.time.WaitForProperty
 import java.lang.Exception
+import java.lang.Thread.sleep
 import kotlin.reflect.KClass
 
 open class StubConfiguration<D> : Configuration<Stub<D>> {
@@ -195,13 +196,16 @@ open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
     private var preEvolve: suspend (D)-> Evolving<D> = suspended{d: D -> Immediate{d}}
     private val stack: ArrayList<P> by lazy{ arrayListOf<P>() }
     private val stackEmpty: SimpleObjectProperty<Boolean> by lazy { SimpleObjectProperty<Boolean>(true) }
-    private var observedProperty: SimpleObjectProperty<P>? = null
+
     private var gap: Gap<D, P>? = null
+
+
+    private var observedProperty: Property<P>? = null
 
     /**
      * Observe a property
      */
-    fun observe(property: SimpleObjectProperty<P>) {
+    fun observe(property: Property<P>) {
         observedProperty = property
     }
 
@@ -297,7 +301,94 @@ open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
     }
 }
 
+/**
+ * Configure an observing stub
+ * Important: The stub will not work unless a gap is defined
+ */
 fun <D,P> observingStub(configuration: ObservingStubConfiguration<D,P>.()->Unit) : Stub<D> = configure(configuration)
+/**
+ *
+ */
+open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
+    private val property = SimpleObjectProperty<P?>()
+    private var cnt = 0
+    private var numberOfNullResponses = 0
+    private var timeout: Long  = Long.MAX_VALUE
+    /**
+     * Add a new driver to the race
+     */
+    fun driver(stub: Stub<P?>) {
+        child(Keys[cnt]!!,
+            stub<P?>{
+                evolve{p: P? ->
+                    val result = stub.evolve(p).get()
+                    if(result != null) {
+                        property.value = result
+                    } else {
+                        numberOfNullResponses++
+                        if(numberOfNullResponses == cnt){
+                            property.value = result
+                        }
+                    }
+                    Immediate{result}
+                }
+            }
+        )
+        cnt++
+    }
 
+    /**
+     * Add a new driver to the race
+     */
+    fun driver(stub: suspend (P?)-> Evolving<P?>) {
+        val driver = stub<P?>{ evolve(stub) }
+        driver(driver)
+    }
+
+    /**
+     * Set a timeout
+     */
+    fun timeout(millis: Long){
+        timeout = millis
+    }
+
+    override fun configure(): Stub<D> {
+        var setup = true
+        GlobalScope.launch { async{
+            observe(property)
+            child(TimeoutKey::class,
+                stub<Unit> {
+                    evolve {
+                        Parallel {
+                            sleep(timeout)
+                            property.value = null
+                        }
+                    }
+                }
+            )
+            evolve { data ->
+                Immediate {
+                    IntRange(0, cnt - 1).forEach {
+                        Parallel { (child(Keys[it]!!) as Stub<P?>).evolve(null) }
+
+                    }
+                    Parallel { (child(TimeoutKey::class) as Stub<Unit>).evolve(Unit) }
+                    data
+                }
+            }}.await()
+            setup = false
+        }
+        while(setup){
+            Thread.sleep(0,1)
+        }
+        return super.configure()
+    }
+}
+
+/**
+ * Configure a race between certain stubs
+ * Important: You need to configure a gap for the underlying observing flow
+ */
+fun <D,P> racingStub(configuration: RacingStubConfiguration<D,P>.()->Unit) = configure(configuration)
 
 

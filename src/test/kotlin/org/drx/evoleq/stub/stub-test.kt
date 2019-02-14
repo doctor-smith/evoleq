@@ -17,6 +17,7 @@ package org.drx.evoleq.stub
 
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.dsl.*
@@ -29,7 +30,7 @@ import java.lang.Thread.sleep
 class StubTest {
 
     @Test
-    fun stubWithParent() {
+    fun stubWithParent() = runBlocking {
 
         class GetStateKey
         class ChildKey
@@ -63,16 +64,16 @@ class StubTest {
             )
 
         }
-        runBlocking {
+
             val flow = stub.evolve(1)
             println(flow.get())
 
-        }
+
     }
 
     @Test
-    fun observingStub() {
-        val prop = SimpleObjectProperty<String>()
+    fun observingStub() = runBlocking {
+        val prop = SimpleStringProperty()//SimpleObjectProperty<String>()
         val change = SimpleObjectProperty<String>()
         val stub = observingStub<Int,String>{
             observe(prop)
@@ -88,7 +89,7 @@ class StubTest {
                 }}
             }
         }
-        runBlocking {
+
             val x = stub.evolve(8)
 
             prop.value = "supi"
@@ -97,10 +98,11 @@ class StubTest {
             //sleep(1_000)
             assert(change.value == "8supi")
             assert(y == 5)
-        }
+
     }
+
     @Test
-    fun observingStubAsFlow() {
+    fun observingStubAsFlow() = runBlocking{
         class Data(val x: Int, val y: String, val clientId: Int)
         class Request(val message: String, val clientId: Int)
         val property = SimpleObjectProperty<Request>()
@@ -123,8 +125,8 @@ class StubTest {
                 updateCondition { data: Data -> data.x < 1000}
             }
         )
-        runBlocking {
-            sleep(1_000)  // make sure that flow is configured before firing data
+
+            Thread.sleep(1_000)  // make sure that flow is configured before firing data
             val result  = flow.evolve(Data(0, "",-1))
             IntRange(1,11).forEach {i ->
                 //GlobalScope.launch {
@@ -138,11 +140,11 @@ class StubTest {
             }
             assert(result.get().x >= 950)
 
-        }
+
     }
 
     @Test
-    fun pauseObservingStub() {
+    fun pauseObservingStub() =runBlocking {
         class Data(val x: Int, val cnt: Int = 0)
         class ObserverKey
         class OutKey
@@ -259,7 +261,7 @@ class StubTest {
             }
         )
 
-        runBlocking{
+
             sleep(1_000)
             var done = false
             Parallel {
@@ -285,11 +287,11 @@ class StubTest {
                 sleep(10)
             }
 
-        }
-    }
 
+    }
+/*
     @Test
-    fun racing() {
+    fun racing() = runBlocking {
         class Data(val x : Int = 0, val data: String = "")
         open class Result(val value: String = "")
 
@@ -308,7 +310,7 @@ class StubTest {
             }
             child(First::class,
                 stub<Result>{
-                    evolve{ it -> Parallel{
+                    evolve{  Parallel{
                         sleep(50)
                         val res = Result("first")
                         property.value = res
@@ -319,7 +321,7 @@ class StubTest {
             )
             child(Second::class,
                 stub<Result>{
-                    evolve{  it -> Parallel{
+                    evolve{  Parallel{
                         sleep(10)
                         val res = Result("second")
                         property.value = res
@@ -339,11 +341,49 @@ class StubTest {
             }
         }
 
-        runBlocking{
-            sleep(1_000) // make sure that configuration has taken place
-            val res = wrapperStub.evolve(Data()).get()
-            assert(res.data == "second")
+
+        sleep(1_000) // make sure that configuration has taken place
+        val res = wrapperStub.evolve(Data()).get()
+        assert(res.data == "second")
+
+
+    }
+    */
+
+
+    @Test
+    fun racingStubTest() = runBlocking {
+
+        val stub = racingStub<Int,Int> {
+            timeout (1_000 )
+            // drivers
+            driver{ Immediate{
+                sleep(150)
+                1
+            }}
+            driver{ Immediate{
+                sleep(100)
+                2
+            }}
+            driver{ Immediate{
+                sleep(10)
+                3
+            }}
+            // gap
+            gap{
+                from{ Immediate{ null } }
+                to{x , y-> Immediate{
+                    when(y==null){
+                        true -> x
+                        false ->x+y
+                    }
+                }}
+            }
         }
+        sleep(1_000)
+        val x = stub.evolve(0).get()
+        //println(x)
+        assert(x == 3)
 
     }
 }
