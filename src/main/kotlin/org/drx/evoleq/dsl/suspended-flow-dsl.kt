@@ -31,6 +31,10 @@ class SuspendedFlowConfiguration<D,T> : Configuration<SuspendedFlow<D, T>> {
         this.conditions = conditions
     }
 
+    fun setupConditions(configuration: EvolutionConditionsConfiguration<D, T>.()->Unit) {
+        conditions = org.drx.evoleq.dsl.configure(configuration)
+    }
+
     fun flow(flow: suspend (D)-> Evolving<D>) {
         this.flow = flow
     }
