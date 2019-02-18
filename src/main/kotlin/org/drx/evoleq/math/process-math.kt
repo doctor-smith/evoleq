@@ -38,7 +38,7 @@ tailrec suspend fun <S,T> process(first: (S)-> Evolving<T>, steps: ArrayList<(T)
             process(first * next, tail)
         }
     }
-
+/*
 suspend fun <S,T> process(first: suspend (S)-> Evolving<T>, vararg steps: (T)-> Evolving<T>): suspend (S)-> Evolving<T> =
     when(steps.isEmpty()) {
         true -> first
@@ -87,3 +87,4 @@ tailrec suspend fun <S,T> process(first: suspend (S)-> Evolving<T>, steps: Suspe
         }
     }
 
+*/
