@@ -21,6 +21,7 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.coroutines.suspended
@@ -267,7 +268,7 @@ open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
             }.enter(gap!!)
             // define the side-effect.
             // Have to distinguish the cases of empty and non-empty stack
-            val sideEffect = suspended { p:P -> Parallel {
+            val sideEffect = suspended { p:P -> Parallel<P> {
                 //println(stack.size)
                 when (stack.isEmpty()) {
                     true -> {
@@ -314,6 +315,7 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
     private var cnt = 0
     private var numberOfNullResponses = 0
     private var timeout: Long  = Long.MAX_VALUE
+    private val cancellables: ArrayList<Parallel<Evolving<P?>>> by lazy { ArrayList<Parallel<Evolving<P?>>>() }
     /**
      * Add a new driver to the race
      */
@@ -356,11 +358,12 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
         var setup = true
         GlobalScope.launch { async{
             observe(property)
+            property.addListener{_,_,nV -> cancellables.forEach{it.cancel(Immediate{null})}}
             child(TimeoutKey::class,
                 stub<Unit> {
                     evolve {
                         Parallel {
-                            sleep(timeout)
+                            delay(timeout)
                             property.value = null
                         }
                     }
@@ -369,10 +372,9 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
             evolve { data ->
                 Immediate {
                     IntRange(0, cnt - 1).forEach {
-                        Parallel { (child(Keys[it]!!) as Stub<P?>).evolve(null) }
-
+                        cancellables.add( Parallel { (child(Keys[it]!!) as Stub<P?>).evolve(null) })
                     }
-                    Parallel { (child(TimeoutKey::class) as Stub<Unit>).evolve(Unit) }
+                    Parallel<Unit> { (child(TimeoutKey::class) as Stub<Unit>).evolve(Unit) }
                     data
                 }
             }}.await()
