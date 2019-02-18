@@ -18,6 +18,7 @@ package org.drx.evoleq.stub
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.dsl.*
@@ -65,10 +66,8 @@ class StubTest {
 
         }
 
-            val flow = stub.evolve(1)
-            println(flow.get())
-
-
+        val flow = stub.evolve(1)
+        assert(flow.get() == 2)
     }
 
     @Test
@@ -122,23 +121,23 @@ class StubTest {
             conditions{
                 testObject(true)
                 check { b -> b }
-                updateCondition { data: Data -> data.x < 1000}
+                updateCondition { data: Data -> data.x < 500}
             }
         )
 
-            Thread.sleep(1_000)  // make sure that flow is configured before firing data
+            delay(1_000)  // make sure that flow is configured before firing data
             val result  = flow.evolve(Data(0, "",-1))
             IntRange(1,11).forEach {i ->
                 //GlobalScope.launch {
-                Parallel{
+                Parallel<Unit>{
                     IntRange(1, 101).forEach {
                         property.value = Request("$it", i)
-                        sleep(1)
+                        delay(1)
                     }
                 }
 
             }
-            assert(result.get().x >= 950)
+            assert(result.get().x >= 150)
 
 
     }
@@ -170,7 +169,7 @@ class StubTest {
                     if(!launched) {
                         launched = true
                         val behavior = child(ObserveBehaviorKey::class) as Stub<Boolean>
-                        Parallel{val res =behavior.toFlow<Boolean,Boolean>(
+                        Parallel<Unit>{val res =behavior.toFlow<Boolean,Boolean>(
                             conditions{
                                 testObject(true)
                                 check{b -> b}
@@ -264,7 +263,7 @@ class StubTest {
 
             sleep(1_000)
             var done = false
-            Parallel {
+            Parallel<Unit> {
                 val result = flow.evolve(Data(0))
                 val res = result.get().x
                 assert (res == 4)
@@ -273,18 +272,18 @@ class StubTest {
 
             }
             observe.value = false
-            sleep(1_000)
+            delay(1_000)
             observedProperty.value = 1
 
             observe.value = true
-            sleep(1_000)
+            delay(1_000)
             observedProperty.value = 2
             observedProperty.value = 3
             observedProperty.value = 4
             observe.value = false
             observedProperty.value = 5
             while(!done){
-                sleep(10)
+                delay(10)
             }
 
 
@@ -358,15 +357,15 @@ class StubTest {
             timeout (1_000 )
             // drivers
             driver{ Immediate{
-                sleep(150)
+                delay(150)
                 1
             }}
             driver{ Immediate{
-                sleep(100)
+                delay(100)
                 2
             }}
             driver{ Immediate{
-                sleep(10)
+                delay(10)
                 3
             }}
             // gap
@@ -380,7 +379,7 @@ class StubTest {
                 }}
             }
         }
-        sleep(1_000)
+        delay(1_000)
         val x = stub.evolve(0).get()
         //println(x)
         assert(x == 3)
