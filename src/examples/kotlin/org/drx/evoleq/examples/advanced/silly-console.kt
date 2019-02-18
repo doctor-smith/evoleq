@@ -45,7 +45,7 @@ fun main(args: Array<String>) = runBlocking{
         val fProp =  SimpleObjectProperty<(W)-> Evolving<W>>()
         var fSet = false
         init{
-            Parallel {
+            Parallel<Unit> {
                 fProp.value = fill(gap)
                 fSet = true
             }
