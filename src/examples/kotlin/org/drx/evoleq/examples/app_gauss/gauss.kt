@@ -52,7 +52,7 @@ class App: tornadofx.App() {
 
             val scale = 100.0
             GlobalScope.launch {
-            val list = Parallel {
+            val list = Parallel<Pair<ArrayList<Double>,Long>> {
                 evolve<Pair<ArrayList<Double>, Long>, Long>(
                     initialData = Pair(arrayListOf<Double>(), 0L),
                     conditions = EvolutionConditions<Pair<ArrayList<Double>, Long>, Long>(
@@ -86,7 +86,7 @@ class App: tornadofx.App() {
                     cnt++
                 }
             }
-                println(groups.size)
+                //println(groups.size)
             Platform.runLater {
                 val center = 600.0;
                 val base = 300.0
