@@ -43,7 +43,7 @@ class SpatulaTest {
             val fProp =  SimpleObjectProperty<(W)-> Evolving<W>>()
             var fSet = false
             init{
-                Parallel {
+                Parallel<Unit> {
                     println("init")
                     fProp.value = fill(gap)
                     fSet = true
