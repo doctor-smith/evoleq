@@ -54,7 +54,7 @@ fun main() {
         println("start")
         val flow = suspendedFlow<Data,Boolean> {
             /* TODO find better conditions */
-            conditions<Data,Boolean>{
+            setupConditions{
                 testObject (true)
                 check {b ->b}
                 updateCondition { data -> data.message != Stop}
@@ -75,7 +75,7 @@ fun main() {
                         Immediate{data.copy(message = FxLaunchResponse)}
                     }
                     is FxResponseMessage -> when(data.message){
-                        is FxLaunchResponse -> Parallel{
+                        is FxLaunchResponse -> Parallel<Data>{
                             println("launched")
                             // register cofigurations
                             data.copy(
@@ -133,7 +133,7 @@ fun main() {
                         val stub = data.stubs[FileSystemStubKey::class] as Stub<FileSystemMessage>
                         when (data.message) {
 
-                            is LoadRootFolder -> Parallel {
+                            is LoadRootFolder -> Parallel<Data> {
                                 data.copy(
                                     message = stub.stub(
                                         data.message
