@@ -18,17 +18,49 @@ package org.drx.evoleq.evolving
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.*
+import kotlinx.coroutines.NonCancellable.attachChild
 
 /**
  * Evolution type parallel:
  * evolve async and parallel
  * - without blocking the current thread
  */
-class Parallel<D>(private val delay: Long = 1, private val block: suspend () -> D ) :
-    Evolving<D> {
+class Parallel<D>(
+    private val delay: Long = 1,
+    val scope: CoroutineScope = GlobalScope,
+    private val block: suspend Parallel<D>.() -> D
+) : Evolving<D> {
 
+    private var deferred: Deferred<D>? = null
+
+    init{
+        scope.launch{ coroutineScope{
+            deferred = async{ this@Parallel.block() }
+        }}
+    }
+
+    override suspend fun get(): D {
+        while(deferred == null) {
+            delay(delay)
+        }
+        return deferred!!.await()
+    }
+
+    fun cancel(d: D): Evolving<D> = Immediate {
+        while(deferred == null) {
+            delay(delay)
+        }
+        deferred!!.cancel()
+        d
+    }
+
+    fun job(): Job = deferred!!
+
+/*
     private val property: SimpleObjectProperty<D> = SimpleObjectProperty()
     private var updated = false
+    private var job: Job? = null
+
     init {
         val listener = ChangeListener<D>{_, oV, nV ->
             if (nV != oV) {
@@ -36,25 +68,43 @@ class Parallel<D>(private val delay: Long = 1, private val block: suspend () -> 
             }
         }
         property.addListener( listener )
-        GlobalScope.launch {
-            coroutineScope {
-                launch {
+
+        job = scope.launch{ coroutineScope {
+           launch {
+                try {
                     property.value = block()
-                    property.removeListener( listener )
+                } finally {
+                    property.removeListener(listener)
                 }
             }
-        }
+        } }
     }
+
     override suspend fun get(): D {
         while(!updated){
             delay(delay)  // reason why get has to be suspended
         }
         return property.value
     }
+
+    fun cancel(d: D) { if(!updated) {
+        //scope.launch {
+
+            job!!.cancel()//cancelAndJoin()
+        job!!.cancelChildren()
+            property.value = d
+            updated = true
+        //}
+        }
+    }
+
+    fun job(): Job = job!!
+*/
 }
 /**
  * Evolution type function
  */
+/*
 suspend fun <D> parallel( block: suspend () -> D ): D {
     val property: SimpleObjectProperty<D> = SimpleObjectProperty()
     var updated = false
@@ -74,3 +124,4 @@ suspend fun <D> parallel( block: suspend () -> D ): D {
         result
     }.await()
 }
+*/
