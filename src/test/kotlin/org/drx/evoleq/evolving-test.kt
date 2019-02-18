@@ -17,6 +17,7 @@ package org.drx.evoleq
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
+import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.math.times
@@ -34,18 +35,18 @@ class EvolvingTest {
     @Test
     fun testTimes() {
         val f = {s:String->
-            Parallel {
+            Parallel<Int> {
                 delay(1_000)
                 s.length
             }
         }
         val g = {i:Int ->
-            Parallel {
+            Parallel<Double> {
                 i.toDouble()
             }
         }
         runBlocking {
-            val h = Parallel { f * g }.get()
+            val h = Parallel<(String)-> Evolving<Double>> { f * g }.get()
             val j = f*g
             assert(h("kind").get() == 4.0)
             assert(j("kind").get() == 4.0)
@@ -89,8 +90,5 @@ class EvolvingTest {
         }
     }
 
-    @Test
-    fun testBackPropagationSndAttempt() = runBlocking {
 
-    }
 }
