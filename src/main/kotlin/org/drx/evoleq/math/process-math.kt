@@ -38,14 +38,14 @@ tailrec suspend fun <S,T> process(first: (S)-> Evolving<T>, steps: ArrayList<(T)
             process(first * next, tail)
         }
     }
-/*
+
 suspend fun <S,T> process(first: suspend (S)-> Evolving<T>, vararg steps: (T)-> Evolving<T>): suspend (S)-> Evolving<T> =
     when(steps.isEmpty()) {
         true -> first
         false -> {
             val next = steps.first()
             val tail = arrayListOf(*steps).tail()
-            process( suspended(first * next), tail)
+            process( first * next, tail)
         }
     }
 tailrec suspend fun <S,T> process(first: suspend (S)-> Evolving<T>, steps: ArrayList<(T)-> Evolving<T>>):suspend (S)-> Evolving<T> =
@@ -54,7 +54,7 @@ tailrec suspend fun <S,T> process(first: suspend (S)-> Evolving<T>, steps: Array
         false -> {
             val next = steps.first()
             val tail = steps.tail()
-            process(suspended(first * next), tail)
+            process(first * next, tail)
         }
     }
 
@@ -87,4 +87,3 @@ tailrec suspend fun <S,T> process(first: suspend (S)-> Evolving<T>, steps: Suspe
         }
     }
 
-*/

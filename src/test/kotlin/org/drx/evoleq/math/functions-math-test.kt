@@ -15,6 +15,7 @@
  */
 package org.drx.evoleq.math
 
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class FunctionsMathTest {
@@ -26,5 +27,12 @@ class FunctionsMathTest {
         val h1 = g then f
         val h2 = f then g
         val h3 = g then g
+
+        assert(h(Unit) == Unit)
+        runBlocking {
+            assert(h1(Unit) == Unit)
+            assert(h2(Unit) == Unit)
+            assert(h3(Unit) == Unit)
+        }
     }
 }

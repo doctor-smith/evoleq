@@ -29,6 +29,7 @@ import org.drx.evoleq.*
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.math.process
 import org.drx.evoleq.math.times
@@ -71,8 +72,8 @@ sealed class Message {
     object StoppedApp : Message()
     object Wait : Message()
     object Empty : Message()
-    class Continuation(val blocks: ArrayList<(Data)-> Evolving<Data>> = arrayListOf()) : Message()  {
-        constructor(process:(Data)-> Evolving<Data>): this(arrayListOf({ d:Data -> process(d)}))
+    class Continuation(val blocks: ArrayList<suspend (Data)-> Evolving<Data>> = arrayListOf()) : Message()  {
+        constructor(process:suspend (Data)-> Evolving<Data>): this(arrayListOf(process))
     }
     sealed class Dialog(val id: Long) : Message() {
         class Confirm(val statement: String,id: Long,val continuation: Continuation = Continuation()) : Dialog(id)
@@ -284,20 +285,20 @@ fun main(args: Array<String>) {
                 is Message.StoppedApp-> data.app.waiting(Data(data.app, Message.Wait, data.cnt))
 
                 // continuation
-                is Message.Continuation -> data.message.blocks.first() (
+                is Message.Continuation -> Immediate{data.message.blocks.first() (
                     data.copy(message = Message.Continuation(
                         data.message.blocks.tail())
-                    )
-                )
+                    )).get()}
+
 
                 // interaction
                 is Message.ClickedIncButton -> data.app.updateApp(Data(data.app, Message.Empty, data.cnt + 1))
                 is Message.StopApp -> Parallel {
                     val id = System.currentTimeMillis()
-                    val continuation = Parallel<(Data)-> Evolving<Data>> {
+                    val continuation = Parallel<suspend (Data)-> Evolving<Data>> {
                         process<Data,Data>(
-                            { d: Data -> d.app.updateApp(d.copy(message = Message.Dialog.Close(id))) },
-                            { d: Data -> d.app.stopApp(d.copy(message = Message.Empty)) }
+                            suspended{ d: Data -> d.app.updateApp(d.copy(message = Message.Dialog.Close(id))) },
+                            suspended { d: Data -> d.app.stopApp(d.copy(message = Message.Empty)) }
                         )
                     }.get()
                     data.app.updateApp(
