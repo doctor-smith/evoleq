@@ -15,10 +15,8 @@
  */
 package org.drx.evoleq.evolving
 
-import javafx.beans.property.SimpleObjectProperty
-import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.*
-import kotlinx.coroutines.NonCancellable.attachChild
+import org.drx.evoleq.coroutines.blockRace
 
 /**
  * Evolution type parallel:
@@ -29,99 +27,53 @@ class Parallel<D>(
     private val delay: Long = 1,
     val scope: CoroutineScope = GlobalScope,
     private val block: suspend Parallel<D>.() -> D
-) : Evolving<D> {
+) : Evolving<D>, Cancellable<D> {
 
-    private var deferred: Deferred<D>? = null
+    private lateinit var deferred: Deferred<D>
 
-    init{
-        scope.launch{ coroutineScope{
-            deferred = async{ this@Parallel.block() }
-        }}
+    private var default: D? = null
+
+    init {
+        scope.launch {
+            coroutineScope {
+                deferred = async { this@Parallel.block() }
+            }
+        }
     }
 
     override suspend fun get(): D {
-        while(deferred == null) {
+        while (!::deferred.isInitialized) {
             delay(delay)
         }
-        return deferred!!.await()
+
+        return blockRace(
+            scope,
+            { deferred.await() },
+            {
+                while (default == null) {
+                    delay(1)
+                }
+                default!!
+            }
+        ).await()
     }
 
-    fun cancel(d: D): Evolving<D> = Immediate {
-        while(deferred == null) {
-            delay(delay)
+    override fun cancel(d: D): Evolving<D> = Immediate {
+        default = d
+        if (::deferred.isInitialized) {
+            deferred.cancel()
+        } else {
+            coroutineScope {
+                var cnt = 0
+                while (cnt < 1000 && !::deferred.isInitialized) {
+                    delay(delay)
+                    cnt++
+                }
+                deferred.cancel()
+            }
         }
-        deferred!!.cancel()
         d
     }
 
-    fun job(): Job = deferred!!
-
-/*
-    private val property: SimpleObjectProperty<D> = SimpleObjectProperty()
-    private var updated = false
-    private var job: Job? = null
-
-    init {
-        val listener = ChangeListener<D>{_, oV, nV ->
-            if (nV != oV) {
-                updated = true
-            }
-        }
-        property.addListener( listener )
-
-        job = scope.launch{ coroutineScope {
-           launch {
-                try {
-                    property.value = block()
-                } finally {
-                    property.removeListener(listener)
-                }
-            }
-        } }
-    }
-
-    override suspend fun get(): D {
-        while(!updated){
-            delay(delay)  // reason why get has to be suspended
-        }
-        return property.value
-    }
-
-    fun cancel(d: D) { if(!updated) {
-        //scope.launch {
-
-            job!!.cancel()//cancelAndJoin()
-        job!!.cancelChildren()
-            property.value = d
-            updated = true
-        //}
-        }
-    }
-
-    fun job(): Job = job!!
-*/
+    fun job(): Job = deferred
 }
-/**
- * Evolution type function
- */
-/*
-suspend fun <D> parallel( block: suspend () -> D ): D {
-    val property: SimpleObjectProperty<D> = SimpleObjectProperty()
-    var updated = false
-    property.addListener{ _, oV, nV ->
-        if(nV != oV) {
-            updated = true
-        }
-    }
-    coroutineScope{ launch {
-        property.value = block()
-    }}
-    return GlobalScope.async {
-        while(!updated){
-            delay(1)
-        }
-        val result = property.value
-        result
-    }.await()
-}
-*/
