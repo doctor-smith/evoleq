@@ -237,7 +237,7 @@ val folderViewConf = fxNodeLazyConfiguration<Message,FolderViewContainer> {
         if(!dragging.value){
         val stub = stubs[AppStubKey::class]!! as Stub<Message>
         val fileStub = stubs[FileSystemStubKey::class]!! as Stub<FileSystemMessage>
-        Parallel{
+        Parallel<Unit>{
             var m = stub.stub(FxShowStage(AddFileDialogKey())).get()
             val s = (m as FxShowStageResponse<*,*>).stub as Stub<Message>
             m = s.stub(SetOutputMessage<Message>(
@@ -276,7 +276,7 @@ val folderViewConf = fxNodeLazyConfiguration<Message,FolderViewContainer> {
 
 
         when(message){
-            is WaitForPropertyMessage<*> -> Parallel{
+            is WaitForPropertyMessage<*> -> Parallel<Message>{
                 WaitForProperty(message.property).toChange().get() as Message
             }
             is SetValueOfStringProperty -> Parallel{

@@ -18,7 +18,6 @@ package org.drx.evoleq.dsl
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.flow.Flow
-import org.drx.evoleq.flow.SuspendedFlow
 
 class FlowConfiguration<D,T> : Configuration<Flow<D, T>> {
 
@@ -29,6 +28,10 @@ class FlowConfiguration<D,T> : Configuration<Flow<D, T>> {
 
     fun conditions(conditions: EvolutionConditions<D, T>) {
         this.conditions = conditions
+    }
+
+    fun setupConditions(configuration: EvolutionConditionsConfiguration<D, T>.()->Unit) {
+        conditions = org.drx.evoleq.dsl.configure(configuration)
     }
 
     fun flow(flow:(D)-> Evolving<D>) {

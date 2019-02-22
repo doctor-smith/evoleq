@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.math
+package org.drx.evoleq.dsl
 
-import kotlinx.coroutines.runBlocking
-import org.junit.Test
+fun<K,V> map(configuration: HashMapConfiguration<K,V>.()->Unit): HashMap<K,V> = configure(configuration)
+class HashMapConfiguration<K,V> : Configuration<HashMap<K, V>> {
 
-class FunctionsMathTest {
-    @Test
-    fun testOverloading() {
-        val f: (Unit)->Unit = {Unit}
-        val g: suspend (Unit)->Unit = {Unit}
-        val h = f then f
-        val h1 = g then f
-        val h2 = f then g
-        val h3 = g then g
+    val map: HashMap<K,V> by lazy { HashMap<K,V>() }
 
-        assert(h(Unit) == Unit)
-        runBlocking {
-            assert(h1(Unit) == Unit)
-            assert(h2(Unit) == Unit)
-            assert(h3(Unit) == Unit)
-        }
+    override fun configure(): HashMap<K, V> =  map
+
+    infix fun K.to(value: V) {
+        map[this] = value
+    }
+
+    fun putAll(from: HashMap<K,V>) {
+        map.putAll(from)
     }
 }

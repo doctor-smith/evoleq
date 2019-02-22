@@ -13,26 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.math
+package org.drx.evoleq.evolving
 
-import kotlinx.coroutines.runBlocking
-import org.junit.Test
-
-class FunctionsMathTest {
-    @Test
-    fun testOverloading() {
-        val f: (Unit)->Unit = {Unit}
-        val g: suspend (Unit)->Unit = {Unit}
-        val h = f then f
-        val h1 = g then f
-        val h2 = f then g
-        val h3 = g then g
-
-        assert(h(Unit) == Unit)
-        runBlocking {
-            assert(h1(Unit) == Unit)
-            assert(h2(Unit) == Unit)
-            assert(h3(Unit) == Unit)
-        }
-    }
+interface Cancellable<D> {
+    fun cancel(d : D): Evolving<D>
 }

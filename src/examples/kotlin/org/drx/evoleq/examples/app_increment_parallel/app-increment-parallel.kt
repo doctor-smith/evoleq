@@ -182,8 +182,8 @@ fun main(args: Array<String>) {
                 updateCondition = { data -> Pair(data.appData.message, data.clock.time) }
             )
         ){  data ->
-            Parallel {
-                val appData = Parallel {
+            Parallel<Data> {
+                val appData = Parallel<AppData> {
                     evolve(
                         initialData = data.appData,
                         conditions = EvolutionConditions(
@@ -221,7 +221,7 @@ fun main(args: Array<String>) {
                         }
                     }
                 }
-                val clock = Parallel {
+                val clock = Parallel<Clock> {
                     evolve(
                         initialData = data.clock,
                         conditions = EvolutionConditions(

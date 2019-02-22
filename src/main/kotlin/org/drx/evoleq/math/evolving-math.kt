@@ -63,7 +63,7 @@ fun <R,S,T> ( (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : (R)-> Evolving
     Immediate { muEvolving(this(r) map flow).get() }
 }
 suspend operator
-fun <R,S,T> ( suspend (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : (R)-> Evolving<T> = {
+fun <R,S,T> ( suspend (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : suspend (R)-> Evolving<T> = {
         r ->
     Immediate { muEvolving(this(r) map flow).get() }
 }

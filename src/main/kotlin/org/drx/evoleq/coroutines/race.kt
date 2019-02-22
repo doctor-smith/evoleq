@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.math
+package org.drx.evoleq.coroutines
 
-import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import kotlinx.coroutines.*
 
-class FunctionsMathTest {
-    @Test
-    fun testOverloading() {
-        val f: (Unit)->Unit = {Unit}
-        val g: suspend (Unit)->Unit = {Unit}
-        val h = f then f
-        val h1 = g then f
-        val h2 = f then g
-        val h3 = g then g
+suspend fun <D> blockRace(scope: CoroutineScope = GlobalScope, block1: suspend ()->D, block2: suspend ()->D): Deferred<D> = scope.async {
+    lateinit var job1: Job
+    var job2: Job? = null
 
-        assert(h(Unit) == Unit)
-        runBlocking {
-            assert(h1(Unit) == Unit)
-            assert(h2(Unit) == Unit)
-            assert(h3(Unit) == Unit)
+    var result: D? = null
+
+    job1 = scope.launch{ coroutineScope{
+        result = block1()
+        while(job2 == null) {
+            delay(1)
         }
+        job2!!.cancel()
+    }}
+    job2 = scope.launch{ coroutineScope{
+        result = block2()
+
+        job1.cancel()
+    }}
+    while(result == null) {
+        delay(1)
     }
+    result!!
 }

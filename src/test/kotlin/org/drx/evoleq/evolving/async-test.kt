@@ -13,26 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.math
+package org.drx.evoleq.evolving
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class FunctionsMathTest {
-    @Test
-    fun testOverloading() {
-        val f: (Unit)->Unit = {Unit}
-        val g: suspend (Unit)->Unit = {Unit}
-        val h = f then f
-        val h1 = g then f
-        val h2 = f then g
-        val h3 = g then g
+class AsyncTest {
 
-        assert(h(Unit) == Unit)
-        runBlocking {
-            assert(h1(Unit) == Unit)
-            assert(h2(Unit) == Unit)
-            assert(h3(Unit) == Unit)
+    @Test
+    fun isAsyncExecution() = runBlocking{
+        val async1 = Async<String>(scope = this) {
+            var i = 0
+            while(i < 10) {
+                kotlinx.coroutines.delay(100)
+                println("running 1")
+                i ++
+            }
+            "done 1"
         }
+        val x1 = async1.get()
+        val async2 = Async<String>(scope = this) {
+            var i = 0
+            while(i < 20) {
+                kotlinx.coroutines.delay(50)
+                println("running 2")
+                i ++
+            }
+            "done 2"
+        }
+
+        val x2 = async2.get()
     }
+
 }

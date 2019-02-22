@@ -18,15 +18,10 @@ package org.drx.evoleq.evolving
 import kotlinx.coroutines.*
 import org.drx.evoleq.coroutines.blockRace
 
-/**
- * Evolution type parallel:
- * evolve async and parallel
- * - without blocking the current thread
- */
-class Parallel<D>(
-    private val delay: Long = 1,
-    val scope: CoroutineScope = GlobalScope,
-    private val block: suspend Parallel<D>.() -> D
+class Async<D>(
+            private val delay: Long = 1,
+            val scope: CoroutineScope = GlobalScope,
+            private val block: suspend Async<D>.() -> D
 ) : Evolving<D>, Cancellable<D> {
 
     private lateinit var deferred: Deferred<D>
@@ -35,9 +30,7 @@ class Parallel<D>(
 
     init {
         scope.launch {
-            coroutineScope {
-                deferred = async { this@Parallel.block() }
-            }
+            deferred = async { this@Async.block() }
         }
     }
 
@@ -72,6 +65,7 @@ class Parallel<D>(
                 deferred.cancel()
             }
         }
+
         d
     }
 

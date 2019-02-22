@@ -13,26 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.math
+package org.drx.evoleq.sugar
 
-import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.gap.Gap
+import org.drx.evoleq.gap.fill
 
-class FunctionsMathTest {
-    @Test
-    fun testOverloading() {
-        val f: (Unit)->Unit = {Unit}
-        val g: suspend (Unit)->Unit = {Unit}
-        val h = f then f
-        val h1 = g then f
-        val h2 = f then g
-        val h3 = g then g
-
-        assert(h(Unit) == Unit)
-        runBlocking {
-            assert(h1(Unit) == Unit)
-            assert(h2(Unit) == Unit)
-            assert(h3(Unit) == Unit)
-        }
-    }
-}
+fun <W,P> close(gap: Gap<W, P>): Gap<W, P> = gap
+suspend infix fun <W,P> Gap<W, P>.with(filler: (P)-> Evolving<P>) = this.fill(filler)
+suspend infix fun <W,P> Gap<W, P>.withSuspended(filler: suspend (P)-> Evolving<P>) = this.fill(filler)

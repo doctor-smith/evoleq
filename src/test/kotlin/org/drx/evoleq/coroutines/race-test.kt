@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.math
+package org.drx.evoleq.coroutines
 
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
+import java.lang.Thread.sleep
 
-class FunctionsMathTest {
-    @Test
-    fun testOverloading() {
-        val f: (Unit)->Unit = {Unit}
-        val g: suspend (Unit)->Unit = {Unit}
-        val h = f then f
-        val h1 = g then f
-        val h2 = f then g
-        val h3 = g then g
+class RaceTest {
 
-        assert(h(Unit) == Unit)
-        runBlocking {
-            assert(h1(Unit) == Unit)
-            assert(h2(Unit) == Unit)
-            assert(h3(Unit) == Unit)
-        }
+    @Test fun blockRace() = runBlocking{
+        val x = blockRace(GlobalScope,{
+            sleep(10)
+            1
+        },{
+            sleep(1)
+            2
+        }).await()
+
+        assert(x ==2)
     }
+
 }

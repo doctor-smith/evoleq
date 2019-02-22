@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.stub
+package org.drx.evoleq.dsl
 
-import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.dsl.suspendedFlow
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.flow.Evolver
-import org.drx.evoleq.flow.SuspendedFlow
-import kotlin.reflect.KClass
+import org.drx.evoleq.gap.Gap
 
-class DefaultIdentificationKey
-interface Stub<D> : Evolver<D> {
+open class GapConfiguration<W,P> : Configuration<Gap<W,P>> {
 
-    override suspend fun evolve(d: D): Evolving<D> = Immediate{ d }
+    private var from: ((W)->Evolving<P>)? = null
+    private var to: ((W)->((P)->Evolving<W>))? = null
 
-    val id: KClass<*>
-    val stubs: HashMap<KClass<*>, Stub<*>>
+    fun from(start: (W)->Evolving<P>) {
+        from = start
+    }
+    fun to(end : (W)->((P)->Evolving<W>)) {
+        to = end
+    }
+    fun to(end: (W,P)-> Evolving<W>) {
+        to = {w ->  {p -> end(w,p)}}
+    }
+
+    override fun configure(): Gap<W, P> = Gap(from!!, to!!)
+
 }
-class ParentStubKey
-fun <D,T> Stub<D>.toFlow(conditions: EvolutionConditions<D,T>): SuspendedFlow<D,T> = suspendedFlow {
-    conditions(conditions)
-    flow{ d -> this@toFlow.evolve(d) }
-}
+fun <W, P> gap(configuration: GapConfiguration<W, P>.()->Unit): Gap<W, P> = configure(configuration)

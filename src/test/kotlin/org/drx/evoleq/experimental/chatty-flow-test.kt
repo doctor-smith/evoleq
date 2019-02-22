@@ -17,6 +17,7 @@ package org.drx.evoleq.experimental
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.experimental.flow.ChattyFlow
@@ -44,7 +45,7 @@ class ChattyFlowTest {
             }
 
             override fun waitForInput()  {
-                Parallel { WaitForProperty(output()).toChange() }
+                Parallel<Evolving<String>> { WaitForProperty(output()).toChange() }
             }
         }
         var d = "";
