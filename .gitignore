@@ -6,8 +6,8 @@ build
 .idea
 gradle.properties
 
-#/src/experiments
-#/src/examples
+/src/experiments
+/src/examples
 
 
 # Created by .ignore support plugin (hsz.mobi)
