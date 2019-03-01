@@ -15,9 +15,57 @@
  */
 package org.drx.evoleq.flow
 
+import org.drx.evoleq.evolving.Async
 import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
 
 interface Evolver<D> {
     suspend fun evolve(d: D): Evolving<D>
 }
 
+
+suspend fun <D,E> Evolver<D>.forkImmediate(other: Evolver<E>) : Evolver<Pair<D,E>> = object: Evolver<Pair<D,E>> {
+    override suspend fun evolve(d: Pair<D, E>): Evolving<Pair<D, E>> = Immediate {
+        val first =this@forkImmediate.evolve(d.first)
+        val second = other.evolve(d.second)
+        Pair(first.get(),second.get())
+    }
+}
+suspend fun <D,E> Evolver<D>.forkParallel(other: Evolver<E>) : Evolver<Pair<D,E>> = object: Evolver<Pair<D,E>> {
+    override suspend fun evolve(d: Pair<D, E>): Evolving<Pair<D, E>> = Parallel {
+        val first =this@forkParallel.evolve(d.first)
+        val second = other.evolve(d.second)
+        Pair(first.get(),second.get())
+    }
+}
+/*
+suspend fun <D> Evolver<D>.forkParallel(vararg others: Evolver<D>) : Evolver<ArrayList<D>> = object: Evolver<ArrayList<D>> {
+    override suspend fun evolve(d: ArrayList<D>): Evolving<ArrayList<D>> = Parallel{
+        val result = arrayListOf(this@forkParallel.evolve(d.first()).get())
+        others.forEachIndexed { index, evolver -> result.add(
+            evolver.evolve(d[index +1]).get()
+        ) }
+
+        result
+    }
+}
+*/
+suspend fun <D,E> Evolver<D>.forkAsync(other: Evolver<E>) : Evolver<Pair<D,E>> = object: Evolver<Pair<D,E>> {
+    override suspend fun evolve(d: Pair<D, E>): Evolving<Pair<D, E>> = Async {
+        val first =this@forkAsync.evolve(d.first)
+        val second = other.evolve(d.second)
+        Pair(first.get(),second.get())
+    }
+}
+
+data class ErrorCatcher<D>(val data: D, val error: Exception? = null)
+fun <D> Evolver<D>.runCatchingErrors() : Evolver<ErrorCatcher<D>> = object: Evolver<ErrorCatcher<D>> {
+    override suspend fun evolve(d: ErrorCatcher<D>): Evolving<ErrorCatcher<D>> = Immediate {
+        try{
+            ErrorCatcher(this@runCatchingErrors.evolve(d.data).get())
+        } catch(exception : Exception){
+            d.copy(error = exception)
+        }
+    }
+}
