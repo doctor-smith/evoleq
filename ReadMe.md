@@ -1,21 +1,17 @@
-# A declarative approach to application design
-Think of your applications (and their functional flow) being easily described in a dsl-flavoured fashion.
-Think of your applications asynchronous, concurrent components being arranged in an unbreakable process hierarchy, which is easily understood.
-Think of your applications being designed in a really composable way 
+# Evoleq
+
+Functional programming in terms of dynamical systems. A declarative approach to application design.
+## Goals
+* Write applications (and their functional flow) in a dsl-flavoured fashion.
+* Arrange applications asynchronous, concurrent components in an unbreakable process hierarchy.
+* Design applications in a really composable way.
 
 
-## The Core
+## The Core 
 
 The functional heart of the library consists of just one powerful function (and a variation for suspended flows).
-### The main function
+### The Main Function 
 ```kotlin
-package org.drx.evoleq
-
-import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.conditions.ok
-import org.drx.evoleq.conditions.update
-import org.drx.evoleq.evolving.Evolving
-
 /**
  * Evolution
  */
@@ -37,6 +33,7 @@ tailrec suspend fun <D, T> evolve(
 }
 ```  
 ### The main data type
+The main idea behind the following data type is to provide a uniform way to treat synchronous and asynchronous processes.  
 ```kotlin
 package org.drx.evoleq.evolving
 
@@ -45,8 +42,56 @@ interface Evolving<out D> {
 }
 
 ```
+It is obvious that the Evolving type is monadic.
+ 
 
-It is obvious that the Evolving type is monadic. 
+<!--## Outlook
+-->
+ 
+## Terminology <!-- / Code snippets-->
+
+### Flows, Stubs and Gaps
+Use stubs, gaps and flows to organize the evolution maps:
+
+Example: First one wins
+```kotlin
+val stub = racingStub<Int,Int> {
+    timeout (1_000 )
+    // drivers
+    driver{ Parallel{
+        delay(150)
+        1
+    }}
+    driver{ Parallel{
+        delay(100)
+        2
+    }}
+    driver{ Parallel{
+        delay(10)
+        3
+    }}
+    // gap
+    gap{
+        from{ Immediate{ null } }
+        to{x , y-> Immediate{
+            when(y==null){
+                true -> x
+                false -> y
+            }
+        }}
+    }
+}
+val flow = stub.toFlow( conditions( once() ))
+val result = flow.evolve(0).get()
+```
+
+To be continued...
+<!--
+### Gaps
+
+
+### Stubs 
+-->
 
 
 
