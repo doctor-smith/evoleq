@@ -44,11 +44,7 @@ interface Evolving<out D> {
 ```
 It is obvious that the Evolving type is monadic.
  
-
-<!--## Outlook
--->
- 
-## Terminology <!-- / Code snippets-->
+## Terminology 
 
 ### Flows, Stubs and Gaps
 Use stubs, gaps and flows to organize the evolution maps:
@@ -86,12 +82,6 @@ val result = flow.evolve(0).get()
 ```
 
 To be continued...
-<!--
-### Gaps
-
-
-### Stubs 
--->
 
 
 
