@@ -10,6 +10,7 @@ plugins {
     `maven-publish`
     maven
     id ("com.jfrog.bintray") version "1.8.0"
+    id("org.jetbrains.dokka") version "0.9.17"
 }
 
 group = Config.ProjectData.group
@@ -106,9 +107,16 @@ tasks {
         from(tasks["javadoc"])
     }
 
+    val dokkaJar by creating(Jar::class) {
+        group = JavaBasePlugin.DOCUMENTATION_GROUP
+        description = "Assembles Kotlin docs with Dokka"
+        classifier = "javadoc"
+        from(tasks["dokka"])
+    }
+
     artifacts {
         add("archives", sourcesJar)
-        add("archives", javadocJar)
+        add("archives", dokkaJar)
     }
 
 
@@ -203,3 +211,10 @@ bintray {
     })
 
 }
+
+
+
+
+
+
+
