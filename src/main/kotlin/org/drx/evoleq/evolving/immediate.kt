@@ -19,9 +19,15 @@ package org.drx.evoleq.evolving
  * Immediate: return immediately
  */
 class Immediate<D>(private val block: suspend ()->D) : Evolving<D> {
+    private var set = false
     private var result: D? = null
+    @Suppress("unchecked_cast")
     override suspend fun get(): D {
-        if (result == null){ result = block() }
-        return result!!
+        if (!set){
+            result = block()
+            set = true
+            return result as D
+        }
+        return result as D
     }
 }
