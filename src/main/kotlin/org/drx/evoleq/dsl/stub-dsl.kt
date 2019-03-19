@@ -30,6 +30,7 @@ import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.message.Message
 import org.drx.evoleq.stub.*
+import org.drx.evoleq.time.TimeoutKey
 import org.drx.evoleq.time.WaitForProperty
 import java.lang.Exception
 import java.lang.Thread.sleep
@@ -404,7 +405,8 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
         GlobalScope.launch { async{
             observe(property)
             property.addListener{_,_,nV -> cancellables.forEach{it.cancel(Immediate{null})}}
-            child(TimeoutKey::class,
+            child(
+                TimeoutKey::class,
                 stub<Unit> {
                     evolve {
                         Parallel {
