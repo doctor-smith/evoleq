@@ -43,7 +43,7 @@ interface Evolving<out D> {
 
 ```
 It is obvious that the Evolving type is monadic.
- 
+
 ## Terminology 
 
 ### Flows, Stubs and Gaps
@@ -83,5 +83,10 @@ val result = flow.evolve(0).get()
 
 To be continued...
 
+## Examples 
+Take a look at the sources of [evoleq-examples](https://bitbucket.org/dr-smith/evoleq-examples/src/master/) 
+
+## Versions
+Take a look at the [version history](VERSIONS.md).
 
 

@@ -14,5 +14,3 @@
    * Evolving, Immediate, Parallel
    * Flows 
    * Gaps
-
-Note: Publication of this library was not intended in vhe very beginning.

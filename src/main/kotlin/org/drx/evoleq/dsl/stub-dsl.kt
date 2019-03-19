@@ -19,10 +19,7 @@ import javafx.beans.property.Property
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
@@ -33,6 +30,7 @@ import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.message.Message
 import org.drx.evoleq.stub.*
+import org.drx.evoleq.time.TimeoutKey
 import org.drx.evoleq.time.WaitForProperty
 import java.lang.Exception
 import java.lang.Thread.sleep
@@ -46,25 +44,32 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     /**
      * Collection of all sub-stubs
      */
-    protected val stubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
+     val stubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
     /**
      * Stubs to be called by children
      */
-    private val parentalStubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
+    protected val parentalStubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
 
-    private val parentalStubsMap: HashMap<KClass<*>, KClass<*>> by lazy { HashMap<KClass<*>, KClass<*>>() }
+    protected val parentalStubsMap: HashMap<KClass<*>, KClass<*>> by lazy { HashMap<KClass<*>, KClass<*>>() }
     /**
      * key: 'Key of a child class'
      * val: 'list of stub identifiers accessible to key-stub'
      */
-    private val crossChildAccessMap: HashMap<KClass<*>, ArrayList<KClass<*>>> by lazy{ HashMap<KClass<*>, ArrayList<KClass<*>>>() }
+    protected val crossChildAccessMap: HashMap<KClass<*>, ArrayList<KClass<*>>> by lazy{ HashMap<KClass<*>, ArrayList<KClass<*>>>() }
     /**
      * Shall child stub be visible to parent of the generated stub
      */
     //private val visibleToParent: ArrayList<KClass<*>> by lazy{ arrayListOf<KClass<*>>()}
 
+    private lateinit var stub: Stub<D>
 
+    init{
+
+    }
     override fun configure(): Stub<D> {
+
+
+
         val stub = object : Stub<D> {
 
             override val id: KClass<*>
@@ -79,10 +84,12 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
         parentalStubsMap.entries.forEach { entry ->
             val child = stub.stubs[entry.key]
             val parentStub = parentalStubs[entry.value]
-            if(child != null && parentStub != null) {
+            if (child != null && parentStub != null) {
                 child.stubs[ParentStubKey::class] = parentStub
             }
         }
+        this@StubConfiguration.stub = stub
+
 
         return stub
     }
@@ -103,7 +110,8 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
      * Access the stub provided by the parent during configuration.
      * E.g. within the evolve block of the child's dsl
      */
-    fun parent(): Stub<*> = stubs[ParentStubKey::class]!!
+    @Suppress("unchecked_cast")
+    fun <E> parent(): Stub<E> = stubs[ParentStubKey::class]!! as Stub<E>
 
     /**
      * Access a child during configuration.
@@ -113,7 +121,11 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
         true -> throw(Exception("accessing the parent is not allowed via child-function"))
         else -> stubs[key]!!
     }
-
+    @Suppress("unchecked_cast")
+    inline fun <reified K, E> child(): Stub<E> =when(K::class  == ParentStubKey::class) {
+        true -> throw(Exception("accessing the parent is not allowed via child-function"))
+        else -> stubs[K::class] as Stub<E>
+    }
     /**
      * Access a sibling during configuration
      */
@@ -130,7 +142,7 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     /**
      * Configure a child stub
      */
-    fun child( key: KClass<*>, stub: Stub<*>, accessedParentStub: KClass<*>? = null) {
+    fun child( key: KClass<*>, stub: Stub<*>, accessedParentStub: KClass<*>? = null) = runBlocking {
         stubs[key] = stub
         if(accessedParentStub != null) {
             parentalStubsMap[key] = accessedParentStub
@@ -140,7 +152,7 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     /**
      * Using this function requires setting up id during configuration
      */
-    fun child(stub: Stub<*>, accessedParentStub: KClass<*>?? = null){
+    fun child(stub: Stub<*>, accessedParentStub: KClass<*>? = null){
         child(stub.id, stub, accessedParentStub)
     }
 
@@ -152,6 +164,9 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
         parentalStubs[key] = stub
     }
 
+    /**
+     * Define which siblings shall be accessible to child
+     */
     fun accessibleSiblings(child: KClass<*>, vararg siblingKeys: KClass<*>) {
         crossChildAccessMap[child] = arrayListOf(*siblingKeys)
     }
@@ -159,7 +174,7 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     fun KClass<*>.grantAccessToSiblings(vararg siblingKeys: KClass<*>) = accessibleSiblings(this,*siblingKeys)
 
     /**
-     * Using this method requires that the ids of the involved stubs ar set
+     * Using this method requires that the ids of the involved stubs have been set
      */
     fun accessibleSiblings(child: Stub<*>, vararg siblings: Stub<*>) {
         crossChildAccessMap[child.id] = arrayListOf(*siblings.map{stub -> stub.id}.toTypedArray())
@@ -170,19 +185,50 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
      */
     fun Stub<*>.grantAccessToSiblings(vararg siblings: Stub<*>) = accessibleSiblings(this,*siblings)
 
-/*
-    fun find(key: KClass<*>): Stub<*>? {
-        stubs.forEach{
+
+    fun setupRelationsToChildren() {
+        parentalStubsMap.entries.forEach { entry ->
+            val child = stub.stubs[entry.key]
+            val parentStub = parentalStubs[entry.value]
+            if(child != null && parentStub != null) {
+                child.stubs[ParentStubKey::class] = parentStub
+            }
+        }
+    }
+
+
+
+    fun whenReady(actOn: Stub<D>.()->Unit) = Parallel<Stub<D>>{
+        while(!::stub.isInitialized){
+            kotlinx.coroutines.delay(1)
+        }
+        println(stub.stubs.keys)
+        stub.actOn()
+        stub
+    }
+
+    fun exposeConfiguration(): StubConfiguration<D> = this@StubConfiguration
+
+
+    /**
+     * Find a stub in this stub or in one of its children.
+     */
+    fun Stub<*>.find(key: KClass<*>): Stub<*>? = findByKey(key) /*{
+        this.stubs.forEach{
             if(it.key == key){
                 return it.value
             }
         }
-        stubs.values.forEach{
-            if(it.stubs)
+        this.stubs.values.forEach{
+            val stub = it.find(key)
+            if(stub != null){
+                return stub
+            }
         }
         return null
     }
-*/
+    */
+
 }
 
 fun <D> stub(configuration: StubConfiguration<D>.()->Unit) : Stub<D> = configure(configuration)
@@ -359,7 +405,8 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
         GlobalScope.launch { async{
             observe(property)
             property.addListener{_,_,nV -> cancellables.forEach{it.cancel(Immediate{null})}}
-            child(TimeoutKey::class,
+            child(
+                TimeoutKey::class,
                 stub<Unit> {
                     evolve {
                         Parallel {

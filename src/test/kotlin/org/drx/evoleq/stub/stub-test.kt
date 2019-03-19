@@ -54,7 +54,7 @@ class StubTest {
             child(ChildKey::class,
                 stub<String>{
                     evolve{ s -> Immediate {
-                        val parentStub = parent() as Stub<Int>
+                        val parentStub = parent<Int>()
                         val x = parentStub.evolve(0)
                         val res = x.get().toString()
                         res
@@ -221,7 +221,7 @@ class StubTest {
                     gap{
                         from{ x -> Immediate{ x } }
                         to{x,y -> Immediate{
-                            val parentStub = parent() as Stub<String>
+                            val parentStub = parent<String>()
                             val res = parentStub.evolve("received: $y").get()
                             y
                         }}
@@ -238,7 +238,7 @@ class StubTest {
                     gap{
                         from{ x -> Immediate{ x } }
                         to{x,y -> Immediate{
-                            val parentStub = parent() as Stub<Boolean>
+                            val parentStub = parent<Boolean>()
                             val res = parentStub.evolve(y).get()
                             y
                         }}
@@ -384,5 +384,51 @@ class StubTest {
         //println(x)
         assert(x == 3)
 
+    }
+
+    @Test fun find() = runBlocking {
+        class One
+        class Two
+        class Three
+        var s : Stub<*>? = null
+        val stub = stub<Unit> {
+            id(One::class)
+            child( stub<Unit>{
+                id(Two::class)
+                child(stub<Unit>{
+                    id(Three::class)
+                    evolve{Immediate{Unit}}
+                })
+                evolve{Immediate{Unit}}
+            })
+            evolve{
+                Parallel{
+                    //this@stub.whenReady{
+                    s = this@stub.child(Two::class)
+                    whenReady {
+                        s = find(Three::class) as Stub<*>
+                        println((s as Stub<*>).id)
+                    }
+                    assert(s != null)
+                    Unit
+                }
+            }
+            whenReady{
+                s = find(Three::class) as Stub<*>
+                assert(s != null)
+                println("in whenReady" +(s as Stub<*>).id)
+                println(stubs.size)
+                stubs.forEach{
+                    println(it.key)
+                    println(it.value.stubs.size)
+                }
+            }
+
+        }
+
+        //delay(500)
+        val d =  stub.evolve(Unit).get()
+        assert(s != null)
+        delay(1_000)
     }
 }

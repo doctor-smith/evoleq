@@ -87,4 +87,15 @@ class ParallelTest {
         val x2 = parallel2.get()
         val x1 = parallel1.get()
     }
+
+    @Test fun readTwice() = runBlocking{
+        val parallel = Parallel<Int>{
+            kotlinx.coroutines.delay(20)
+            1
+        }
+        val x = parallel.get()
+        val y = parallel.get()
+
+        assert(x == y)
+    }
 }

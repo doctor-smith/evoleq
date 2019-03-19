@@ -16,7 +16,7 @@
 package org.drx.evoleq.dsl
 
 fun<K,V> map(configuration: HashMapConfiguration<K,V>.()->Unit): HashMap<K,V> = configure(configuration)
-class HashMapConfiguration<K,V> : Configuration<HashMap<K, V>> {
+open class HashMapConfiguration<K,V> : Configuration<HashMap<K, V>> {
 
     val map: HashMap<K,V> by lazy { HashMap<K,V>() }
 
