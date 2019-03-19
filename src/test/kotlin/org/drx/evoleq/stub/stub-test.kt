@@ -410,9 +410,6 @@ class StubTest {
                         println((s as Stub<*>).id)
                     }
                     assert(s != null)
-                    //println("s:"+s.id)
-                    //}
-                    //delay(100)
                     Unit
                 }
             }

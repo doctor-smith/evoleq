@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.dsl
+package org.drx.evoleq.stub
 
-fun<K,V> map(configuration: HashMapConfiguration<K,V>.()->Unit): HashMap<K,V> = configure(configuration)
-open class HashMapConfiguration<K,V> : Configuration<HashMap<K, V>> {
+import kotlin.reflect.KClass
 
-    val map: HashMap<K,V> by lazy { HashMap<K,V>() }
-
-    override fun configure(): HashMap<K, V> =  map
-
-    infix fun K.to(value: V) {
-        map[this] = value
-    }
-
-    fun putAll(from: HashMap<K,V>) {
-        map.putAll(from)
+var currentKeyId = -1
+object cyclicKeys {
+    private val size = Keys.size
+    private var currentId = 0
+    fun next(): KClass<*> {
+        val key = Keys[currentId]!!
+        when (currentId) {
+            size -1 ->   currentId = 0
+            else -> currentId++
+        }
+        return key
     }
 }

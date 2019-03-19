@@ -36,3 +36,18 @@ fun <D,T> Stub<D>.toFlow(conditions: EvolutionConditions<D,T>): SuspendedFlow<D,
     conditions(conditions)
     flow{ d -> this@toFlow.evolve(d) }
 }
+
+fun Stub<*>.findByKey(key: KClass<*>): Stub<*>? {
+    this.stubs.forEach{
+        if(it.key == key){
+            return it.value
+        }
+    }
+    this.stubs.values.forEach{
+        val stub = it.findByKey(key)
+        if(stub != null){
+            return stub
+        }
+    }
+    return null
+}

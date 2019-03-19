@@ -13,20 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.dsl
+package org.drx.evoleq.flow
 
-fun<K,V> map(configuration: HashMapConfiguration<K,V>.()->Unit): HashMap<K,V> = configure(configuration)
-open class HashMapConfiguration<K,V> : Configuration<HashMap<K, V>> {
-
-    val map: HashMap<K,V> by lazy { HashMap<K,V>() }
-
-    override fun configure(): HashMap<K, V> =  map
-
-    infix fun K.to(value: V) {
-        map[this] = value
-    }
-
-    fun putAll(from: HashMap<K,V>) {
-        map.putAll(from)
-    }
-}
+interface Phase

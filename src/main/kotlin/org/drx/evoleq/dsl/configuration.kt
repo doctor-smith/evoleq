@@ -16,12 +16,14 @@
 package org.drx.evoleq.dsl
 
 import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.flow.Phase
 import kotlin.reflect.full.createInstance
 
 interface Configuration<out D>
 {
     fun configure() : D
 }
+interface ConfigurationPhase : Phase
 
 open class ConfigurationConfiguration<D> : Configuration<Configuration<D>> {
 

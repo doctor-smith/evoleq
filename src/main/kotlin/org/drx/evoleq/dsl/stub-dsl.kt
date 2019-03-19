@@ -207,10 +207,12 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     }
 
     fun exposeConfiguration(): StubConfiguration<D> = this@StubConfiguration
+
+
     /**
      * Find a stub in this stub or in one of its children.
      */
-    fun Stub<*>.find(key: KClass<*>): Stub<*>? {
+    fun Stub<*>.find(key: KClass<*>): Stub<*>? = findByKey(key) /*{
         this.stubs.forEach{
             if(it.key == key){
                 return it.value
@@ -224,6 +226,7 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
         }
         return null
     }
+    */
 
 }
 
