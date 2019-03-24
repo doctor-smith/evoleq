@@ -1,3 +1,5 @@
+[ ![Download](https://api.bintray.com/packages/drx/maven/evoleq/images/download.svg?version=1.0.3) ](https://bintray.com/drx/maven/evoleq/1.0.3/link)
+
 # Evoleq
 
 Functional programming in terms of dynamical systems. A declarative approach to application design.
