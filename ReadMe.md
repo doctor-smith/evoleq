@@ -5,7 +5,7 @@
 Functional programming in terms of dynamical systems. A declarative approach to application design.
 ## Goals
 * Write applications (and their functional flow) in a dsl-flavoured fashion.
-* Arrange applications asynchronous, concurrent components in an unbreakable process hierarchy.
+* Arrange asynchronous, concurrent components of applications in an unbreakable process hierarchy.
 * Design applications in a really composable way.
 
 
