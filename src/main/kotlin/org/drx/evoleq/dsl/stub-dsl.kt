@@ -32,8 +32,7 @@ import org.drx.evoleq.message.Message
 import org.drx.evoleq.stub.*
 import org.drx.evoleq.time.TimeoutKey
 import org.drx.evoleq.time.WaitForProperty
-import java.lang.Exception
-import java.lang.Thread.sleep
+import kotlin.Exception
 import kotlin.reflect.KClass
 
 open class StubConfiguration<D> : Configuration<Stub<D>> {
@@ -441,3 +440,108 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
 fun <D,P> racingStub(configuration: RacingStubConfiguration<D,P>.()->Unit) = configure(configuration)
 
 
+class ReceivingStub
+sealed class ReceivingStubMessage {
+    sealed class Request : ReceivingStubMessage() {
+        object Observe : Request()
+        object Ignore : Request()
+        object Close : Request()
+    }
+    sealed class Response: ReceivingStubMessage() {
+        object Observing : Response()
+        object Ignoring : Response()
+        object Closed : Response()
+    }
+    object Empty: ReceivingStubMessage()
+}
+open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
+    private var preEvolve: suspend (W)-> Evolving<W> = suspended{d: W -> Immediate{d}}
+    lateinit var gap: Gap<W,P>
+    lateinit var receiver: Receiver<P>
+    /**
+     * The gap to close
+     */
+    fun gap(configuration: GapConfiguration<W, P>.()->Unit) {
+        this.gap = configure(configuration)
+    }
+
+    fun receiver(receiver: Receiver<P>) {
+        this.receiver = receiver
+    }
+
+    /**
+     * Define the pre-evolve function of the stub.
+     * In principle it is not necessary to use this function during usage
+     */
+    override fun evolve( flow:suspend (W)-> Evolving<W> ) {
+        this.preEvolve = flow
+    }
+
+    override fun configure(): Stub<W> {
+        var setupDone = false
+        GlobalScope.launch {
+            var observing = true
+            val stack = arrayListOf<P>()
+            Parallel<Unit> {
+                for(p in receiver.channel) {
+                    if (observing) {
+                        //println("added $p to stack")
+                        stack.add(p)
+                    }
+                }
+            }
+
+            val flowGap = suspendedFlow<W,Boolean> {
+                conditions(once())
+                flow { d:W ->preEvolve(d) }
+            }.enter(gap)
+            val sideEffect = suspended { p: P ->
+                Parallel<P> {
+                    if(!observing) {
+                        stack.clear()
+                    }
+                    while(stack.isEmpty()){
+                        kotlinx.coroutines.delay(1)
+                    }
+                    val pNew = stack.first()
+                    stack.removeAt(0)
+                    pNew
+                }
+            }
+
+            super.stubs[ReceivingStub::class] = stub<ReceivingStubMessage>{
+                id(ReceivingStub::class)
+                evolve{
+                    message -> when (message){
+                    is ReceivingStubMessage.Request -> when(message){
+                        is ReceivingStubMessage.Request.Observe -> Parallel{
+                            observing = true
+                            ReceivingStubMessage.Response.Observing
+                        }
+                        is ReceivingStubMessage.Request.Ignore -> Parallel{
+                            observing = false
+                            ReceivingStubMessage.Response.Ignoring
+                        }
+                        is ReceivingStubMessage.Request.Close -> Parallel{
+                            try {
+                                receiver.actor.close()
+                            }catch(exception: Exception){}
+                            ReceivingStubMessage.Response.Closed
+                        }
+                    }
+                    else -> Parallel{ReceivingStubMessage.Empty}
+                }
+            } }
+
+            super.evolve = suspended(flowGap.fill(sideEffect))
+            setupDone = true
+        }
+        // await configuration to be done
+        while(!setupDone) {
+            Thread.sleep(0,1)
+        }
+        return super.configure()
+    }
+}
+
+fun <W,P> receivingStub(configuration : ReceivingStubConfiguration<W,P>.()->Unit): Stub<W> = configure(configuration)

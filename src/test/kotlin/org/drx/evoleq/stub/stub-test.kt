@@ -431,4 +431,48 @@ class StubTest {
         assert(s != null)
         delay(1_000)
     }
+
+    @Test fun receiverStubBasics() = runBlocking {
+
+        val receiver: Receiver<Int> = receiver<Int>() {}
+
+        val actorStub = receivingStub<Int, Int> {
+            gap {
+                from { x -> Immediate { x } }
+                to { x, y -> Immediate { x + y } }
+            }
+
+            receiver(receiver)
+
+            evolve { x ->
+                Immediate {
+                    //println(x)
+                    x
+                }
+            }
+        }
+
+        val callingStub = stub<Int> {
+            evolve { x ->
+                actorStub.evolve(x)
+            }
+        }
+    val N = 100
+        val flow = callingStub.toFlow<Int, Boolean>(conditions {
+            testObject(true)
+            check { b -> b }
+            updateCondition { x -> x <= N*(N+1) / 2 }
+        })
+        Parallel<Unit>{
+            (1..(N+1)).forEach{Parallel<Unit>{receiver.send(it)}}
+
+        }
+        val res = flow.evolve(0)
+        println(res.get())
+        val response = (actorStub.stubs[ReceivingStub::class]!! as Stub<ReceivingStubMessage>).evolve(ReceivingStubMessage.Request.Close).get()
+
+        assert(receiver.actor.isClosedForSend)
+        //receiver.receiver.close()
+        Unit
+    }
 }
