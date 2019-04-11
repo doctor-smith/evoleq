@@ -44,8 +44,8 @@ interface Evolving<out D> {
 }
 
 ```
-It is obvious that the Evolving type is monadic.
-
+It is obvious that implementations of the Evolving type are monadic when they are functorial.
+The implementations provided in this library are all functorial.
 ## Terminology 
 
 ### Flows, Stubs and Gaps
