@@ -83,6 +83,68 @@ val flow = stub.toFlow( conditions( once() ))
 val result = flow.evolve(0).get()
 ```
 
+Example (schematic): Intercept application shutdown with a confirmation dialog
+```kotlin
+/**
+ * Dialog message
+ */
+sealed class Dialog {
+    object Show : Dialog()
+    object Ok : Dialog()
+    object Cancel : Dialog()
+}
+/**
+ * Dialog stub
+ */
+val closeDialogStub: Stub<Dialog> = TODO()
+
+
+/**
+ * Application Messages
+ */
+sealed class Message {
+    object Start : Message()
+    object Close : Message()
+    object CloseResponse : Message()
+    object Resume : Message()
+}
+
+/**
+ * Application stub 
+ */
+val appStub = stub<Message> {
+    evolve{ message -> when( message ) {
+        is Message.Start -> TODO()
+       
+        // interception
+        is Message.Close -> message.intercept(
+            closeDialogStub,
+            gap{
+                from { message -> Parallel{ Dialog.Show } }
+                to { message, dialog -> when(dialog) {
+                    is Dialog.Ok -> Immedaite{ Message.CloseResponse }
+                    is Dialog.Cancel -> Immediate{ Message.Resume }
+                    else -> Immediate{ Message.Resume }
+                } }
+            }     
+       )
+             
+       is Message.Resume -> TODO()
+       is Mesage.CloseResponse -> Immediate{ message }
+    } }
+    
+/**
+ * Aplication flow
+ */
+val appFlow = appStub.toFlow<Message, Boolean>(
+    conditions{
+        testObject(true)
+        check{ b -> b }
+        updateCondition{ message -> message !is Message.CloseReponse }
+    }
+)
+
+```
 To be continued...
 
 ## Examples 
