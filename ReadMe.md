@@ -4,12 +4,13 @@
 
 Functional programming in terms of dynamical systems. A declarative approach to application design.
 ## Goals
-* Write applications (and their functional flow) in a dsl-flavoured fashion.
+* Write applications (and their functional flows) using a process-dsl.
+* Unify synchronous and asynchronous coding  
 * Arrange asynchronous, concurrent components of applications in an unbreakable process hierarchy.
 * Design applications in a really composable way.
 
 ## Build your Project with Evoleq 
-
+Evoleq is hosted on bintray/jcenter
 ### Gradle
 ```kotlin
 compile( "org.drx:evoleq:1.0.3" )
