@@ -59,7 +59,6 @@ package org.drx.evoleq.evolving
 interface Evolving<out D> {
     suspend fun get() : D
 }
-
 ```
 It is obvious that implementations of the Evolving type are monadic when they are functorial.
 The implementations provided in this library are all functorial.
@@ -67,6 +66,24 @@ The implementations provided in this library are all functorial.
 The well-disposed reader sees immediately that the evolution map is a co-algebra.
 
 ## Terminology 
+Evoleq is inspired by the theory of __dynamical systems__. 
+Roughly speaking, a dynamical system can be described as follows: 
+if you have an invertible map 
+T: X->X, 
+where a is a set, 
+then T induces a map
+&Phi; : Z x X -> X: (n,x)->T<sup>n</sup>(x) on X (here, Z is the set of integers).
+with the following properties:
+* &Phi;(0,x) = x, for all elements x of X,
+* &Phi;(n+m,x) = &Phi;(n, &Phi(m,x)) for all integers n,m and all x in X
+ 
+&Phi; is called the __flow__ of T on X or simply a __dynamical system__.
+Further, mathematicians would say that X __evolves__ under the flow of T.
+
+The requirement on T in being invertible is too strong for our purposes.
+We will keep the terminology but allow all transformations T: X->X. Doing so, we end up with a somehow monoidal version
+of flows &Phi;: N x X -> X, (n, x)->T<sup>n</sup>(x) 
+
 
 ### Flows, Stubs and Gaps
 Use stubs, gaps and flows to organize the evolution maps:
@@ -234,5 +251,9 @@ Take a look at the sources of [evoleq-examples](https://bitbucket.org/dr-smith/e
 
 ## Versions
 Take a look at the [version history](VERSIONS.md).
+
+
+
+
 
 
