@@ -136,7 +136,7 @@ val appStub = stub<Message> {
             gap{
                 from { message -> Parallel{ Dialog.Show } }
                 to { message, dialog -> when(dialog) {
-                    is Dialog.Ok -> Immedaite{ Message.CloseResponse }
+                    is Dialog.Ok -> Immediate{ Message.CloseResponse }
                     is Dialog.Cancel -> Immediate{ Message.Resume }
                     else -> Immediate{ Message.Resume }
                 } }
