@@ -148,7 +148,7 @@ val appStub = stub<Message> {
     } }
 }    
 /**
- * Aplication flow
+ * Application flow
  */
 val appFlow = appStub.toFlow<Message, Boolean>(
     conditions{
