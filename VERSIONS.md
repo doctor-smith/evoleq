@@ -1,6 +1,7 @@
 ## Versions
 1.0.3: ReceivingStubs: 
    * Use kotlin channels to define receiving-stub. 
+   * Interception with Evolvers
 
 1.0.2: Observing stubs:
    * Integrate initial side-effects in a convenient way

@@ -16,6 +16,8 @@
 package org.drx.evoleq.flow
 
 import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.dsl.gap
+import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
@@ -75,6 +77,39 @@ class EvolverTest {
             assert(res2.exception!!.message == "Exception")
             assert(res2.data == -1)
         } catch(e: Exception) {}
+    }
+
+    @Test fun intercept() = runBlocking {
+
+        var interceptorCalled = false
+
+        class Interceptor
+        val interceptor = stub<String>{
+            id(Interceptor::class)
+
+            evolve{
+                s -> Immediate{
+                interceptorCalled = true
+                    s+s
+                }
+            }
+        }
+
+        val stub = stub<Int> {
+            evolve{ x -> when(x) {
+                0 -> x.intercept(interceptor, gap{
+                    from  { x -> Immediate{x.toString()} }
+                    to { x, s -> Immediate{x + Integer.parseInt(s)} }
+                })
+                5 -> Immediate{0}
+                else -> Immediate{x+1}
+            } }
+        }
+
+        val res = stub.evolve(0).get()
+
+        assert(interceptorCalled)
+
     }
 
 }
