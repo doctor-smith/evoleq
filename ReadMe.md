@@ -75,7 +75,7 @@ then T induces a map
 &Phi; : Z x X -> X: (n,x)->T<sup>n</sup>(x) on X (here, Z is the set of integers).
 with the following properties:
 * &Phi;(0,x) = x, for all elements x of X,
-* &Phi;(n+m,x) = &Phi;(n, &Phi(m,x)) for all integers n,m and all x in X
+* &Phi;(n+m,x) = &Phi;(n, &Phi;(m,x)) for all integers n,m and all x in X
  
 &Phi; is called the __flow__ of T on X or simply a __dynamical system__.
 Further, mathematicians would say that X __evolves__ under the flow of T.
