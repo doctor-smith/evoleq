@@ -63,8 +63,6 @@ interface Evolving<out D> {
 It is obvious that implementations of the Evolving type are monadic when they are functorial.
 The implementations provided in this library are all functorial.
 
-The well-disposed reader sees immediately that the evolution map is a co-algebra.
-
 ## Terminology 
 Evoleq is inspired by the theory of __dynamical systems__. 
 Roughly speaking, a dynamical system can be described as follows: 
