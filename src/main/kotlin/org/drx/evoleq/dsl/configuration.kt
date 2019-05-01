@@ -23,6 +23,7 @@ interface Configuration<out D>
 {
     fun configure() : D
 }
+
 interface ConfigurationPhase : Phase
 
 open class ConfigurationConfiguration<D> : Configuration<Configuration<D>> {
@@ -31,6 +32,7 @@ open class ConfigurationConfiguration<D> : Configuration<Configuration<D>> {
 
     override fun configure(): Configuration<D> = conf!!
 }
+
 inline fun <D, reified C: Configuration<D>> configure(noinline sideEffect:  C.()->Unit) : D {
     val c = C::class.createInstance()
     c.sideEffect()
@@ -54,6 +56,7 @@ inline fun <reified C> C.reconfigure(block:C.()->C): C {
 interface SuspendedConfiguration<out D> {
     suspend  fun configure(): Evolving<D>
 }
+
 suspend inline fun <D, reified C: SuspendedConfiguration<D>> configureSuspended(noinline  sideEffect: suspend C.()->Unit) : Evolving<D> {
     val c = C::class.createInstance()
     c.sideEffect()

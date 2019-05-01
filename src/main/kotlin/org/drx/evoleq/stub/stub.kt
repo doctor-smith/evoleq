@@ -26,10 +26,11 @@ import kotlin.reflect.KClass
 class DefaultIdentificationKey
 interface Stub<D> : Evolver<D> {
 
-    override suspend fun evolve(d: D): Evolving<D> = Immediate{ d }
-
     val id: KClass<*>
     val stubs: HashMap<KClass<*>, Stub<*>>
+
+    override suspend fun evolve(d: D): Evolving<D> = Immediate{ d }
+
 }
 class ParentStubKey
 fun <D,T> Stub<D>.toFlow(conditions: EvolutionConditions<D,T>): SuspendedFlow<D,T> = suspendedFlow {

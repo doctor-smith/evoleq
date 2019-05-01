@@ -59,3 +59,38 @@ tailrec suspend fun <D, T> evolveSuspended(
         }
     }
 }
+
+/**
+ * Evolution
+ */
+tailrec fun <D,T> evolveSeq(
+    initialData: D,
+    conditions: EvolutionConditions<D, T>,
+    flow: (D) -> D
+) : D = when( conditions.ok() ) {
+    false -> initialData
+    true -> {
+        val evolvedData: D = flow ( initialData )
+        evolveSeq(
+            evolvedData,
+            conditions.update( evolvedData )
+        ){
+                data -> flow ( data )
+        }
+    }
+}
+
+/*
+tailrec suspend fun <D,T> coEvolve(
+    initialData: Evolving<D>,
+    conditions: EvolutionConditions<D, T>,
+    flow: (D) -> D
+
+): Evolving<D> {
+    val evolvedData = initialData.get()
+    val conditions = conditions.update(evolvedData)
+    if(conditions.ok()) {
+
+    }
+}
+        */
