@@ -15,7 +15,6 @@
  */
 package org.drx.evoleq.flow
 
-import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Async
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
