@@ -21,6 +21,7 @@ import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.once
+import org.drx.evoleq.coroutines.Receiver
 import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
@@ -457,7 +458,7 @@ class StubTest {
                 actorStub.evolve(x)
             }
         }
-    val N = 100
+        val N = 100
         val flow = callingStub.toFlow<Int, Boolean>(conditions {
             testObject(true)
             check { b -> b }
