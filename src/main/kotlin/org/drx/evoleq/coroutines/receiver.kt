@@ -15,7 +15,6 @@
  */
 package org.drx.evoleq.coroutines
 
-import com.sun.xml.internal.bind.v2.model.core.ID
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import org.drx.evoleq.dsl.conditions
@@ -23,6 +22,7 @@ import org.drx.evoleq.dsl.receivingStub
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.stub.ID
 import org.drx.evoleq.stub.toFlow
 
 interface Receiver<in D>{

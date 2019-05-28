@@ -23,6 +23,8 @@ import org.drx.evoleq.flow.Evolver
 import org.drx.evoleq.flow.SuspendedFlow
 import kotlin.reflect.KClass
 
+typealias ID = KClass<*>
+
 class DefaultIdentificationKey
 interface Stub<D> : Evolver<D> {
 

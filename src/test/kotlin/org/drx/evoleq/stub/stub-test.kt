@@ -21,6 +21,7 @@ import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.once
+import org.drx.evoleq.coroutines.BaseReceiver
 import org.drx.evoleq.coroutines.Receiver
 import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Immediate
@@ -435,7 +436,7 @@ class StubTest {
 
     @Test fun receiverStubBasics() = runBlocking {
 
-        val receiver: Receiver<Int> = receiver<Int>() {}
+        val receiver: BaseReceiver<Int> = receiver<Int>() {}
 
         val actorStub = receivingStub<Int, Int> {
             gap {
