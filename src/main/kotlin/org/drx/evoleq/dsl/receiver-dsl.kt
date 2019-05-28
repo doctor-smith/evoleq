@@ -15,19 +15,15 @@
  */
 package org.drx.evoleq.dsl
 
-import kotlinx.coroutines.CompletionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ActorScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
+import org.drx.evoleq.coroutines.*
+import org.drx.evoleq.stub.ID
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-class Receiver<D>(val actor: SendChannel<D>, val channel: Channel<D>){
-    suspend fun send(data: D) = actor.send(data)
-}
 
 
 suspend fun <D> CoroutineScope.receiver(
@@ -36,7 +32,7 @@ suspend fun <D> CoroutineScope.receiver(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend ActorScope<D>.(D) -> Unit = {}
-): Receiver<D> {
+): BaseReceiver<D> {
     val c: Channel<D> = Channel()
     val actor = actor<D>(context, capacity, start, onCompletion){
         for(d in channel){
@@ -45,5 +41,25 @@ suspend fun <D> CoroutineScope.receiver(
         }
     }
 
-    return Receiver(actor,c)
+    return BaseReceiver(actor,c)
+}
+
+
+
+suspend fun <D> CoroutineScope.duplicator(
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null
+): Duplicator<D> {
+    val receivers = HashMap<ID, Receiver<D>>()
+    val actor = actor<D>(context, capacity, start, onCompletion){
+
+        for(d in channel){
+            receivers.values.forEach{it.send(d)}
+        }
+    }
+    val subscriptionPort = receiver<DuplicatorMessage<D>> {}
+
+    return Duplicator(actor,subscriptionPort,receivers)
 }

@@ -21,6 +21,8 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
+import org.drx.evoleq.coroutines.BaseReceiver
+import org.drx.evoleq.coroutines.Receiver
 import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
@@ -201,7 +203,7 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
         while(!::stub.isInitialized){
             kotlinx.coroutines.delay(1)
         }
-        println(stub.stubs.keys)
+        //println(stub.stubs.keys)
         stub.actOn()
         stub
     }
@@ -454,10 +456,14 @@ sealed class ReceivingStubMessage {
     }
     object Empty: ReceivingStubMessage()
 }
+
+/**
+ * ReceivingStub configuration
+ */
 open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
     private var preEvolve: suspend (W)-> Evolving<W> = suspended{d: W -> Immediate{d}}
     lateinit var gap: Gap<W,P>
-    lateinit var receiver: Receiver<P>
+    lateinit var receiver: BaseReceiver<P>
     /**
      * The gap to close
      */
@@ -465,7 +471,7 @@ open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
         this.gap = configure(configuration)
     }
 
-    fun receiver(receiver: Receiver<P>) {
+    fun receiver(receiver: BaseReceiver<P>) {
         this.receiver = receiver
     }
 
@@ -544,4 +550,7 @@ open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
     }
 }
 
+/**
+ * Configure a receiving stub
+ */
 fun <W,P> receivingStub(configuration : ReceivingStubConfiguration<W,P>.()->Unit): Stub<W> = configure(configuration)

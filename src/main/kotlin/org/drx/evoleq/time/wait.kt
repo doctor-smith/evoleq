@@ -63,3 +63,23 @@ Parallel{
         v!!
     }.await()
 }
+
+class Later<D>{
+    var value: D? = null
+        set(value) {if(field == null) field = value}
+}
+fun <D> Later<D>.await(): Evolving<D> = Parallel{
+    while(value == null) {
+        delay(1)
+    }
+    value!!
+}
+
+class Change<D>(var value: D)
+fun <D> Change<D>.happen(): Evolving<D> = Parallel{
+    val current = value
+    while(value == current) {
+        delay(1)
+    }
+    value
+}
