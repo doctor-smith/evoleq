@@ -7,17 +7,12 @@ object Config {
     }
 
     object Versions {
-
         val kotlin = "1.3.30"
         val coroutines = "1.2.0"
-
 
         val tornadofx  = "1.7.18"
 
         val junit = "4.12"
-
-
-
     }
 
     object Dependencies {
