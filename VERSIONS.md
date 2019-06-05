@@ -1,4 +1,6 @@
 ## Versions
+1.1.0: Evolving DSL
+
 1.0.3: ReceivingStubs: 
    * Use kotlin channels to define receiving-stub. 
    * Interception with Evolvers
