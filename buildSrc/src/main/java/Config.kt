@@ -2,7 +2,7 @@ object Config {
 
     object ProjectData {
         val group = "org.drx"
-        val version = "1.0.3"
+        val version = "1.1.0" // Evolving DSL
         val artifactId = "evoleq"
     }
 
