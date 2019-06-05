@@ -17,6 +17,7 @@ package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.dsl.parallel
 import org.junit.Test
 
 class ParallelTest {
@@ -97,5 +98,35 @@ class ParallelTest {
         val y = parallel.get()
 
         assert(x == y)
+    }
+
+    @Test fun cancellation() = runBlocking {
+        var inner: Parallel<Int>? = null
+        val parallel = parallel<String>(){
+            inner = parallel{
+                delay(10_000)
+                1
+            }// as Parallel<Int>
+            delay(5000)
+            "parallel"
+        }
+
+        while(inner == null){
+            delay(100)
+        }
+        //delay(1_000)
+
+
+        val x = parallel.cancel("parallel_cancelled")
+        val y =parallel.get()
+        //assert(x==y)
+        assert(parallel.job().isCancelled)
+        assert(inner!!.job().isCancelled)
+        Unit
+    }
+
+
+    @Test fun c() {
+
     }
 }
