@@ -15,6 +15,8 @@
  */
 package org.drx.evoleq.evolving
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.dsl.parallel
@@ -126,7 +128,12 @@ class ParallelTest {
     }
 
 
-    @Test fun c() {
+    @Test fun scope() = runBlocking {
+        val x = parallel{
+            actor<Int> {
 
+            }
+        }
+        Unit
     }
 }

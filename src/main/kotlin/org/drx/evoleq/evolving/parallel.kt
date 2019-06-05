@@ -27,7 +27,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  */
 class Parallel<D>(
     private val delay: Long = 1,
-    val scope: CoroutineScope = GlobalScope,//CoroutineScope(EmptyCoroutineContext),
+    val scope: CoroutineScope = GlobalScope,
     private val block: suspend CoroutineScope.() -> D
 ) : Evolving<D>, Cancellable<D> {
 
