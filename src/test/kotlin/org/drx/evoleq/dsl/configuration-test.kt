@@ -80,4 +80,30 @@ class ConfigurationTest {
             x=2
         }
     }
+
+
+
+    @Test fun configureWithConstructor() {
+        class Ex<out T>(val x: T)
+        class ExConfig(var x : Int) : Configuration<Ex<Int>> {
+            override fun configure(): Ex<Int> {
+                return Ex(x)
+            }
+        }
+        val c = configure<Ex<Int>,ExConfig, Int>(2){x+=2}
+        assert(c.x == 4)
+    }
+    @Test fun configureWithConstructor2() {
+        class Ex<out T>(val x: T, val y: T)
+        class ExConfig(var x : Int, var y: Int) : Configuration<Ex<Int>> {
+            override fun configure(): Ex<Int> {
+                return Ex(x,y)
+            }
+        }
+        val c = configure<Ex<Int>,ExConfig>(constructor(1,1)){
+            x+=1
+            y+=1
+        }
+        assert(c.x+c.y == 4)
+    }
 }
