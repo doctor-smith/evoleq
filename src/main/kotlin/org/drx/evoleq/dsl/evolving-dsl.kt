@@ -18,6 +18,7 @@ package org.drx.evoleq.dsl
 import kotlinx.coroutines.CoroutineScope
 import org.drx.evoleq.evolving.Async
 import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 
 fun <D> CoroutineScope.parallel(
@@ -35,3 +36,6 @@ fun <D> CoroutineScope.asynq(
     delay: Long = 1,
     block: suspend CoroutineScope.() -> D
 ): Evolving<D> = Async(delay,this){block()}
+
+
+fun <D> CoroutineScope.immediate(block: suspend CoroutineScope.()->D) = Immediate{ this.block() }
