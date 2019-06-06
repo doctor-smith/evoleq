@@ -18,6 +18,7 @@ package org.drx.evoleq.stub
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.once
@@ -76,7 +77,7 @@ class StubTest {
     fun observingStub() = runBlocking {
         val prop = SimpleStringProperty()//SimpleObjectProperty<String>()
         val change = SimpleObjectProperty<String>()
-        val stub = observingStub<Int,String>{
+        val stub = GlobalScope.observingStub<Int,String>{
             observe(prop)
 
             evolve { x -> Immediate{
@@ -218,7 +219,7 @@ class StubTest {
 
             // children
             // Process observing the observed property
-            child( observingStub<Int,Int>{
+            child( GlobalScope.observingStub<Int,Int>{
                     id ( ObserverKey::class )
                     gap{
                         from{ x -> Immediate{ x } }
@@ -236,7 +237,7 @@ class StubTest {
 
             // Process looking for changes of the observe property.
             child( ObserveBehaviorKey::class,
-                observingStub<Boolean,Boolean>{
+                GlobalScope.observingStub<Boolean,Boolean>{
                     gap{
                         from{ x -> Immediate{ x } }
                         to{x,y -> Immediate{
@@ -355,7 +356,7 @@ class StubTest {
     @Test
     fun racingStubTest() = runBlocking {
 
-        val stub = racingStub<Int,Int> {
+        val stub = GlobalScope.racingStub<Int,Int> {
             timeout (1_000 )
             // drivers
             driver{ Immediate{
@@ -438,7 +439,7 @@ class StubTest {
 
         val receiver: BaseReceiver<Int> = receiver<Int>() {}
 
-        val actorStub = receivingStub<Int, Int> {
+        val actorStub = GlobalScope.receivingStub<Int, Int> {
             gap {
                 from { x -> Immediate { x } }
                 to { x, y -> Immediate { x + y } }
@@ -465,8 +466,8 @@ class StubTest {
             check { b -> b }
             updateCondition { x -> x <= N*(N+1) / 2 }
         })
-        Parallel<Unit>{
-            (1..(N+1)).forEach{Parallel<Unit>{receiver.send(it)}}
+        parallel<Unit>{
+            (1..(N+1)).forEach{parallel<Unit>{receiver.send(it)}}
 
         }
         val res = flow.evolve(0)

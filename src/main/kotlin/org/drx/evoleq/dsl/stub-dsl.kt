@@ -37,11 +37,19 @@ import org.drx.evoleq.time.WaitForProperty
 import kotlin.Exception
 import kotlin.reflect.KClass
 
-open class StubConfiguration<D> : Configuration<Stub<D>> {
+val DEFAULT_STUB_SCOPE : CoroutineScope by lazy{ GlobalScope }
+
+open class StubConfiguration<D>() : Configuration<Stub<D>> {
+
+    constructor(scope: CoroutineScope): this(){
+        this.scope  = scope
+    }
 
     private var id: KClass<*> = DefaultIdentificationKey::class
 
     protected var evolve: suspend (D)-> Evolving<D> = { d -> Immediate{d} }
+
+    var scope : CoroutineScope = DEFAULT_STUB_SCOPE
     /**
      * Collection of all sub-stubs
      */
@@ -199,8 +207,8 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
 
 
 
-    fun whenReady(actOn: Stub<D>.()->Unit) = Parallel<Stub<D>>{
-        while(!::stub.isInitialized){
+    fun whenReady(actOn: Stub<D>.()->Unit) = scope.parallel{
+        while(!this@StubConfiguration::stub.isInitialized){
             kotlinx.coroutines.delay(1)
         }
         //println(stub.stubs.keys)
@@ -214,32 +222,26 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     /**
      * Find a stub in this stub or in one of its children.
      */
-    fun Stub<*>.find(key: KClass<*>): Stub<*>? = findByKey(key) /*{
-        this.stubs.forEach{
-            if(it.key == key){
-                return it.value
-            }
-        }
-        this.stubs.values.forEach{
-            val stub = it.find(key)
-            if(stub != null){
-                return stub
-            }
-        }
-        return null
-    }
-    */
+    fun Stub<*>.find(key: KClass<*>): Stub<*>? = findByKey(key)
 
 }
 
 fun <D> stub(configuration: StubConfiguration<D>.()->Unit) : Stub<D> = configure(configuration)
+fun <D> CoroutineScope.stub(configuration: StubConfiguration<D>.()->Unit) : Stub<D> = configure(this, configuration) as Stub<D>
 
 class ObservePropertyStub
 sealed class ObservePropertyMessage : Message {
     object Observe : ObservePropertyMessage()
     object Pause : ObservePropertyMessage()
 }
-open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
+open class ObservingStubConfiguration<D,P>() : StubConfiguration<D>() {
+
+
+    constructor(scope: CoroutineScope) : this(){
+        this.scope = scope
+    }
+
+    //var scope: CoroutineScope = GlobalScope
 
     private var preEvolve: suspend (D)-> Evolving<D> = suspended{d: D -> Immediate{d}}
     private val stack: ArrayList<P> by lazy{ arrayListOf<P>() }
@@ -291,11 +293,11 @@ open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
         super.stubs[ObservePropertyStub::class] = stub<ObservePropertyMessage>{
             evolve { message ->
                 when (message) {
-                    is ObservePropertyMessage.Observe -> Parallel {
+                    is ObservePropertyMessage.Observe -> scope.parallel {
                         observing.value = true
                         message
                     }
-                    is ObservePropertyMessage.Pause -> Parallel {
+                    is ObservePropertyMessage.Pause -> scope.parallel {
                         observing.value = false
                         message
                     }
@@ -306,7 +308,7 @@ open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
 
         // configure evolution function
         var setupDone: Boolean = false
-        GlobalScope.launch {
+        scope.launch {
             // view evolution function as
             // flow and make it enter the gap
             val flowGap = suspendedFlow<D,Boolean> {
@@ -354,10 +356,17 @@ open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
  * Important: The stub will not work unless a gap is defined
  */
 fun <D,P> observingStub(configuration: ObservingStubConfiguration<D,P>.()->Unit) : Stub<D> = configure(configuration)
+fun <D,P> CoroutineScope.observingStub(configuration: ObservingStubConfiguration<D,P>.()->Unit) : Stub<D> = configure(this,configuration)
 /**
  *
  */
-open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
+open class RacingStubConfiguration<D,P>() : ObservingStubConfiguration<D,P?>() {
+
+    constructor(scope: CoroutineScope) : this(){
+        this.scope = scope
+    }
+
+
     private val property = SimpleObjectProperty<P?>()
     private var cnt = 0
     private var numberOfNullResponses = 0
@@ -403,7 +412,7 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
 
     override fun configure(): Stub<D> {
         var setup = true
-        GlobalScope.launch { async{
+        scope.launch { async{
             observe(property)
             property.addListener{_,_,nV -> cancellables.forEach{it.cancel(Immediate{null})}}
             child(
@@ -418,11 +427,11 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
                 }
             )
             evolve { data ->
-                Immediate {
+                immediate {
                     IntRange(0, cnt - 1).forEach {
                         cancellables.add( Parallel { (child(Keys[it]!!) as Stub<P?>).evolve(null) })
                     }
-                    Parallel<Unit> { (child(TimeoutKey::class) as Stub<Unit>).evolve(Unit) }
+                    parallel<Unit> { (child(TimeoutKey::class) as Stub<Unit>).evolve(Unit) }
                     data
                 }
             }}.await()
@@ -440,6 +449,7 @@ open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
  * Important: You need to configure a gap for the underlying observing flow
  */
 fun <D,P> racingStub(configuration: RacingStubConfiguration<D,P>.()->Unit) = configure(configuration)
+fun <D,P> CoroutineScope.racingStub(configuration: RacingStubConfiguration<D,P>.()->Unit) = configure(this,configuration)
 
 
 class ReceivingStub
@@ -460,8 +470,15 @@ sealed class ReceivingStubMessage {
 /**
  * ReceivingStub configuration
  */
-open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
-    private var preEvolve: suspend (W)-> Evolving<W> = suspended{d: W -> Immediate{d}}
+open class ReceivingStubConfiguration<W, P>() : StubConfiguration<W>() {
+
+    constructor(scope: CoroutineScope) : this(){
+        this.scope = scope
+    }
+
+    //var scope: CoroutineScope = GlobalScope
+
+    private var preEvolve: suspend (W)-> Evolving<W> = suspended{d: W -> scope.immediate{d}}
     lateinit var gap: Gap<W,P>
     lateinit var receiver: BaseReceiver<P>
     /**
@@ -485,10 +502,10 @@ open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
 
     override fun configure(): Stub<W> {
         var setupDone = false
-        GlobalScope.launch {
+        scope.launch {
             var observing = true
             val stack = arrayListOf<P>()
-            Parallel<Unit> {
+            parallel<Unit> {
                 for(p in receiver.channel) {
                     if (observing) {
                         //println("added $p to stack")
@@ -502,7 +519,7 @@ open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
                 flow { d:W ->preEvolve(d) }
             }.enter(gap)
             val sideEffect = suspended { p: P ->
-                Parallel<P> {
+                parallel<P> {
                     if(!observing) {
                         stack.clear()
                     }
@@ -520,15 +537,15 @@ open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
                 evolve{
                     message -> when (message){
                     is ReceivingStubMessage.Request -> when(message){
-                        is ReceivingStubMessage.Request.Observe -> Parallel{
+                        is ReceivingStubMessage.Request.Observe -> parallel{
                             observing = true
                             ReceivingStubMessage.Response.Observing
                         }
-                        is ReceivingStubMessage.Request.Ignore -> Parallel{
+                        is ReceivingStubMessage.Request.Ignore -> parallel{
                             observing = false
                             ReceivingStubMessage.Response.Ignoring
                         }
-                        is ReceivingStubMessage.Request.Close -> Parallel{
+                        is ReceivingStubMessage.Request.Close -> parallel{
                             try {
                                 receiver.actor.close()
                             }catch(exception: Exception){}
@@ -550,7 +567,9 @@ open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
     }
 }
 
-/**
+/*.
  * Configure a receiving stub
  */
 fun <W,P> receivingStub(configuration : ReceivingStubConfiguration<W,P>.()->Unit): Stub<W> = configure(configuration)
+
+fun <W,P> CoroutineScope.receivingStub(configuration : ReceivingStubConfiguration<W,P>.()->Unit): Stub<W> = configure(this,configuration)
