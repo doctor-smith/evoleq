@@ -17,6 +17,8 @@ package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.coroutines.blockRace
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Evolution type parallel:
@@ -26,54 +28,46 @@ import org.drx.evoleq.coroutines.blockRace
 class Parallel<D>(
     private val delay: Long = 1,
     val scope: CoroutineScope = GlobalScope,
-    private val block: suspend Parallel<D>.() -> D
+    private val block: suspend CoroutineScope.() -> D
 ) : Evolving<D>, Cancellable<D> {
 
     private lateinit var deferred: Deferred<D>
 
     private var default: D? = null
 
+    private var job: Job
+
+
     init {
-        scope.launch {
-            coroutineScope {
-                deferred = async { this@Parallel.block() }
+        job = scope.launch {
+         coroutineScope {
+                deferred = async { block() }
+                default = deferred.await()
             }
         }
+        scope + job
+
     }
 
-    override suspend fun get(): D {
-        while (!::deferred.isInitialized) {
+    override suspend fun get(): D = coroutineScope {
+        while(default == null){
             delay(delay)
         }
-
-        return blockRace(
-            scope,
-            { deferred.await() },
-            {
-                while (default == null) {
-                    delay(1)
-                }
-                default!!
-            }
-        ).await()
+        default!!
     }
 
-    override fun cancel(d: D): Evolving<D> = Immediate {
-        default = d
-        if (::deferred.isInitialized) {
-            deferred.cancel()
-        } else {
-            coroutineScope {
-                var cnt = 0
-                while (cnt < 1000 && !::deferred.isInitialized) {
-                    delay(delay)
-                    cnt++
-                }
+    override fun cancel(d: D): Evolving<D> = object: Evolving<D> {
+        init {
+            default = d
+            if (::deferred.isInitialized) {
                 deferred.cancel()
             }
+            job.cancel()
         }
-        d
+
+        override suspend fun get(): D = d
     }
 
     fun job(): Job = deferred
+
 }

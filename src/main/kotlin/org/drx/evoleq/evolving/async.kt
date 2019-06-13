@@ -21,53 +21,42 @@ import org.drx.evoleq.coroutines.blockRace
 class Async<D>(
             private val delay: Long = 1,
             val scope: CoroutineScope = GlobalScope,
-            private val block: suspend Async<D>.() -> D
+            private val block: suspend CoroutineScope.() -> D
 ) : Evolving<D>, Cancellable<D> {
 
     private lateinit var deferred: Deferred<D>
 
     private var default: D? = null
 
+    private var job: Job
+
     init {
-        scope.launch {
-            deferred = async { this@Async.block() }
+        job = scope.launch {
+            deferred = async { block() }
+            default = deferred.await()
         }
+        scope + job
     }
 
     override suspend fun get(): D {
-        while (!::deferred.isInitialized) {
+        while (default == null) {
             delay(delay)
         }
-
-        return blockRace(
-            scope,
-            { deferred.await() },
-            {
-                while (default == null) {
-                    delay(1)
-                }
-                default!!
-            }
-        ).await()
+        return default!!
     }
 
-    override fun cancel(d: D): Evolving<D> = Immediate {
-        default = d
-        if (::deferred.isInitialized) {
-            deferred.cancel()
-        } else {
-            coroutineScope {
-                var cnt = 0
-                while (cnt < 1000 && !::deferred.isInitialized) {
-                    delay(delay)
-                    cnt++
-                }
+    override fun cancel(d: D): Evolving<D> =object: Evolving<D> {
+        init {
+            default = d
+            if (::deferred.isInitialized) {
                 deferred.cancel()
             }
+            job.cancel()
         }
 
-        d
+        override suspend fun get(): D = d
     }
+
 
     fun job(): Job = deferred
 }

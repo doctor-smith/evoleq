@@ -2,13 +2,15 @@ object Config {
 
     object ProjectData {
         val group = "org.drx"
-        val version = "1.1.0" // Evolving DSL
+        val version = "1.1.0"
         val artifactId = "evoleq"
     }
 
     object Versions {
+
         val kotlin = "1.3.30"
         val coroutines = "1.2.0"
+
 
         val tornadofx  = "1.7.18"
 

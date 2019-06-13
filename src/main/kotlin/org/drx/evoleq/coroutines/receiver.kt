@@ -67,11 +67,11 @@ class Duplicator<D>(
         evolve{ message -> when(message) {
             is DuplicatorMessage.Subscribe -> Parallel{
                 receivers[message.id] = message.receiver
-                DuplicatorMessage.Wait()
+                DuplicatorMessage.Wait<D>()
             }
             is DuplicatorMessage.UnSubscribe -> Parallel{
                 receivers.remove(message.id)
-                DuplicatorMessage.Wait()
+                DuplicatorMessage.Wait<D>()
             }
             is DuplicatorMessage.Wait -> manager.evolve(message)
             is DuplicatorMessage.Terminate -> Immediate{ DuplicatorMessage.Terminate<D>() }
