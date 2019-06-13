@@ -21,6 +21,9 @@ import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
+import org.drx.evoleq.stub.ID
+import org.drx.evoleq.stub.Stub
+import kotlin.reflect.KClass
 
 interface Evolver<D> {
     suspend fun evolve(d: D): Evolving<D>
@@ -75,4 +78,16 @@ fun <D> Evolver<D>.runCatchingErrors() : Evolver<ErrorCatcher<D>> = object: Evol
 suspend fun <D,E> D.intercept(with: Evolver<E>, gap: Gap<D, E>): Evolving<D> {
     val f: suspend (E)-> Evolving<E> = {e: E -> with.evolve(e)}
     return gap.fill(f)(this)
+}
+
+
+fun <D> Evolver<D>.toStub(id: ID = Evolver::class, stubs: HashMap<ID, Stub<*>>) : Stub<D> = object: Stub<D> {
+    override val id: KClass<*>
+        get() = id
+    override val stubs: HashMap<KClass<*>, Stub<*>>
+        get() = stubs
+
+    override suspend fun evolve(d: D): Evolving<D> {
+        return this@toStub.evolve(d)
+    }
 }
