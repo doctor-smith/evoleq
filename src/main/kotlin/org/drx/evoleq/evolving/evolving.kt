@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package org.drx.evoleq.evolving
-
+/* TODO make all evolvings cancellable */
 interface Evolving<out D> {
     suspend fun get() : D
 }
