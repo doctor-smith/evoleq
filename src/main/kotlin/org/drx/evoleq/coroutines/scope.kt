@@ -26,6 +26,13 @@ fun <S,T> onScope(f:(S)->T): CoroutineScope.(S)->T = { d -> f(d) }
 fun <S1,S2,T> onScope(f:(S1,S2)->T): CoroutineScope.(S1,S2)->T = { s1, s2 -> f(s1,s2) }
 fun <S1,S2,S3,T> onScope(f:(S1,S2,S3)->T): CoroutineScope.(S1,S2,S3)->T = { s1, s2, s3 -> f(s1,s2,s3) }
 fun <S1,S2,S3,S4,T> onScope(f:(S1,S2,S3,S4)->T): CoroutineScope.(S1,S2,S3,S4)->T = { s1, s2, s3, s4 -> f(s1,s2,s3,s4) }
+fun <S1,S2,S3,S4,S5,T> onScope(f:(S1,S2,S3,S4,S5)->T): CoroutineScope.(S1,S2,S3,S4,S5)->T = { s1, s2, s3, s4, s5 -> f(s1,s2,s3,s4, s5) }
+fun <S1,S2,S3,S4,S5,S6,T> onScope(f:(S1,S2,S3,S4,S5,S6)->T): CoroutineScope.(S1,S2,S3,S4,S5,S6)->T = { s1, s2, s3, s4, s5, s6 -> f(s1,s2,s3,s4,s5,s6) }
+fun <S1,S2,S3,S4,S5,S6,S7,T> onScope(f:(S1,S2,S3,S4,S5,S6,S7)->T): CoroutineScope.(S1,S2,S3,S4,S5,S6,S7)->T = { s1, s2, s3, s4, s5, s6, s7 -> f(s1,s2,s3,s4,s5,s6,s7) }
+fun <S1,S2,S3,S4,S5,S6,S7,S8,T> onScope(f:(S1,S2,S3,S4,S5,S6,S7,S8)->T): CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8)->T = { s1, s2, s3, s4, s5, s6, s7, s8 -> f(s1,s2,s3,s4,s5,s6,s7,s8) }
+fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,T> onScope(f:(S1,S2,S3,S4,S5,S6,S7,S8,S9)->T): CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8,S9)->T = { s1, s2, s3, s4, s5, s6, s7, s8, s9 -> f(s1,s2,s3,s4,s5,s6,s7,s8,s9) }
+fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,T> onScope(f:(S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T): CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T = { s1, s2, s3, s4, s5, s6, s7, s8, s9, s10 -> f(s1,s2,s3,s4,s5,s6,s7,s8,s9,s10) }
+
 
 /*
 fun <S,T> CoroutineScope.onScope(f: (CoroutineContext)-> (S)->T): CoroutineScope.(CoroutineContext, S)->T =
