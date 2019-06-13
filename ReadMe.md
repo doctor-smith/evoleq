@@ -1,4 +1,4 @@
-[ ![Download](https://api.bintray.com/packages/drx/maven/evoleq/images/download.svg?version=1.1.0) ](https://bintray.com/drx/maven/evoleq/1.0.3/link)
+[ ![Download](https://api.bintray.com/packages/drx/maven/evoleq/images/download.svg?version=1.1.0) ](https://bintray.com/drx/maven/evoleq/1.1.0/link)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 # Evoleq
 
@@ -13,14 +13,14 @@ Functional programming in terms of dynamical systems. A declarative approach to 
 Evoleq is hosted on bintray/jcenter
 ### Gradle
 ```kotlin
-compile( "org.drx:evoleq:1.0.3" )
+compile( "org.drx:evoleq:1.1.0" )
 ```
 ### Maven
 ```xml
 <dependency>
     <groupId>org.drx</groupId>
     <artifactId>evoleq</artifactId>
-    <version>1.0.3</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 ### Notes
