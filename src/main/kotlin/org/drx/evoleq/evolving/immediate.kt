@@ -15,19 +15,47 @@
  */
 package org.drx.evoleq.evolving
 
+import kotlinx.coroutines.*
+
 /**
  * Immediate: return immediately
  */
-class Immediate<D>(private val block: suspend ()->D) : Evolving<D> {
+class Immediate<D>(val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(), private val block: suspend CoroutineScope.()->D) : Evolving<D> {
     private var set = false
     private var result: D? = null
+
+    override val job: Job
+
+    init{
+
+        job = scope.launch {
+            while(result == null){
+                delay(1)
+            }
+            set = true
+        }
+
+
+        runBlocking(scope.coroutineContext){
+        //runBlocking{
+            scope + job
+            result = block()
+        }
+    }
+
     @Suppress("unchecked_cast")
     override suspend fun get(): D {
-        if (!set){
+        while(!set){
+            delay(1)
+        }
+        return result!!
+        /*if (!set){
             result = block()
             set = true
             return result as D
         }
-        return result as D
+        */
+
+        //return result as D
     }
 }

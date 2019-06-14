@@ -20,7 +20,7 @@ import org.drx.evoleq.coroutines.blockRace
 
 class Async<D>(
             private val delay: Long = 1,
-            val scope: CoroutineScope = GlobalScope,
+            val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(),
             private val block: suspend CoroutineScope.() -> D
 ) : Evolving<D>, Cancellable<D> {
 
@@ -28,7 +28,7 @@ class Async<D>(
 
     private var default: D? = null
 
-    private var job: Job
+    /*private var*/ override val  job: Job
 
     init {
         job = scope.launch {
@@ -54,9 +54,11 @@ class Async<D>(
             job.cancel()
         }
 
+        override val job: Job
+            get() = job()
         override suspend fun get(): D = d
     }
 
 
-    fun job(): Job = deferred
+    fun job(): Job = job
 }
