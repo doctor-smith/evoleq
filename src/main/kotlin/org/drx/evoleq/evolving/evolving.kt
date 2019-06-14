@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 package org.drx.evoleq.evolving
-/* TODO make all evolvings cancellable */
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+
+/**
+ * A cancellable scope enforcing structured concurrency
+ * To be used as default by all implementations of the [Evolving] type
+ */
+val DEFAULT_EVOLVING_SCOPE = { CoroutineScope(Job()) }
+
+/* TODO make all evolvings cancellable in the sense that they have to implement the Cancellable interface */
 interface Evolving<out D> {
+    val job: Job
     suspend fun get() : D
 }
 
