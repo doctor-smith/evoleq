@@ -23,6 +23,7 @@ import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.math.times
 import org.drx.evoleq.flow.Flow
 import org.drx.evoleq.flow.repeatImmediate
+import org.drx.evoleq.math.map
 import org.junit.Test
 
 class EvolvingTest {
@@ -75,7 +76,7 @@ class EvolvingTest {
         runBlocking {
             /* TODO implement */
             val flow = Flow(
-                once()
+                conditions = once()
             ) { pair: Pair<Int, (Int) -> Int> ->
                 Immediate {
 
@@ -89,6 +90,5 @@ class EvolvingTest {
             assert (stub.get() == 3)
         }
     }
-
 
 }

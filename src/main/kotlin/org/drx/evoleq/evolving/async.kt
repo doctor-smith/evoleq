@@ -19,46 +19,46 @@ import kotlinx.coroutines.*
 import org.drx.evoleq.coroutines.blockRace
 
 class Async<D>(
-            private val delay: Long = 1,
-            val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(),
-            private val block: suspend CoroutineScope.() -> D
-) : Evolving<D>, Cancellable<D> {
+    private val delay: Long = 1,
+    val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(),
+    private val default: D? = null,
+    private val block: suspend CoroutineScope.() -> D
+    ) : Evolving<D>, Cancellable<D> {
 
-    private lateinit var deferred: Deferred<D>
-
-    private var default: D? = null
-
-    /*private var*/ override val  job: Job
-
-    init {
-        job = scope.launch {
-            deferred = async { block() }
-            default = deferred.await()
-        }
-        scope + job
-    }
-
-    override suspend fun get(): D {
-        while (default == null) {
-            delay(delay)
-        }
-        return default!!
-    }
-
-    override fun cancel(d: D): Evolving<D> =object: Evolving<D> {
-        init {
-            default = d
-            if (::deferred.isInitialized) {
-                deferred.cancel()
-            }
-            job.cancel()
-        }
-
+        private lateinit var deferred: Deferred<D>
+        private var returnValue: D?=  null
         override val job: Job
-            get() = job()
-        override suspend fun get(): D = d
+
+        init {
+            job = scope.launch {
+                deferred = async { block() }
+                returnValue = deferred.await()
+            }
+            scope + job
+        }
+
+        override suspend fun get(): D = coroutineScope {
+            scope + this.coroutineContext
+            while(returnValue == null && !job.isCancelled){
+                delay(delay)
+            }
+            if(returnValue != null) {
+                returnValue!!
+            } else {
+                default!!
+            }
+        }
+
+        override fun cancel(d: D): Evolving<D> = object: Evolving<D> {
+            init {
+                returnValue = d
+                job.cancel()
+            }
+            override val job: Job
+                get() = this@Async.job
+            override suspend fun get(): D = d
+        }
     }
 
 
-    fun job(): Job = job
-}
+typealias LazyAsync<D> = CoroutineScope.(D)->Async<D>

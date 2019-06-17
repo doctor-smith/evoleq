@@ -16,26 +16,45 @@
 package org.drx.evoleq.dsl
 
 import kotlinx.coroutines.CoroutineScope
-import org.drx.evoleq.evolving.Async
-import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.coroutines.onScope
+import org.drx.evoleq.evolving.*
 
 fun <D> CoroutineScope.parallel(
     delay: Long = 1,
+    default: D? = null,
     block: suspend CoroutineScope.() -> D
-): Parallel<D> = Parallel(delay,this){block()}
+): Parallel<D> = Parallel(delay,this, default ){block()}
 
-fun <D,E> Parallel<D>.parallel(
+fun <D> lazyParallel(
     delay: Long = 1,
-    block: suspend CoroutineScope.() -> E
-): Parallel<E> =Parallel(delay, this.scope) { block() }
+    block: suspend CoroutineScope.(D) -> D
+): LazyParallel<D>  = {
+    parallel(delay, it) {
+         block(it)
+    }
+}
 
 
 fun <D> CoroutineScope.asynq(
     delay: Long = 1,
+    default: D? = null,
     block: suspend CoroutineScope.() -> D
-): Evolving<D> = Async(delay,this){block()}
+): Async<D> = Async(delay,this, default){block()}
+
+fun <D> lazyAsync(
+    delay: Long = 1,
+    block: suspend CoroutineScope.(D) -> D
+): LazyAsync<D>  = {
+    asynq(delay, it) {
+        block(it)
+    }
+}
+
+fun <D> CoroutineScope.immediate(block: suspend CoroutineScope.()->D) = Immediate(this){ block() }
 
 
-fun <D> CoroutineScope.immediate(block: suspend CoroutineScope.()->D) = Immediate{ this.block() }
+fun <D,E> Evolving<D>.parallel(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Parallel<E> = Parallel(delay, CoroutineScope(this.job),default) { block() }
+
+fun <D,E> Evolving<D>.async(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Async<E> = Async(delay, CoroutineScope(this.job),default) { block() }
+
+fun <D,E> Evolving<D>.immediate(block: suspend CoroutineScope.() -> E): Immediate<E> = Immediate(CoroutineScope(this.job)) { block() }

@@ -28,47 +28,45 @@ import kotlin.coroutines.EmptyCoroutineContext
 class Parallel<D>(
     private val delay: Long = 1,
     val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(),
+    private val default: D? = null,
     private val block: suspend CoroutineScope.() -> D
 ) : Evolving<D>, Cancellable<D> {
 
     private lateinit var deferred: Deferred<D>
-
-    private var default: D? = null
-
-    //private var job: Job
+    private var returnValue: D?=  null
     override val job: Job
 
     init {
         job = scope.launch {
          coroutineScope {
                 deferred = async { block() }
-                default = deferred.await()
+                returnValue = deferred.await()
             }
         }
         scope + job
-
     }
 
     override suspend fun get(): D = coroutineScope {
-        while(default == null){
+        scope + this.coroutineContext
+        while(returnValue == null && !job.isCancelled){
             delay(delay)
         }
-        default!!
+        if(returnValue != null) {
+            returnValue!!
+        } else {
+            default!!
+        }
     }
 
     override fun cancel(d: D): Evolving<D> = object: Evolving<D> {
         init {
-            default = d
-            if (::deferred.isInitialized) {
-                deferred.cancel()
-            }
+            returnValue = d
             job.cancel()
         }
         override val job: Job
-            get() = job()
+            get() = this@Parallel.job
         override suspend fun get(): D = d
     }
-
-    fun job(): Job = job
-
 }
+
+typealias LazyParallel<D> = CoroutineScope.(D)->Parallel<D>

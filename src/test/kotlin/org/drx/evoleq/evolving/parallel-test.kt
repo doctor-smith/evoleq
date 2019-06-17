@@ -15,12 +15,12 @@
  */
 package org.drx.evoleq.evolving
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.dsl.lazyParallel
 import org.drx.evoleq.dsl.parallel
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 class ParallelTest {
     @Test
@@ -122,8 +122,8 @@ class ParallelTest {
         val x = parallel.cancel("parallel_cancelled")
         val y =parallel.get()
         //assert(x==y)
-        assert(parallel.job().isCancelled)
-        assert(inner!!.job().isCancelled)
+        assert(parallel.job.isCancelled)
+        assert(inner!!.job.isCancelled)
         Unit
     }
 
@@ -136,4 +136,32 @@ class ParallelTest {
         }
         Unit
     }
+
+
+
+    @Test fun lazyParallelTest() =runBlocking {
+        val x: LazyParallel<Int> = lazyParallel{d->
+            delay(10_000)
+            d*d
+        }
+
+        val s1 = CoroutineScope(Job())
+        val r1 = s1.x(5)
+
+        s1.cancel()
+        delay(1_000)
+        assert(r1.job.isCancelled)
+        assert(r1.get() == 5)
+
+        val y: LazyParallel<Int> = lazyParallel{d->
+            d*d
+        }
+
+        val s2 = CoroutineScope(Job())
+        val r2 = s2.y(10)
+        val r = r2.get()
+        assert(r == 100)
+
+    }
+
 }

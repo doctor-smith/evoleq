@@ -18,7 +18,7 @@ package org.drx.evoleq.evolving
 import kotlinx.coroutines.*
 
 /**
- * Immediate: return immediately
+ * Immediate: return immediately, blocking the current thread
  */
 class Immediate<D>(val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(), private val block: suspend CoroutineScope.()->D) : Evolving<D> {
     private var set = false
@@ -27,19 +27,15 @@ class Immediate<D>(val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(), private
     override val job: Job
 
     init{
-
         job = scope.launch {
             while(result == null){
                 delay(1)
             }
             set = true
         }
-
-
-        runBlocking(scope.coroutineContext){
-        //runBlocking{
-            scope + job
-            result = block()
+        result = runBlocking(scope.coroutineContext) {
+            scope+job
+            block()
         }
     }
 
@@ -49,13 +45,5 @@ class Immediate<D>(val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(), private
             delay(1)
         }
         return result!!
-        /*if (!set){
-            result = block()
-            set = true
-            return result as D
-        }
-        */
-
-        //return result as D
     }
 }

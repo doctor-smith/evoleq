@@ -15,8 +15,7 @@
  */
 package org.drx.evoleq.evolving
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 
 /**
  * A cancellable scope enforcing structured concurrency
@@ -26,8 +25,16 @@ val DEFAULT_EVOLVING_SCOPE = { CoroutineScope(Job()) }
 
 /* TODO make all evolvings cancellable in the sense that they have to implement the Cancellable interface */
 interface Evolving<out D> {
+    /**
+     * The Job to be created when implementation is initialized
+     */
     val job: Job
+
+    /**
+     * Get the evolved value
+     */
     suspend fun get() : D
 }
 
+typealias LazyEvolving<D> = CoroutineScope.(D)->Evolving<D>
 
