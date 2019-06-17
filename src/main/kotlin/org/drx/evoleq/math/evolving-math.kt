@@ -15,6 +15,7 @@
  */
 package org.drx.evoleq.math
 
+import kotlinx.coroutines.Job
 import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
@@ -27,10 +28,14 @@ import org.drx.evoleq.util.tail
  */
 suspend infix
 fun <D1,D2> Evolving<D1>.map(f:  (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
+    override val job: Job
+        get() = this@map.job
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 suspend infix
 fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
+    override val job: Job
+        get() = this@map.job
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 suspend infix
@@ -60,22 +65,22 @@ suspend fun <D> muEvolving(evolving: Evolving<Evolving<D>>): Evolving<D> {
 suspend operator
 fun <R,S,T> ( (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : (R)-> Evolving<T> = {
         r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+    Immediate { muEvolving(this@times(r) map flow).get() }
 }
 suspend operator
 fun <R,S,T> ( suspend (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : suspend (R)-> Evolving<T> = {
         r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+    Immediate { muEvolving(this@times(r) map flow).get() }
 }
 suspend operator
 fun <R,S,T> ( suspend (R)-> Evolving<S>).times(flow: suspend (S)-> Evolving<T>) :suspend (R)-> Evolving<T> = {
         r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+    Immediate { muEvolving(this@times(r) map flow).get() }
 }
 suspend operator
 fun <R,S,T> (  (R)-> Evolving<S>).times(flow: suspend (S)-> Evolving<T>) :suspend (R)-> Evolving<T> = {
         r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+    Immediate { muEvolving(this@times(r) map flow).get() }
 }
 
 fun<S,T> klEvolving(f:(S)->T): (S)->Evolving<T> = {s->Immediate{f(s)}}
