@@ -16,11 +16,10 @@
 package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.*
-import org.drx.evoleq.coroutines.blockRace
 
 class Async<D>(
     private val delay: Long = 1,
-    val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(),
+    val scope: CoroutineScope = DefaultEvolvingScope(),
     private val default: D? = null,
     private val block: suspend CoroutineScope.() -> D
     ) : Evolving<D>, Cancellable<D> {

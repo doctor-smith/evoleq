@@ -13,5 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.peer
+package org.drx.evoleq.dsl
 
+import org.drx.evoleq.stub.LazyStub
+import org.junit.Test
+
+class StubDslTest {
+
+
+}

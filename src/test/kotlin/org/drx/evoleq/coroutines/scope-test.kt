@@ -42,11 +42,11 @@ class ScopeTest {
             f(this,3)
         }
         delay(100)
-        assert(j!!.job().isActive)
+        assert(j!!.job.isActive)
         job.cancel()
         delay(100)
         assert(job.isCancelled)
-        assert(j!!.job().isCancelled)
+        assert(j!!.job.isCancelled)
     }
 
 

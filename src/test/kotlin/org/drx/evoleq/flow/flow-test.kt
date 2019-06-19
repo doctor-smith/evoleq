@@ -16,15 +16,16 @@
 package org.drx.evoleq.flow
 
 import javafx.beans.property.SimpleIntegerProperty
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
-import org.drx.evoleq.dsl.conditions
-import org.drx.evoleq.dsl.flow
-import org.drx.evoleq.dsl.suspendedFlow
+import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Async
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.stub.DefaultIdentificationKey
+import org.drx.evoleq.stub.lazyStub
+import org.drx.evoleq.stub.toFlow
+import org.drx.evoleq.stub.toLazyFlow
 import org.junit.Test
 
 class FlowTest {
@@ -162,6 +163,109 @@ class FlowTest {
         assert(changes >= 2)
     }
 
+    @Test fun cancelFlowWithScopeInheritedFromUnderlyingStub() = runBlocking {
+        val mainScope = CoroutineScope(Job())
+        var one: Parallel<String>? = null
+        var two: Parallel<String>? = null
+        val flow = mainScope.stub<String>{
+            id(DefaultIdentificationKey::class)
+            /*
+            evolveLazy {
+                string -> parallel(default = "CANCELLED") {
+                    one = parallel{
+                        println("one")
+                        delay(10_000)
+                        string
+                    }
+                    two = parallel{
+                        println("two")
+                        delay(10_000)
+                        string
+                    }
+                    "STOP"
+                }
+            }
 
+             */
+
+            evolve{
+                string -> scope.parallel(default = "CANCELLED") {
+                    one = parallel{
+                        delay(10_000)
+                        string
+                    }
+                    two = parallel{
+                        delay(10_000)
+                        string
+                    }
+                    "STOP"
+                }
+            }
+
+
+        }.toFlow<String,Boolean>(
+            conditions{
+                testObject(true)
+                check{b->b}
+                updateCondition { false }
+            }
+        )
+        GlobalScope.parallel {
+            flow.evolve("START")
+        }
+        delay(100)
+        assert(one!!.job.isActive)
+        assert(two!!.job.isActive)
+        flow.cancel()
+        delay(1500)
+
+        //assert(one!!.job.isActive)
+        assert(one!!.job.isCancelled)
+        assert(two!!.job.isCancelled)
+    }
+
+    @Test fun cancelNestedLazyFlows() = runBlocking {
+        class Stub
+
+        var job: Job? = null
+
+        val lF0 = lazyStub<Int>(stub{
+            id(Stub::class)
+            evolveLazy { x -> parallel(default = x) {
+                job = this.coroutineContext[Job]!!
+                delay(10_000)
+                x+1
+            } }
+        }).toLazyFlow<Int,Boolean>(
+            conditions{
+                testObject(true)
+                check{b->b}
+                updateCondition { it < 10 }
+            }
+        )
+
+        val lF1 = lazyStub<Int>(stub{
+            id(Stub::class)
+            evolveLazy { x -> parallel(default = x) {
+                lF0().evolve(x).get()
+            } }
+        }).toLazyFlow<Int,Boolean>(
+            conditions{
+                testObject(true)
+                check{b->b}
+                updateCondition { it < 10 }
+            }
+        )
+
+        val scope = CoroutineScope(Job())
+
+        scope.lF1().evolve(1)
+
+        delay(100)
+        scope.cancel()
+        delay(100)
+
+        assert(job!!.isCancelled)
+    }
 
 }

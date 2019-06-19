@@ -21,7 +21,7 @@ import kotlinx.coroutines.*
  * A cancellable scope enforcing structured concurrency
  * To be used as default by all implementations of the [Evolving] type
  */
-val DEFAULT_EVOLVING_SCOPE = { CoroutineScope(Job()) }
+val DefaultEvolvingScope: ()->CoroutineScope = { CoroutineScope(Job()) }
 
 /* TODO make all evolvings cancellable in the sense that they have to implement the Cancellable interface */
 interface Evolving<out D> {

@@ -15,10 +15,18 @@
  */
 package org.drx.evoleq
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.conditions.ok
 import org.drx.evoleq.conditions.update
 import org.drx.evoleq.evolving.Evolving
+
+/**
+ * A cancellable scope enforcing structured concurrency
+ * To be used as default by all implementations of the [Evolving] type
+ */
+val DefaultEvolutionScope: ()->CoroutineScope = { CoroutineScope(Job()) }
 
 /**
  * Evolution
@@ -26,6 +34,7 @@ import org.drx.evoleq.evolving.Evolving
 tailrec suspend fun <D, T> evolve(
     initialData: D,
     conditions: EvolutionConditions<D, T>,
+    scope: CoroutineScope = DefaultEvolutionScope(),
     flow: (D) -> Evolving<D>
 ) : D = when( conditions.ok() ) {
     false -> initialData
@@ -33,7 +42,8 @@ tailrec suspend fun <D, T> evolve(
         val evolvedData: D = flow ( initialData ).get()
         evolve(
             evolvedData,
-            conditions.update( evolvedData )
+            conditions.update( evolvedData ),
+            scope
         ){
             data -> flow ( data )
         }
@@ -46,14 +56,16 @@ tailrec suspend fun <D, T> evolve(
 tailrec suspend fun <D, T> evolveSuspended(
     initialData: D,
     conditions: EvolutionConditions<D, T>,
-    flow: suspend (D) -> Evolving<D>
+    scope: CoroutineScope = DefaultEvolutionScope(),
+    flow: suspend CoroutineScope.(D) -> Evolving<D>
 ) : D = when( conditions.ok() ) {
     false -> initialData
     true -> {
-        val evolvedData: D = flow ( initialData ).get()
+        val evolvedData: D = scope.flow ( initialData ).get( )
         evolveSuspended(
             evolvedData,
-            conditions.update( evolvedData )
+            conditions.update( evolvedData ),
+            scope
         ){
             data  -> flow ( data )
         }

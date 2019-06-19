@@ -15,17 +15,25 @@
  */
 package org.drx.evoleq.coroutines
 
+import kotlinx.coroutines.CoroutineScope
+
+
 /**
  * Suspend an ordinary function
  */
 fun <S,T> suspended(f:(S)->T): suspend (S)->T  {
     val suspended: suspend (S)->T
-    suspended = { s -> f(s)}
+    suspended = { s -> f(s) }
     return suspended
 }
 fun<T> T.suspended(): suspend ()->T  {
     return {this}
 }
+
+fun <S, T> ((S)->T).suspend(): suspend CoroutineScope.(S)->T = {
+    s -> this@suspend(s)
+}
+
 
 fun <S, T> suspended(vararg functions: (S)->T): SuspendedFunctions<S,T> = SuspendedFunctions(*functions.map{f -> suspended(f)}.toTypedArray())
 

@@ -15,6 +15,7 @@
  */
 package org.drx.evoleq.gap
 
+import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.math.times
@@ -30,7 +31,7 @@ data class Gap<W,P>(
     val from:(W)-> Evolving<P>,
     val to: (W)->(P)-> Evolving<W>
 )
-
+/*
 suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     val newFrom = from*gap.from
     val newTo= {w:W->
@@ -42,7 +43,8 @@ suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     }
     return Gap(newFrom, newTo)
 }
-
+*/
+/*
 suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
     val newFrom = gap.from*from
     val newTo= {w:W->
@@ -54,12 +56,12 @@ suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
     }
     return Gap(newFrom, newTo)
 }
-
+*/
 suspend fun <W, P> Gap<W, P>.fill(filler: (P)-> Evolving<P>): (W)-> Evolving<W> {
     return { w ->
         Immediate {
             val p = (from * filler)(w).get()
-            to(w)(p).get()
+            this@fill.to(w)(p).get()
         }
     }
 }
@@ -68,7 +70,7 @@ suspend fun <W, P> Gap<W, P>.fill(filler: suspend (P)-> Evolving<P>): (W)-> Evol
     return { w ->
         Immediate {
             val p = (from * filler)(w).get()
-            to(w)(p).get()
+            this@fill.to(w)(p).get()
         }
     }
 }

@@ -18,6 +18,7 @@ package org.drx.evoleq.evolving
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.actor
 import org.drx.evoleq.dsl.lazyParallel
+import org.drx.evoleq.dsl.onScope
 import org.drx.evoleq.dsl.parallel
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -162,6 +163,61 @@ class ParallelTest {
         val r = r2.get()
         assert(r == 100)
 
+    }
+
+    @Test fun evolvingOnScope() = runBlocking {
+        val ev = CoroutineScope(Job()).parallel(1,1) {
+            delay(10_000)
+            2
+        }
+
+        val evS = ev.onScope(GlobalScope)
+
+        assert(ev.job.isActive)
+        assert(evS.job.isActive)
+
+        evS.job.cancel()
+
+        delay(100)
+        assert(evS.job.isCancelled)
+        assert(ev.job.isCancelled)
+        //println(ev.job.isActive)
+
+        //println(ev.job.isCancelled)
+
+        val r = ev.get()
+        assert(r == 1)
+
+        val rS = evS.get()
+        assert(rS == 1)
+    }
+
+    @Test fun evolvingOnScope2() = runBlocking {
+        val scope = CoroutineScope(Job())
+        val ev = scope.parallel(1,1) {
+            delay(10_000)
+            2
+        }
+
+        val evS = ev.onScope(GlobalScope)
+
+        assert(ev.job.isActive)
+        assert(evS.job.isActive)
+
+        scope.cancel()
+
+        delay(100)
+        assert(evS.job.isCancelled)
+        assert(ev.job.isCancelled)
+        //println(ev.job.isActive)
+
+        //println(ev.job.isCancelled)
+
+        val r = ev.get()
+        assert(r == 1)
+
+        val rS = evS.get()
+        assert(rS == 1)
     }
 
 }

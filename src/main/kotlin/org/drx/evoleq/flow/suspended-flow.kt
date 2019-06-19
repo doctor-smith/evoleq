@@ -15,12 +15,16 @@
  */
 package org.drx.evoleq.flow
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.coroutines.suspended
+import org.drx.evoleq.dsl.immediate
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolveSuspended
-import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.evolving.*
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.math.times
@@ -33,18 +37,60 @@ import kotlin.reflect.KClass
  * Standard implementation of Evolver
  */
 open class SuspendedFlow<D, T>(
+
     val conditions: EvolutionConditions<D, T>,
+    override val scope: CoroutineScope = CoroutineScope(Job()),
     val flow: suspend (D)-> Evolving<D>
 ) : Evolver<D> {
     override suspend fun evolve(data: D): Evolving<D> =
-        Immediate {
+        scope.immediate {
             evolveSuspended(
                 initialData = data,
-                conditions = conditions
+                conditions = conditions,
+                scope = this
             ) {
                     data -> flow(data)
             }
         }
+}
+/*
+@Suppress("function_name")
+fun <D,T> CoroutineScope.SuspendeFlow(
+    conditions: EvolutionConditions<D, T>,
+    flow: suspend (D)-> Evolving<D>
+): Evolver<D> = object: LazyEvolver<D> {
+    override val scope: CoroutineScope
+        get() = this@SuspendeFlow
+
+    override suspend fun lazy(): LazyEvolving<D> = {
+        d -> this@SuspendeFlow.immediate{
+            evolveSuspended(
+                initialData = d,
+                conditions = conditions
+            ) {d -> flow(d) }
+        }
+    }
+}
+*/
+@Suppress("FunctionName")
+fun <D,T> CoroutineScope.LazyFlow(
+    conditions: EvolutionConditions<D, T>,
+    flow: LazyEvolving<D>
+): Evolver<D> = object: LazyEvolver<D> {
+    override val scope: CoroutineScope
+        get() = this@LazyFlow
+
+    override suspend fun lazy(): LazyEvolving<D> = { d: D ->
+        this@LazyFlow.parallel(default = d) {
+            evolveSuspended(
+                d,
+                conditions,
+                this
+            ) {
+                data -> flow(data)
+            }
+        }
+    }
 }
 
 /**
@@ -52,7 +98,7 @@ open class SuspendedFlow<D, T>(
  */
 suspend fun <D,T,P> SuspendedFlow<D, T>.enter(gap: Gap<D, P>): Gap<D, P> =
     Gap(
-        from = { d -> Immediate { (this.flow * gap.from)(d).get() } },
+        from = { d -> Immediate { (flow * gap.from)(d).get() } },
         to = gap.to
     )
 

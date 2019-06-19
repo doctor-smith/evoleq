@@ -15,6 +15,9 @@
  */
 package org.drx.evoleq.flow
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.dsl.gap
 import org.drx.evoleq.dsl.stub
@@ -29,12 +32,16 @@ class EvolverTest {
     @Test fun forkParallel() = runBlocking {
 
         val evolver = object : Evolver<Int> {
+            override val scope: CoroutineScope
+                get() = GlobalScope
             override suspend fun evolve(d: Int): Evolving<Int> = Parallel {
                 kotlinx.coroutines.delay(200)
                 d
             }
         }
         val other =object : Evolver<Int> {
+            override val scope: CoroutineScope
+                get() = GlobalScope
             override suspend fun evolve(d: Int): Evolving<Int> = Parallel {
                 kotlinx.coroutines.delay(100)
                 d
@@ -52,6 +59,9 @@ class EvolverTest {
 
         class ErrorStack<D>(val data: D,val  exception: Exception? = null)
         val evolver = object: Evolver<Int> {
+            val s = CoroutineScope(Job())
+            override val scope: CoroutineScope
+                get() = s
             override suspend fun evolve(d: Int): Evolving<Int> {
                 if(d < 0) {
                     throw Exception("Exception")
@@ -60,6 +70,8 @@ class EvolverTest {
             }
         }
         fun Evolver<Int>.catchErrors() : Evolver<ErrorStack<Int>> = object: Evolver<ErrorStack<Int>> {
+            override val scope: CoroutineScope
+                get() = this@catchErrors.scope
             override suspend fun evolve(d: ErrorStack<Int>): Evolving<ErrorStack<Int>> =
                 try{
                     Immediate{ErrorStack(this@catchErrors.evolve(d.data).get(),null)}

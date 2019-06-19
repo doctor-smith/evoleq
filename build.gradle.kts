@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    compile(kotlin("stdlib-jdk8"))
+    compile(Config.Dependencies.kotlinStandardLibrary)
     compile(Config.Dependencies.coroutines)
     compile(kotlin("reflect"))
 

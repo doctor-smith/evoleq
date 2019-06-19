@@ -16,7 +16,8 @@
 package org.drx.evoleq.dsl
 
 import kotlinx.coroutines.CoroutineScope
-import org.drx.evoleq.coroutines.onScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.plus
 import org.drx.evoleq.evolving.*
 
 fun <D> CoroutineScope.parallel(
@@ -50,6 +51,14 @@ fun <D> lazyAsync(
     }
 }
 
+fun <D> lazyImmediate(
+    block: suspend CoroutineScope.(D) -> D
+): LazyImmediate<D> = {
+    immediate{
+        block(it)
+    }
+}
+
 fun <D> CoroutineScope.immediate(block: suspend CoroutineScope.()->D) = Immediate(this){ block() }
 
 
@@ -58,3 +67,16 @@ fun <D,E> Evolving<D>.parallel(delay: Long = 1,default: E? = null, block: suspen
 fun <D,E> Evolving<D>.async(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Async<E> = Async(delay, CoroutineScope(this.job),default) { block() }
 
 fun <D,E> Evolving<D>.immediate(block: suspend CoroutineScope.() -> E): Immediate<E> = Immediate(CoroutineScope(this.job)) { block() }
+
+/**
+ * Force an evolving to run under a new scope
+ */
+fun <D> Evolving<D>.onScope(scope: CoroutineScope): Evolving<D> = object: Evolving<D> {
+
+    val s: CoroutineScope = scope+this@onScope.job
+
+    override val job: Job
+        get() = s.coroutineContext[Job]!!
+
+    override suspend fun get(): D = this@onScope.get()
+}

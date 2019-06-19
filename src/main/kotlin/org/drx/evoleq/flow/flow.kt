@@ -16,10 +16,10 @@
 package org.drx.evoleq.flow
 
 import javafx.beans.property.SimpleObjectProperty
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.dsl.immediate
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolve
 import org.drx.evoleq.evolving.Evolving
@@ -37,11 +37,13 @@ import kotlin.reflect.KClass
  * Standard implementation of Evolver
  */
 open class Flow<D, T>(
+
     val conditions: EvolutionConditions<D, T>,
+    override val scope: CoroutineScope = CoroutineScope(Job()),
     val flow: (D)-> Evolving<D>
 ) : Evolver<D> {
     override suspend fun evolve(data: D): Evolving<D> =
-        Immediate {
+        scope.parallel {
             evolve(
                 initialData = data,
                 conditions = conditions
@@ -56,7 +58,7 @@ open class Flow<D, T>(
  */
 suspend fun <D,T,P> Flow<D, T>.enter(gap: Gap<D, P>): Gap<D, P> =
     Gap(
-        from = { d -> Immediate { (this.flow * gap.from)(d).get() } },
+        from = { d -> Immediate { (flow * gap.from)(d).get() } },
         to = gap.to
     )
 

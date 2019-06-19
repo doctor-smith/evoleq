@@ -13,22 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.math
+package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.CoroutineScope
-import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.flow.Evolver
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.dsl.immediate
+import org.drx.evoleq.dsl.lazyParallel
+import org.drx.evoleq.dsl.parallel
+import org.junit.Test
 
-class Conjugation<S,T>(val invert:(T)->S, val forward:(S)->T)
+class EvolvingTest {
 
-fun <D,E> Evolver<D>.conjugate(f: Conjugation<D,E>): Evolver<E> {
-    return object: Evolver<E> {
+    @Test fun defineLazyEvolving() = runBlocking{
+        val lE: LazyEvolving<Int> = { x -> when(x<0 ){
+            true -> immediate{0}
+            false -> parallel { x*x }
+        }}
 
-        override val scope: CoroutineScope
-            get() = this@conjugate.scope
+        val scope = CoroutineScope(Job())
 
-        override suspend fun evolve(e: E): Evolving<E> {
-            return this@conjugate.evolve(f.invert(e)).map (f.forward)
-        }
+        assert(scope.lE(0).get() == 0)
     }
+
+    @Test fun lazyEvolvingInheritance() {
+        val lE:LazyEvolving<Int> = lazyParallel { x -> x }
+
+    }
+
+
+
 }

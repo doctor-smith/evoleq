@@ -16,9 +16,6 @@
 package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.*
-import org.drx.evoleq.coroutines.blockRace
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Evolution type parallel:
@@ -27,7 +24,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  */
 class Parallel<D>(
     private val delay: Long = 1,
-    val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(),
+    val scope: CoroutineScope = DefaultEvolvingScope(),
     private val default: D? = null,
     private val block: suspend CoroutineScope.() -> D
 ) : Evolving<D>, Cancellable<D> {

@@ -20,7 +20,7 @@ import kotlinx.coroutines.*
 /**
  * Immediate: return immediately, blocking the current thread
  */
-class Immediate<D>(val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(), private val block: suspend CoroutineScope.()->D) : Evolving<D> {
+class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val default: D? = null, private val block: suspend CoroutineScope.()->D) : Evolving<D> {
     private var set = false
     private var result: D? = null
 
@@ -33,6 +33,14 @@ class Immediate<D>(val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(), private
             }
             set = true
         }
+
+        job.invokeOnCompletion{
+            if(result == null){
+            result = default
+            set = true
+        } }
+
+
         result = runBlocking(scope.coroutineContext) {
             scope+job
             block()
@@ -47,3 +55,5 @@ class Immediate<D>(val scope: CoroutineScope = DEFAULT_EVOLVING_SCOPE(), private
         return result!!
     }
 }
+
+typealias LazyImmediate<D> = CoroutineScope.(D)->Immediate<D>

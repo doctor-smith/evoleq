@@ -18,6 +18,7 @@ package org.drx.evoleq.dsl
 import kotlinx.coroutines.*
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.LazyEvolving
 import org.drx.evoleq.stub.*
 import kotlin.Exception
 import kotlin.reflect.KClass
@@ -30,9 +31,12 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
         this.scope  = scope
     }
 
+    private var isLazyStub = false
+
     private var id: KClass<*> = DefaultIdentificationKey::class
 
-    protected var evolve: suspend (D)-> Evolving<D> = { d -> Immediate{d} }
+    protected var evolve: suspend (D)-> Evolving<D> = { d -> scope.immediate{d} }
+    protected var lazyEvolving: LazyEvolving<D>? = null
 
     var scope : CoroutineScope = DEFAULT_STUB_SCOPE
     /**
@@ -63,18 +67,33 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
     override fun configure(): Stub<D> {
 
 
+        val stub: Stub<D> = if(isLazyStub){
+             object : LazyStub<D> {
+                override val scope: CoroutineScope
+                    get() = this@StubConfiguration.scope
 
-        val stub = object : Stub<D> {
+                override val id: KClass<*>
+                    get() = this@StubConfiguration.id
 
-            override val id: KClass<*>
-                get() = this@StubConfiguration.id
+                override suspend fun lazy(): LazyEvolving<D> = this@StubConfiguration.lazyEvolving!!
 
-            override suspend fun evolve(d: D): Evolving<D> = this@StubConfiguration.evolve(d)
+                override val stubs: HashMap<KClass<*>, Stub<*>>
+                    get() = this@StubConfiguration.stubs
+            }
+        } else {
+            object : Stub<D> {
+                override val scope: CoroutineScope
+                    get() = this@StubConfiguration.scope
 
-            override val stubs: HashMap<KClass<*>, Stub<*>>
-                get() = this@StubConfiguration.stubs
+                override val id: KClass<*>
+                    get() = this@StubConfiguration.id
+
+                override suspend fun evolve(d: D): Evolving<D> = this@StubConfiguration.evolve(d)
+
+                override val stubs: HashMap<KClass<*>, Stub<*>>
+                    get() = this@StubConfiguration.stubs
+            }
         }
-
         parentalStubsMap.entries.forEach { entry ->
             val child = stub.stubs[entry.key]
             val parentStub = parentalStubs[entry.value]
@@ -84,21 +103,32 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
         }
         this@StubConfiguration.stub = stub
 
-
         return stub
     }
 
     /**
-     * define the evolve function of the stub
+     * Set the  id of the stub
+     */
+    fun id(id : KClass<*>) {
+        this.id = id
+    }
+
+    /**
+     * Define the evolve function of the stub
      */
     open fun evolve( flow:suspend (D)-> Evolving<D> ) {
         this.evolve = flow
     }
 
-    fun id(id : KClass<*>) {
-        this.id = id
+    /**
+     * Define the evolve function of the stub.
+     * This approach guaranties structured concurrency even when
+     * the scope of the stub is changed
+     */
+    open fun evolveLazy(lazyEvolving: LazyEvolving<D>) {
+        this.lazyEvolving = lazyEvolving
+        this.isLazyStub = true
     }
-
 
     /**
      * Access the stub provided by the parent during configuration.
