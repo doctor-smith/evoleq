@@ -8,8 +8,8 @@ object Config {
 
     object Versions {
 
-        val kotlin = "1.3.30"
-        val coroutines = "1.2.0"
+        val kotlin = "1.3.40"
+        val coroutines = "1.3.0-M1"
 
 
         val tornadofx  = "1.7.18"
