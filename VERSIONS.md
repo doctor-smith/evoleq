@@ -1,5 +1,5 @@
 ## Versions
-1.1.0: Evolving DSL
+1.1.0: Evolving DSL + Structured concurrency
 
 1.0.3: ReceivingStubs: 
    * Use kotlin channels to define receiving-stub. 
