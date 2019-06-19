@@ -59,7 +59,7 @@ fun <D> lazyImmediate(
     }
 }
 
-fun <D> CoroutineScope.immediate(block: suspend CoroutineScope.()->D) = Immediate(this){ block() }
+fun <D> CoroutineScope.immediate(default: D? = null, block: suspend CoroutineScope.()->D) = Immediate(this){ block() }
 
 
 fun <D,E> Evolving<D>.parallel(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Parallel<E> = Parallel(delay, CoroutineScope(this.job),default) { block() }

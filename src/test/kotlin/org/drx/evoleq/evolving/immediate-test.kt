@@ -61,23 +61,19 @@ class ImmediateTest{
         delay(1_000)
     }
 
-    //@Test
-    fun cancelImmediate() = runBlocking {
-        var immediate: Immediate<Int>? = null
+    @Test fun cancelImmediate() = runBlocking {
         val scope = DefaultEvolvingScope()
-
+        var job: Job? = null
         scope.parallel{
-            immediate = Immediate(this, 0){
+            immediate( 0){
+                job = this.coroutineContext[Job]
                 delay(10_000)
                 1
             }
         }
         delay(100)
         scope.cancel()
-
-        val res = immediate!!.get()
-        assert(res == 0)
-        assert(immediate!!.job.isCancelled)
-
+        delay(100)
+        assert(job!!.isCancelled)
     }
 }
