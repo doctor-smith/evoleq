@@ -2,7 +2,7 @@ object Config {
 
     object ProjectData {
         val group = "org.drx"
-        val version = "1.1.0"
+        val version = "1.1.1"
         val artifactId = "evoleq"
     }
 
