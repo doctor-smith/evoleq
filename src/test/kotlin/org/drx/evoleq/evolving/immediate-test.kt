@@ -45,20 +45,16 @@ class ImmediateTest{
         Unit
     }
 
-    @Test
-    fun immediateBlocksConveniently() = runBlocking {
-        var ev: Evolving<Unit>? = null
+
+    @Test fun immediateBlocksConveniently() = runBlocking {
         val startTime = System.currentTimeMillis()
         val parallel = CoroutineScope(Job()).parallel {
-            ev = immediate { delay(10_000) }
+            immediate { delay(10_000) }
             println("fhdkjlsa")
         }
         assert(System.currentTimeMillis()-startTime < 1_000)
 
         parallel.job.cancel()
-
-
-        delay(1_000)
     }
 
     @Test fun cancelImmediate() = runBlocking {
