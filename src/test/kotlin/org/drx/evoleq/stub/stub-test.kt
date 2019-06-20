@@ -21,8 +21,6 @@ import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.coroutines.BaseReceiver
-import org.drx.evoleq.coroutines.Receiver
-import org.drx.evoleq.coroutines.onScope
 import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.*
 import org.drx.evoleq.message.Message
@@ -498,11 +496,8 @@ class StubTest {
 
     @Test fun lazyStub() = runBlocking {
 
-        var currentJob: Job?= null
-
         fun  lP():LazyParallel<Int> =  lazyParallel{
             x ->
-                currentJob = coroutineContext[Job]!!
                 delay(1_000)
                 x*x
         }
@@ -542,37 +537,29 @@ class StubTest {
         parallel {
             res = lazyStub2.evolve(3)
         }
-        //val g =lazyStub2.evolve(3)
-        //delay(100)
         scope.cancel()
-
-        //delay(100)
-        //.cancel()
         delay(300)
         println(res!!.get())
         assert(res!!.get() == 3)
         delay(100)
-        //assert(currentJob!!.isCancelled)
         assert(res!!.job.isCancelled)
 
         delay(1_000)
-        //println(g.get())
     }
 
     @Test fun lazyStubToLazyFlow() = runBlocking {
         class Stub
         var job: Job? = null
-        val lS: LazyStub<Int> = stub<Int>{
+        val lS: LazyStub<Int> = lazyStub( stub{
             id(Stub::class)
-            evolveLazy  {
+            evolveLazy {
                 x -> parallel(default = x) {
                     job = coroutineContext[Job]!!
                     delay(1_000)
                     x * x
                 }
             }
-        } as LazyStub<Int>
-
+        } )
         val lF = lS.toLazyFlow<Int,Boolean>(
             conditions{
                 testObject(true)
@@ -588,9 +575,5 @@ class StubTest {
         scope.cancel()
         delay(500)
         assert(job!!.isCancelled)
-
-
-        println(res)
     }
-
 }
