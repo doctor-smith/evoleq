@@ -44,18 +44,18 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
     /**
      * Collection of all sub-stubs
      */
-     val stubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap() }
+     val stubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
     /**
      * Stubs to be called by children
      */
-    protected val parentalStubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap() }
+    protected val parentalStubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
 
-    protected val parentalStubsMap: HashMap<KClass<*>, KClass<*>> by lazy { HashMap() }
+    protected val parentalStubsMap: HashMap<KClass<*>, KClass<*>> by lazy { HashMap<KClass<*>, KClass<*>>() }
     /**
      * key: 'Key of a child class'
      * val: 'list of stub identifiers accessible to key-stub'
      */
-    protected val crossChildAccessMap: HashMap<KClass<*>, ArrayList<KClass<*>>> by lazy{ HashMap() }
+    protected val crossChildAccessMap: HashMap<KClass<*>, ArrayList<KClass<*>>> by lazy{ HashMap<KClass<*>, ArrayList<KClass<*>>>() }
     /**
      * Shall child stub be visible to parent of the generated stub
      */
@@ -234,6 +234,7 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
         while(!this@StubConfiguration::stub.isInitialized){
             delay(1)
         }
+        //println(stub.stubs.keys)
         stub.actOn()
         stub
     }
