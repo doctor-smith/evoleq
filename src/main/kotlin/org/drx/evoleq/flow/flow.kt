@@ -18,7 +18,6 @@ package org.drx.evoleq.flow
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolve
