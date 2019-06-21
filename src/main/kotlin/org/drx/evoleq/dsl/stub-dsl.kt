@@ -15,15 +15,17 @@
  */
 package org.drx.evoleq.dsl
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.LazyEvolving
 import org.drx.evoleq.stub.*
-import kotlin.Exception
 import kotlin.reflect.KClass
 
-val DEFAULT_STUB_SCOPE : CoroutineScope by lazy{ CoroutineScope(SupervisorJob()) }
+@Suppress("FunctionName")
+fun DefaultStubScope() :CoroutineScope =  CoroutineScope(SupervisorJob())
 
 open class StubConfiguration<D>() : Configuration<Stub<D>> {
 
@@ -33,27 +35,27 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
 
     private var isLazyStub = false
 
-    private var id: KClass<*> = DefaultIdentificationKey::class
+    var id: KClass<*> = DefaultIdentificationKey::class
 
     protected var evolve: suspend (D)-> Evolving<D> = { d -> scope.immediate{d} }
     protected var lazyEvolving: LazyEvolving<D>? = null
 
-    var scope : CoroutineScope = DEFAULT_STUB_SCOPE
+    var scope : CoroutineScope = DefaultStubScope()
     /**
      * Collection of all sub-stubs
      */
-     val stubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
+     val stubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap() }
     /**
      * Stubs to be called by children
      */
-    protected val parentalStubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap<KClass<*>, Stub<*>>() }
+    protected val parentalStubs: HashMap<KClass<*>, Stub<*>> by lazy { HashMap() }
 
-    protected val parentalStubsMap: HashMap<KClass<*>, KClass<*>> by lazy { HashMap<KClass<*>, KClass<*>>() }
+    protected val parentalStubsMap: HashMap<KClass<*>, KClass<*>> by lazy { HashMap() }
     /**
      * key: 'Key of a child class'
      * val: 'list of stub identifiers accessible to key-stub'
      */
-    protected val crossChildAccessMap: HashMap<KClass<*>, ArrayList<KClass<*>>> by lazy{ HashMap<KClass<*>, ArrayList<KClass<*>>>() }
+    protected val crossChildAccessMap: HashMap<KClass<*>, ArrayList<KClass<*>>> by lazy{ HashMap() }
     /**
      * Shall child stub be visible to parent of the generated stub
      */
@@ -111,6 +113,12 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
      */
     fun id(id : KClass<*>) {
         this.id = id
+    }
+    /**
+     * Set the  id of the stub
+     */
+    inline fun <reified ID> id() {
+        this.id = ID::class
     }
 
     /**
@@ -224,9 +232,8 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
 
     fun whenReady(actOn: Stub<D>.()->Unit) = scope.parallel{
         while(!this@StubConfiguration::stub.isInitialized){
-            kotlinx.coroutines.delay(1)
+            delay(1)
         }
-        //println(stub.stubs.keys)
         stub.actOn()
         stub
     }

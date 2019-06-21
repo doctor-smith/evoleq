@@ -26,7 +26,8 @@ import org.drx.evoleq.evolving.Evolving
  * A cancellable scope enforcing structured concurrency
  * To be used as default by all implementations of the [Evolving] type
  */
-val DefaultEvolutionScope: ()->CoroutineScope = { CoroutineScope(Job()) }
+@Suppress("FunctionName")
+fun DefaultEvolutionScope(): CoroutineScope =  CoroutineScope(Job())
 
 /**
  * Evolution

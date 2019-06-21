@@ -17,14 +17,15 @@ package org.drx.evoleq.flow
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolveSuspended
-import org.drx.evoleq.evolving.*
+import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.LazyEvolving
+import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.math.times
@@ -53,25 +54,7 @@ open class SuspendedFlow<D, T>(
             }
         }
 }
-/*
-@Suppress("function_name")
-fun <D,T> CoroutineScope.SuspendeFlow(
-    conditions: EvolutionConditions<D, T>,
-    flow: suspend (D)-> Evolving<D>
-): Evolver<D> = object: LazyEvolver<D> {
-    override val scope: CoroutineScope
-        get() = this@SuspendeFlow
 
-    override suspend fun lazy(): LazyEvolving<D> = {
-        d -> this@SuspendeFlow.immediate{
-            evolveSuspended(
-                initialData = d,
-                conditions = conditions
-            ) {d -> flow(d) }
-        }
-    }
-}
-*/
 @Suppress("FunctionName")
 fun <D,T> CoroutineScope.LazyFlow(
     conditions: EvolutionConditions<D, T>,

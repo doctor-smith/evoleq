@@ -19,7 +19,8 @@ import kotlinx.coroutines.*
 import org.drx.evoleq.dsl.asynq
 import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
-import org.drx.evoleq.evolving.*
+import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.LazyEvolving
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.stub.ID
@@ -36,6 +37,14 @@ interface LazyEvolver<D> : Evolver<D> {
     suspend fun lazy(): LazyEvolving<D>
     override suspend fun evolve(d: D): Evolving<D> = lazy()(scope,d)
 }
+
+fun <D> LazyEvolver<D>.changeScope(scope: CoroutineScope): LazyEvolver<D> = object: LazyEvolver<D> {
+    override val scope: CoroutineScope
+        get() = scope
+
+    override suspend fun lazy(): LazyEvolving<D> = this@changeScope.lazy()
+}
+
 
 /**
  * Cancel evolver
