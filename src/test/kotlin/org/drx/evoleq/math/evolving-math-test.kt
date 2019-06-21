@@ -63,15 +63,27 @@ class EvolvingMathTest {
         assert(h("12").get() == 2.0)
     }
 
-    @Test fun cancelFished1 () = runBlocking {
+    //@Test TODO
+    fun cancelFished1 () = runBlocking {
         val scope = DefaultEvolvingScope()
         var job: Job? = null
-        val f: suspend (String)-> Evolving<Int> = {s -> scope.parallel {
-            job = this.coroutineContext[Job]
-            delay(10_000)
+        var parallel1: Evolving<Int>? = null
+        var parallel2: Evolving<Double>? = null
+        val f: suspend (String)-> Evolving<Int> = {s ->
+            parallel1 = scope.parallel {
+
+            //delay(1_000)
             s.length
-        }}
-        val g: suspend (Int)->Evolving<Double> = {x -> scope.parallel { x.toDouble() }}
+        }
+            parallel1 as Evolving<Int>
+        }
+        val g: suspend (Int)->Evolving<Double> = {x ->
+            parallel2 = scope.parallel {
+                delay(2_000)
+                x.toDouble()
+            }
+            parallel2 as Evolving<Double>
+        }
 
         val h = f * g
 
@@ -82,6 +94,7 @@ class EvolvingMathTest {
 
         //assert(job!!.isCancelled)
         r.job.isCancelled
+        assert(parallel2!!.job.isCancelled)
         Unit
     }
 }
