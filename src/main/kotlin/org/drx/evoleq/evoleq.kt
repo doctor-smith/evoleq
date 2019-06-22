@@ -94,7 +94,7 @@ tailrec fun <D,T> evolveSeq(
 }
 
 /*
-tailrec suspend fun <D,T> coEvolve(
+tailrec suspendOnScope fun <D,T> coEvolve(
     initialData: Evolving<D>,
     conditions: EvolutionConditions<D, T>,
     flow: (D) -> D

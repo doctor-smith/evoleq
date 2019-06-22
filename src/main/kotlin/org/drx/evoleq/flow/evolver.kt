@@ -81,8 +81,8 @@ suspend fun <D,E> Evolver<D>.forkParallel(other: Evolver<E>) : Evolver<Pair<D,E>
     }
 }
 /*
-suspend fun <D> Evolver<D>.forkParallel(vararg others: Evolver<D>) : Evolver<ArrayList<D>> = object: Evolver<ArrayList<D>> {
-    override suspend fun evolve(d: ArrayList<D>): Evolving<ArrayList<D>> = Parallel{
+suspendOnScope fun <D> Evolver<D>.forkParallel(vararg others: Evolver<D>) : Evolver<ArrayList<D>> = object: Evolver<ArrayList<D>> {
+    override suspendOnScope fun evolve(d: ArrayList<D>): Evolving<ArrayList<D>> = Parallel{
         val result = arrayListOf(this@forkParallel.evolve(d.first()).get())
         others.forEachIndexed { index, evolver -> result.add(
             evolver.evolve(d[index +1]).get()

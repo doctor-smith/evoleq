@@ -26,13 +26,19 @@ fun <S,T> suspended(f:(S)->T): suspend (S)->T  {
     suspended = { s -> f(s) }
     return suspended
 }
+fun <S1, S2 ,T> suspended(lambda: (S1,S2)->T): suspend (S1,S2)->T = { s1, s2-> lambda(s1,s2) }
+fun <S1, S2 ,S3, T> suspended(lambda: (S1,S2,S3)->T): suspend (S1,S2,S3)->T = { s1, s2, s3 -> lambda(s1,s2,s3) }
+fun <S1, S2 ,S3, S4, T> suspended(lambda: (S1,S2,S3,S4)->T): suspend (S1,S2,S3,S4)->T = { s1, s2, s3,s4 -> lambda(s1,s2,s3,s4) }
+
 fun<T> T.suspended(): suspend ()->T  {
     return {this}
 }
 
-fun <S, T> ((S)->T).suspend(): suspend CoroutineScope.(S)->T = {
-    s -> this@suspend(s)
+fun <S, T> suspendOnScope(f:(S)->T): suspend CoroutineScope.(S)->T = {
+    s -> f(s)
 }
+
+
 
 
 fun <S, T> suspended(vararg functions: (S)->T): SuspendedFunctions<S,T> = SuspendedFunctions(*functions.map{f -> suspended(f)}.toTypedArray())
@@ -49,3 +55,14 @@ class SuspendedFunctions<S,T>(vararg functions: suspend (S)->T) {
         return SuspendedFunctions(*list.toTypedArray())
     }
 }
+
+/**
+ * Explicitly unsuspended function
+ * Usage: If you define a function as a lambda {s:S->t:T}, then the compiler dosn't know if the lambda is suspended or not
+ */
+fun <S, T> unSuspended(lambda :(S)->T): (S)->T = lambda
+fun <S, T> standard(lambda:(S)->T): (S)->T = lambda
+
+fun <S1, S2 ,T> standard(lambda: (S1,S2)->T): (S1,S2)->T = lambda
+fun <S1, S2 ,S3, T> standard(lambda: (S1,S2,S3)->T): (S1,S2,S3)->T = lambda
+fun <S1, S2 ,S3, S4, T> standard(lambda: (S1,S2,S3,S4)->T): (S1,S2,S3,S4)->T = lambda

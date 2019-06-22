@@ -63,7 +63,7 @@ fun <D> toLazy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
 fun <D> lazyfy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
 fun <D> free(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
 /*
-suspend fun <D> (suspend CoroutineScope.()-> Evolver<D>).down(): suspend CoroutineScope.(D)->Evolving<D> = {
+suspendOnScope fun <D> (suspendOnScope CoroutineScope.()-> Evolver<D>).down(): suspendOnScope CoroutineScope.(D)->Evolving<D> = {
     d: D -> this@down().evolve(d)
 }
 */

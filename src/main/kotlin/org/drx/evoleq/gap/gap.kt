@@ -15,7 +15,6 @@
  */
 package org.drx.evoleq.gap
 
-import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.math.times
@@ -32,7 +31,7 @@ data class Gap<W,P>(
     val to: (W)->(P)-> Evolving<W>
 )
 /*
-suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
+suspendOnScope fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     val newFrom = from*gap.from
     val newTo= {w:W->
         {q:Q ->
@@ -45,7 +44,7 @@ suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
 }
 */
 /*
-suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
+suspendOnScope fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
     val newFrom = gap.from*from
     val newTo= {w:W->
         {q:Q ->
