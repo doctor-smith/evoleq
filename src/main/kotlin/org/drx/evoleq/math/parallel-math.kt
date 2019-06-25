@@ -21,13 +21,15 @@ import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.Parallel
 
 infix fun <S,T> Parallel<S>.mapParallel(f: (S)->T): Parallel<T> = scope.parallel { f(get()) }
-infix fun <S,T> Parallel<S>.mapParallel(f: suspend (S)->T): Parallel<T> = scope.parallel { f(get()) }
+suspend infix fun <S,T> Parallel<S>.mapParallel(f: suspend (S)->T): Parallel<T> = scope.parallel { f(get()) }
 infix fun <S,T> Parallel<S>.mapParallel(f: suspend CoroutineScope.(S)->T): Parallel<T> = scope.parallel { f(get()) }
 
 /**
  * TODO handle scopes / jobs in a convenient way
  */
-suspend fun <D> muParallel(parallel: Parallel<Parallel<D>>) = parallel.scope.parallel { parallel.get() }.get()
+suspend fun <D> muParallel(parallel: Parallel<Parallel<D>>) = parallel.scope.parallel {
+    parallel/*.onScope(this)*/.get()
+}.get()
 
 /**
  * TODO handle scopes / jobs in a convenient way for all of the following 4 functions

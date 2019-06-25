@@ -77,7 +77,7 @@ class ParallelMathTest {
         assert(mapped.job.isCancelled || mapped.job.isCompleted)
     }
 
-    //@Test
+    @Test
     fun muParallel() = runBlocking{
         val scope = DefaultEvolvingScope()
         var innerParallel: Parallel<Int>? = null
@@ -99,9 +99,10 @@ class ParallelMathTest {
 
         delay(500)
 
-        //assert(parallel.job.isCompleted)
+        assert(parallel.job.isCompleted)
+        assert(innerParallel!!.job.isCompleted || innerParallel!!.job.isCancelled)
 
-        assert(innerParallel!!.job.isCancelled)
+        //assert(innerParallel!!.job.isCancelled)
 
 
     }
@@ -127,7 +128,7 @@ class ParallelMathTest {
 
     }
 
-    //@Test
+    @Test
     fun fishParallelCancel() = runBlocking {
         val scope = DefaultEvolvingScope()
 
@@ -158,8 +159,8 @@ class ParallelMathTest {
         h(2).job.cancel()
         //scope.cancel()
         delay(100)
-        assert(parallel1!!.job.isCancelled)
-        //assert(parallel2!!.job.isCancelled)
+        assert(parallel1!!.job.isCompleted)
+        assert(parallel2!!.job.isCancelled)
 
     }
 
