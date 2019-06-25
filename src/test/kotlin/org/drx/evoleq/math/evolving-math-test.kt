@@ -19,6 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.coroutines.standard
 import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
@@ -33,6 +34,15 @@ class EvolvingMathTest {
         val ev = scope.parallel { 3 }
 
         val res = ev map suspended{ x: Int -> "$x"}
+
+        assert(res.get() == "3")
+    }
+
+    @Test fun mapStandard() = runBlocking{
+        val scope = DefaultEvolvingScope()
+        val ev = scope.parallel { 3 }
+
+        val res = ev map standard{ x: Int -> "$x"}
 
         assert(res.get() == "3")
     }
@@ -78,7 +88,7 @@ class EvolvingMathTest {
         assert(h("12").get() == 2.0)
     }
 
-    //@Test TODO
+    @Test //TODO
     fun cancelFished1 () = runBlocking {
         val scope = DefaultEvolvingScope()
         var job: Job? = null
@@ -107,8 +117,8 @@ class EvolvingMathTest {
         scope.cancel()
         delay(100)
 
-        //assert(job!!.isCancelled)
-        r.job.isCancelled
+        assert(parallel1!!.job.isCompleted)
+        //r.job.isCancelled
         assert(parallel2!!.job.isCancelled)
         Unit
     }
