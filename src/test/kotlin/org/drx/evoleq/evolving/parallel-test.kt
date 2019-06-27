@@ -21,7 +21,6 @@ import org.drx.evoleq.dsl.lazyParallel
 import org.drx.evoleq.dsl.onScope
 import org.drx.evoleq.dsl.parallel
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 class ParallelTest {
     @Test
@@ -220,4 +219,21 @@ class ParallelTest {
         assert(rS == 1)
     }
 
+
+    @Test fun lazyParallelToParallelRemindsScope(){
+        val x: LazyParallel<Int> = lazyParallel{d->
+            delay(10_000)
+            d*d
+        }
+
+        val s1 = CoroutineScope(Job())
+
+        val y = {t: Int -> x(s1,t)}
+
+        val res = y(1)
+
+        s1.cancel()
+
+        assert(res.job.isCancelled)
+    }
 }
