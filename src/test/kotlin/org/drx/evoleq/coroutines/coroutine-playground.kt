@@ -18,8 +18,6 @@ package org.drx.evoleq.coroutines
 import kotlinx.coroutines.*
 import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
-import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.junit.Test
 
@@ -128,14 +126,23 @@ class CoroutinePlaygraound {
 
 
     @Test fun y() = runBlocking{
-        val x = onScope<CoroutineScope,()->Int, Evolving<Int>>{ scope, f -> scope.parallel { f() } }
+        //val x = onScope<CoroutineScope,()->Int, Evolving<Int>>{ scope, f -> scope.parallel { f() } }
         fun <D> CoroutineScope.par(f: suspend CoroutineScope.()->D): CoroutineScope.()->Parallel<D> = onScope<Parallel<D>>{ this@par.parallel { f() }}
 
         val res1 = par{
             delay(1_000)
             7
         }
-        val s =GlobalScope.res1()
+        val s = GlobalScope.res1()
     }
 
+
+    @Test fun suspendFunctionsAreExtensions() = runBlocking{
+        fun  f(f:CoroutineScope.()->Unit)  {}
+        fun f(f: suspend ()->Unit) {}
+        fun  f(f: suspend CoroutineScope.()->Unit)  {}
+
+
+
+    }
 }
