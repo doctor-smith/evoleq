@@ -42,8 +42,9 @@ fun <D> LazyEvolver<D>.changeScope(scope: CoroutineScope): LazyEvolver<D> = obje
     override val scope: CoroutineScope
         get() = scope
 
-    override suspend fun lazy(): LazyEvolving<D> = this@changeScope.lazy()
+    override suspend fun lazy(): LazyEvolving<D> = lazy()
 }
+
 
 
 /**
@@ -126,7 +127,7 @@ suspend fun <D,E> D.intercept(with: Evolver<E>, gap: Gap<D, E>): Evolving<D> {
 }
 
 
-fun <D> Evolver<D>.toStub(id: ID = Evolver::class, stubs: HashMap<ID, Stub<*>>) : Stub<D> = object: Stub<D> {
+fun <D> Evolver<D>.toStub(id: ID = Evolver::class, stubs: HashMap<ID, Stub<*>> = HashMap()) : Stub<D> = object: Stub<D> {
     override val scope: CoroutineScope
         get() = this@toStub.scope
     override val id: KClass<*>
