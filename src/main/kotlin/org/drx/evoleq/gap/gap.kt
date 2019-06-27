@@ -30,32 +30,32 @@ data class Gap<W,P>(
     val from:(W)-> Evolving<P>,
     val to: (W)->(P)-> Evolving<W>
 )
-/*
-suspendOnScope fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
+
+suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     val newFrom = from*gap.from
     val newTo= {w:W->
         {q:Q ->
             Immediate {
-                (gap.to(from(w).get()) * to(w))(q).get()
+                (gap.to(from(w).get()) * this@deepen.to(w))(q).get()
             }
         }
     }
     return Gap(newFrom, newTo)
 }
-*/
-/*
-suspendOnScope fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
+
+
+suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
     val newFrom = gap.from*from
     val newTo= {w:W->
         {q:Q ->
             Immediate {
-                (to(gap.from(w).get()) * gap.to(w))(q).get()
+                (this@widen.to(gap.from(w).get()) * gap.to(w))(q).get()
             }
         }
     }
     return Gap(newFrom, newTo)
 }
-*/
+
 suspend fun <W, P> Gap<W, P>.fill(filler: (P)-> Evolving<P>): (W)-> Evolving<W> {
     return { w ->
         Immediate {
