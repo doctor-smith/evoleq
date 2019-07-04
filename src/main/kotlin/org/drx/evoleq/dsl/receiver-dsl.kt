@@ -15,18 +15,22 @@
  */
 package org.drx.evoleq.dsl
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.ActorScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
-import org.drx.evoleq.coroutines.*
+import org.drx.evoleq.coroutines.BaseReceiver
+import org.drx.evoleq.coroutines.Duplicator
+import org.drx.evoleq.coroutines.DuplicatorMessage
+import org.drx.evoleq.coroutines.Receiver
 import org.drx.evoleq.stub.ID
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 
-
-suspend fun <D> CoroutineScope.receiver(
+fun <D> CoroutineScope.receiver(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -34,7 +38,7 @@ suspend fun <D> CoroutineScope.receiver(
     block: suspend ActorScope<D>.(D) -> Unit = {}
 ): BaseReceiver<D> {
     val c: Channel<D> = Channel()
-    val actor = actor<D>(context, capacity, start, onCompletion){
+    val actor = this@receiver.actor<D>(context, capacity, start, onCompletion){
         for(d in channel){
             c.send(d)
             block(d)
@@ -46,14 +50,15 @@ suspend fun <D> CoroutineScope.receiver(
 
 
 
-suspend fun <D> CoroutineScope.duplicator(
+fun <D> CoroutineScope.duplicator(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
+    owner: ID? = null,
     onCompletion: CompletionHandler? = null
 ): Duplicator<D> {
     val receivers = HashMap<ID, Receiver<D>>()
-    val actor = actor<D>(context, capacity, start, onCompletion){
+    val actor = this@duplicator.actor<D>(context, capacity, start, onCompletion){
 
         for(d in channel){
             receivers.values.forEach{it.send(d)}
@@ -61,5 +66,5 @@ suspend fun <D> CoroutineScope.duplicator(
     }
     val subscriptionPort = receiver<DuplicatorMessage<D>> {}
 
-    return Duplicator(actor,subscriptionPort,receivers)
+    return Duplicator(actor,subscriptionPort,receivers, owner)
 }

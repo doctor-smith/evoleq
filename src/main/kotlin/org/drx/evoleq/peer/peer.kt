@@ -15,3 +15,12 @@
  */
 package org.drx.evoleq.peer
 
+import org.drx.evoleq.coroutines.DuplicatorMessage
+import org.drx.evoleq.coroutines.Receiver
+import org.drx.evoleq.stub.Stub
+
+interface Peer<D, I, O> : Stub<D>{
+    val input: Receiver<I>
+    val manager: Receiver<DuplicatorMessage<O>>
+}
+
