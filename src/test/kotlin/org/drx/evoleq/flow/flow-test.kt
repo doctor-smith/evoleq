@@ -119,7 +119,7 @@ class FlowTest {
         val flow = flow<Data, Boolean>{
             conditions(once())
             flow{
-                data -> Immediate{
+                data -> Parallel{
                     val parallel1 = Parallel<Int>{
                         suspendedFlow<Int, Boolean> {
                             setupConditions{
