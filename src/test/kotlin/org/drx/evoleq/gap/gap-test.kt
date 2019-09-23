@@ -16,12 +16,14 @@
 package org.drx.evoleq.gap
 
 import javafx.beans.property.SimpleObjectProperty
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.dsl.gap
 import org.drx.evoleq.dsl.initialSideEffect
+import org.drx.evoleq.dsl.parallel
+import org.drx.evoleq.evolving.DefaultEvolvingScope
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.sideeffect.InitialSideEffect
 import org.drx.evoleq.sugar.close
 import org.drx.evoleq.sugar.with
@@ -81,23 +83,30 @@ class GapTest {
 
     //@Test
     fun sideEffectGap() = runBlocking{
+        val scope = DefaultEvolvingScope()
         val property = SimpleObjectProperty<String>()
-        val sideEffect: InitialSideEffect<String?> = initialSideEffect { property.value }
+        val sideEffect: CoroutineScope.()->InitialSideEffect<String?> = initialSideEffect { property.value }
         class Data(val x: Int, val s: String)
 
         val gap = gap<Data,String?>{
-            from{ Parallel{null} }
+            from{ scope.parallel{null} }
             to{
-                data, s -> Parallel{Data(data.x, s!!)}
+                data, s -> scope.parallel{Data(data.x, s!!)}
             }
         }
 
-        val closed = close (gap) with { Parallel{ sideEffect() } }
+        val closed = close (gap) with { scope.parallel{ sideEffect()() } }
 
         property.value = "set"
 
-        val result = closed(Data(0,"")).get()
-
+        val result = closed(Data(0, "")).get()
+        println("here")
         assert(result.s == "set")
+
+        Unit
+    }
+
+    fun gapCancellation() {
+
     }
 }

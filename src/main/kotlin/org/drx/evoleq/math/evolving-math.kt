@@ -17,6 +17,7 @@ package org.drx.evoleq.math
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.plus
 import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
@@ -121,4 +122,16 @@ suspend fun <S,T> coklEvolving(f: suspend (S)->T): suspend (Evolving<S>)->T {
     val cokl: suspend (Evolving<S>)-> T =  { evolving -> mapper(evolving).get() }
 
     return cokl
+}
+
+
+fun <D,E> Pair<Evolving<D>,Evolving<E>>.ev(): Evolving<Pair<D,E>> = object: Evolving<Pair<D,E>>{
+
+    val scope = CoroutineScope(Job())+first.job+second.job
+
+    override val job: Job
+        get() = scope.coroutineContext[Job]!!
+
+    override suspend fun get(): Pair<D, E> = Pair(first.get(), second.get())
+
 }

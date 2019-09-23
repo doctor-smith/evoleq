@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.peer
+package org.drx.evoleq.gap
 
-import org.drx.evoleq.coroutines.DuplicatorMessage
-import org.drx.evoleq.coroutines.Receiver
-import org.drx.evoleq.stub.Stub
+import kotlinx.coroutines.CoroutineScope
+import org.drx.evoleq.dsl.parallel
+import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.evolving.LazyEvolving
 
-interface Peer<D, I, O> : Stub<D>{
-    /**
-     * Receive input of type I
-     * [Receiver]
-     */
-    val input: Receiver<I>
-    /**
-     * Manage peer;
-     * Receive duplicator-messages - output type O
-     * [Receiver], [DuplicatorMessage]
-     */
-    val manager: Receiver<DuplicatorMessage<O>>
+data class LazyGap<W,P>(
+    //val scope: CoroutineScope,
+    val from: suspend CoroutineScope.(W)-> Evolving<P>,
+    val to: suspend CoroutineScope.(W)->CoroutineScope.(P)->Evolving<W>
+)
+
+suspend fun <W,P> LazyGap<W, P>.fill(filler: LazyEvolving<P>): LazyEvolving<W> = {
+    w: W -> parallel{
+        this.to(w)(filler(from(w).get()).get()).get()
+    }
 }
-

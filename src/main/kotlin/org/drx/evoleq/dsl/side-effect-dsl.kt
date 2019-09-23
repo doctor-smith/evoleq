@@ -15,6 +15,7 @@
  */
 package org.drx.evoleq.dsl
 
+import kotlinx.coroutines.CoroutineScope
 import org.drx.evoleq.sideeffect.InitialSideEffect
 import org.drx.evoleq.sideeffect.TerminalSideEffect
 import org.drx.evoleq.sideeffect.TotalSideEffect
@@ -27,7 +28,9 @@ fun<T> terminalSideEffect(sideEffect: (T)->Unit): TerminalSideEffect<T> = object
 fun<T> initialSideEffect(sideEffect: ()->T): InitialSideEffect<T> = object : InitialSideEffect<T>() {
     override fun invoke() = sideEffect()
 }
-
+fun <T> CoroutineScope.initialSideEffect(sideEffect: CoroutineScope.()->T): CoroutineScope.()->InitialSideEffect<T> = { object : InitialSideEffect<T>() {
+    override fun invoke() = this@initialSideEffect.sideEffect()
+} }
 
 fun<T> totalSideEffect(sideEffect: ()->Unit): TotalSideEffect = object : TotalSideEffect() {
     override fun invoke() = sideEffect()

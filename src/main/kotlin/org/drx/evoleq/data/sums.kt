@@ -16,7 +16,6 @@
 package org.drx.evoleq.data
 
 
-
 sealed class Sum<D,E> {
     data class First<D,E>(val value: D): Sum<D,E>()
     data class Second<D,E>(val value: E): Sum<D,E>()
@@ -40,7 +39,7 @@ sealed class QuintSum<D,E,F,G,H>  {
     data class Second<D,E,F,G,H>(val value: E): QuintSum<D,E,F,G,H>()
     data class Third<D,E,F,G,H>(val value: F): QuintSum<D,E,F,G,H>()
     data class Fourth<D,E,F,G,H>(val value: G): QuintSum<D,E,F,G,H>()
-    data class Fith<D,E,F,G,H>(val value: H): QuintSum<D,E,F,G,H>()
+    data class Fifth<D,E,F,G,H>(val value: H): QuintSum<D,E,F,G,H>()
 }
 
 

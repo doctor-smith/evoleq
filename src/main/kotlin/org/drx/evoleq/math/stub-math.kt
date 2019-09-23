@@ -87,7 +87,7 @@ fun <D,E,F,G,H> sum(first: Evolver<D>, second: Evolver<E>, third: Evolver<F>, fo
         is QuintSum.Second -> second.evolve(d.value) map suspended { v -> QuintSum.Second(v) }
         is QuintSum.Third -> third.evolve(d.value) map suspended { v -> QuintSum.Third(v) }
         is QuintSum.Fourth -> fourth.evolve(d.value) map suspended { v -> QuintSum.Fourth(v) }
-        is QuintSum.Fith -> fith.evolve(d.value) map suspended { v -> QuintSum.Fith(v) }
+        is QuintSum.Fifth -> fith.evolve(d.value) map suspended { v -> QuintSum.Fifth(v) }
     }
 }
 

@@ -1,7 +1,5 @@
 import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer
-import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer.id
 
 plugins {
     java
@@ -37,8 +35,17 @@ configure<JavaPluginConvention> {
     sourceSets.create("experiments"){
         java.srcDirs("src/experiments/java")
     }
-
+    sourceSets.create("generated"){
+        java.srcDirs("src/generated/java")
+    }
     sourceSets{
+        
+        getByName("main"){
+            java {
+                compileClasspath += sourceSets["generated"].output
+                runtimeClasspath += sourceSets["generated"].output
+            }
+        }
         getByName("examples"){
             java {
                 compileClasspath += sourceSets["main"].output
@@ -57,10 +64,22 @@ configure<JavaPluginConvention> {
                 runtimeClasspath += sourceSets["experiments"].output
             }
         }
+        
+
     }
 }
 kotlin{
+    
     sourceSets {
+
+        getByName("generated"){
+            kotlin.srcDirs("src/generated/kotlin")
+            configurations {
+                dependencies{
+                    implementation(Config.Dependencies.kotlinStandardLibrary)
+                }
+            }
+        }
         getByName("examples"){
             kotlin.srcDirs("src/examples/kotlin")
             configurations {
@@ -212,8 +231,7 @@ bintray {
 
 }
 
-
-
+apply<org.drx.evoleq.plugin.EvoleqPlugin>()
 
 
 
