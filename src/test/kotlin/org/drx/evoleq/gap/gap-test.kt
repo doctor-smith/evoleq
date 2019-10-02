@@ -16,8 +16,10 @@
 package org.drx.evoleq.gap
 
 import javafx.beans.property.SimpleObjectProperty
+import junit.framework.Assert.fail
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import org.drx.evoleq.coroutines.standard
 import org.drx.evoleq.dsl.gap
 import org.drx.evoleq.dsl.initialSideEffect
 import org.drx.evoleq.dsl.parallel
@@ -106,7 +108,84 @@ class GapTest {
         Unit
     }
 
-    fun gapCancellation() {
+    @Test fun gapCancellation() {
+        fail("Not implemented")
+    }
 
+    @Test fun deepenGap() = runBlocking{
+        //fail("Not implemented")
+
+        val gap1 = gap<String,Int> {
+            from { x: String -> parallel { x.length } }
+            to { x: String, y: Int -> parallel { x + y } }
+        }
+        val gap2= gap<Int, Boolean> {
+            from{ x-> parallel{x > 0}}
+            to{x ,y -> parallel{ x + when(y){true -> 1; false -> 0} }}
+        }
+
+        val deepened = gap1.deepen(gap2)
+
+        val filler: (Boolean) -> Evolving<Boolean> = { b:Boolean -> parallel {  !b }}
+        val filled = deepened.fill (filler)
+
+        val res = filled("aaa").get()
+
+        assert(res == "aaa3")
+
+    }
+
+    @Test fun deepenGap2() = runBlocking {
+        data class P(val x:String,  val q: Int)
+        data class W(val a: Boolean, val p: P)
+
+        val gap1 = gap<W,P>{
+            from{ w:W -> parallel{ w.p } }
+            to{ w: W, p:P -> parallel{ W(w.a,p) } }
+        }
+
+        val gap2 = gap<P,Int> {
+            from{p -> parallel{p.q}}
+            to{p,q -> parallel{P(p.x,q)}}
+        }
+
+        val deepened = gap1.deepen(gap2)
+
+        val filler: (Int)->Evolving<Int> = {x -> parallel{x+1}}
+
+        val filled = deepened.fill(standard{ x: Int -> parallel{x+1}})
+
+        val result = filled(W(true,P("name", 0))).get()
+
+        assert(result.a)
+        assert(result.p.x == "name")
+        assert(result.p.q == 1)
+
+
+    }
+
+    @Test fun widenGap() = runBlocking{
+        data class P(val x:String,  val q: Int)
+        data class W(val a: Boolean, val p: P)
+
+        val gap1 = gap<W,P>{
+            from{ w:W -> parallel{ w.p } }
+            to{ w: W, p:P -> parallel{ W(w.a,p) } }
+        }
+
+        val gap2 = gap<P,Int> {
+            from{p -> parallel{p.q}}
+            to{p,q -> parallel{P(p.x,q)}}
+        }
+
+        val widened = gap2.widen(gap1)
+
+        val filled = widened.fill(standard{x: Int -> parallel{x+1}})
+
+        val result = filled(W(true,P("name", 0))).get()
+
+        assert(result.a)
+        assert(result.p.x == "name")
+        assert(result.p.q == 1)
     }
 }
