@@ -33,6 +33,16 @@ data class Gap<W,P>(
     val to: (W)->(P)-> Evolving<W>
 )
 
+/**
+ * Suppose you have
+ * a gap g1 Gap<Pair<A,Pair<B,C>>,Pair<B,C>> and
+ * a gap g2 Gap<Pair<B,C>,C>
+ * Then you can deepen the gap g1 by g2 to obtain a gap
+ * Gap<Pair<A,Pair<B,C>>,C>.
+ *
+ * This way you can use functions f:(C)->Evolving<C> to manipulate C
+ * on Pair<A,Pair<B,C>>
+ */
 suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     val newFrom = from*gap.from
     val newTo= {w:W->
@@ -45,7 +55,13 @@ suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     return Gap(newFrom, newTo)
 }
 
-
+/**
+ * Suppose you have
+ * a gap g1: Gap<Pair<B,C>,C> and
+ * a gap g2 Gap<Pair<A,Pair<B,C>>,Pair<B,C>>
+ * Then you can widen the gap g1 by g2 to obtain a gap
+ * Gap<Pair<A,Pair<B,C>>,C>.
+ */
 suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
     val newFrom = gap.from*from
     val newTo= {w:W->
