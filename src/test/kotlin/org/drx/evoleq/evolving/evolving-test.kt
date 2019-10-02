@@ -15,9 +15,7 @@
  */
 package org.drx.evoleq.evolving
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.lazyParallel
 import org.drx.evoleq.dsl.parallel
@@ -36,9 +34,15 @@ class EvolvingTest {
         assert(scope.lE(0).get() == 0)
     }
 
-    @Test fun lazyEvolvingInheritance() {
-        val lE:LazyEvolving<Int> = lazyParallel { x -> x }
+    @Test fun lazyEvolvingInheritanceAndCancellation() = runBlocking{
+        val lE:LazyEvolving<Int> = lazyParallel { x -> delay(1_000); x }
+        val scope = CoroutineScope(Job())
 
+        val res = scope.lE(0)
+        val j = res.job
+        scope.cancel()
+        delay(10)
+        assert(j.isCancelled)
     }
 
 

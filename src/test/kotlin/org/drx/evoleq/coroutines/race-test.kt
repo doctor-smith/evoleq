@@ -16,18 +16,18 @@
 package org.drx.evoleq.coroutines
 
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.lang.Thread.sleep
 
 class RaceTest {
 
     @Test fun blockRace() = runBlocking{
         val x = blockRace(GlobalScope,{
-            sleep(10)
+            delay(10)
             1
         },{
-            sleep(1)
+            delay(1)
             2
         }).await()
 

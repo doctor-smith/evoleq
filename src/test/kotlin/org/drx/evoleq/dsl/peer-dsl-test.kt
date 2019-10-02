@@ -20,6 +20,8 @@ import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.coroutines.DuplicatorMessage
 import org.drx.evoleq.coroutines.onNext
 import org.drx.evoleq.peer.Peer
+import org.drx.evoleq.peer.connect
+import org.drx.evoleq.peer.disconnect
 import org.drx.evoleq.stub.Key1
 import org.drx.evoleq.stub.Key2
 import org.junit.Test
@@ -79,4 +81,67 @@ class PeerDslTest {
         delay(100)
     }
 
+
+    @Test fun connectAndDisconnectPeers() = runBlocking{
+        var received = ""
+
+        class Peer1
+        val peer1 = peer<String, String, String>{
+            val id = Peer1::class
+            val scope = DefaultStubScope()
+            stub(stub{
+                id(id)
+                evolve{ scope.parallel{
+                    received = it
+                    it
+                } }
+            })
+
+            input(scope.receiver<String>()
+                .onNext(scope){ s->
+                    //println("input1: received message = $s")
+                    stub.evolve(s)
+                }
+            )
+
+            duplicator(scope.duplicator(owner = id))
+        }
+        class Peer2
+        val peer2 = peer<String, String, String>{
+            val id = Peer2::class
+            val scope = DefaultStubScope()
+            stub(stub{
+                id(id)
+                evolve{ scope.parallel{
+                    duplicator.send(it)
+                    it
+                } }
+            })
+
+            input(scope.receiver<String>()
+                .onNext(scope){ s->
+                    //println("input2: received message = $s")
+                    stub.evolve(s)
+                }
+            )
+
+            duplicator(scope.duplicator(owner = id))
+        }
+
+        peer1.connect(peer2)
+        delay(100)
+        assert(peer1.subscriptions.contains(Peer2::class))
+        val message1 = "Hello Peer1"
+        peer2.input.send(message1)
+        delay(100)
+        assert(received == message1)
+        peer1.disconnect(peer2)
+        delay(100)
+        val message2 = "Bye Peer1"
+        peer2.input.send(message2)
+        delay(100)
+        assert(!peer1.subscriptions.contains(Peer2::class))
+        assert(received == message1)
+
+    }
 }

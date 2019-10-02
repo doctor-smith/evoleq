@@ -18,7 +18,7 @@ package org.drx.evoleq.evolving
 import javafx.beans.property.SimpleIntegerProperty
 import kotlinx.coroutines.*
 import org.drx.evoleq.dsl.immediate
-import org.drx.evoleq.dsl.onScope
+import org.drx.evoleq.dsl.lazyImmediate
 import org.drx.evoleq.dsl.parallel
 import org.junit.Test
 
@@ -71,5 +71,11 @@ class ImmediateTest{
         scope.cancel()
         delay(100)
         assert(job!!.isCancelled)
+    }
+
+    @Test fun lazyImmediateT() = runBlocking {
+        val lI: LazyImmediate<Int> = lazyImmediate<Int>{ x  -> x*x }
+
+        Unit
     }
 }

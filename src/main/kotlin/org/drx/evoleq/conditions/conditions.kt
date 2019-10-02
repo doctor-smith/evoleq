@@ -43,7 +43,7 @@ fun <D> once(): EvolutionConditions<D, Boolean> =
     EvolutionConditions(
         testObject = true,
         check = { b -> b },
-        updateCondition = { d: D -> false }
+        updateCondition = { false }
     )
 
 /**

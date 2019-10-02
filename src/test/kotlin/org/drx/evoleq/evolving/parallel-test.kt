@@ -124,6 +124,7 @@ class ParallelTest {
         //assert(x==y)
         assert(parallel.job.isCancelled)
         assert(inner!!.job.isCancelled)
+        assert(x.get() == "parallel_cancelled")
         Unit
     }
 
