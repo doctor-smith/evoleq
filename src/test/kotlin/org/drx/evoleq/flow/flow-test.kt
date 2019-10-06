@@ -39,7 +39,7 @@ class FlowTest {
                 updateCondition { x: Int -> x <= 0 }
             }
             flow  {
-                x:Int -> Immediate{
+                x:Int -> Parallel{
                     val p1 = Parallel<Int>{
                         delay(1_000)
                         1
@@ -109,18 +109,24 @@ class FlowTest {
         var changes = 0
         property.addListener{_,oV,nV ->
             if(oV == -1) {
-                //println("initial change")
+                println("initial change")
             }
             else if(oV != nV){
-                //println("change: oV = $oV; nV = $nV" )
+                println("change: oV = $oV; nV = $nV" )
                 changes ++
             }
         }
+
+        val scope1 = DefaultStubScope()
+        val scope2 = DefaultStubScope()
+
         val flow = flow<Data, Boolean>{
             conditions(once())
             flow{
-                data -> Parallel{
-                    val parallel1 = Parallel<Int>{
+                data -> parallel{
+                    println("launching main parallel")
+                    val parallel1 = parallel<Int>{
+                        println("   parallel 1")
                         suspendedFlow<Int, Boolean> {
                             setupConditions{
                                 testObject(true)
@@ -128,7 +134,8 @@ class FlowTest {
                                 updateCondition{x -> x <= 10}
                             }
                             flow{
-                                x -> Immediate{
+                                x -> parallel{
+                                    println("       flow 1")
                                     delay(2)
                                     property.value = 1
                                     x + 1
@@ -136,7 +143,8 @@ class FlowTest {
                             }
                         }.evolve(data.x).get()
                     }
-                    val parallel2 = Parallel<String> {
+                    val parallel2 = parallel<String> {
+                        println("   parallel 2")
                         suspendedFlow<String, Boolean> {
                             setupConditions{
                                 testObject(true)
@@ -144,7 +152,8 @@ class FlowTest {
                                 updateCondition{x -> x.length <= 1024}
                             }
                             flow{
-                                s -> Immediate{
+                                s -> parallel{
+                                    println("       flow 2")
                                     delay(2)
                                     property.value = 2
                                     "$s-+$s"
@@ -158,8 +167,8 @@ class FlowTest {
         }
 
         // result doesn't matter
-        flow.evolve(Data(0, "1")).get()
-
+        val res = flow.evolve(Data(0, "1")).get()
+        println("result: $res")
         assert(changes >= 2)
     }
 
@@ -213,7 +222,7 @@ class FlowTest {
         GlobalScope.parallel {
             flow.evolve("START")
         }
-        delay(100)
+        delay(1500)
         assert(one!!.job.isActive)
         assert(two!!.job.isActive)
         flow.cancel()

@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.coroutines.suspended
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.flow.enter
 import org.drx.evoleq.gap.Gap
@@ -47,7 +46,7 @@ open class ObservingStubConfiguration<D,P>() : StubConfiguration<D>() {
 
     //var scope: CoroutineScope = GlobalScope
 
-    private var preEvolve: suspend (D)-> Evolving<D> = suspended{ d: D -> Immediate{d} }
+    private var preEvolve: suspend (D)-> Evolving<D> = suspended{ d: D -> Parallel{d} }
     private val stack: ArrayList<P> by lazy{ arrayListOf<P>() }
     private val stackEmpty: SimpleObjectProperty<Boolean> by lazy { SimpleObjectProperty<Boolean>(true) }
 

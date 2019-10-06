@@ -18,7 +18,7 @@ package org.drx.evoleq.gap
 import kotlinx.coroutines.CoroutineScope
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.math.times
 
 /**
@@ -47,7 +47,7 @@ suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     val newFrom = from*gap.from
     val newTo= {w:W->
         {q:Q ->
-            Immediate {
+            Parallel {
                 (gap.to(from(w).get()) * this@deepen.to(w))(q).get()
             }
         }
@@ -66,7 +66,7 @@ suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
     val newFrom = gap.from*from
     val newTo= {w:W->
         {q:Q ->
-            Immediate {
+            Parallel {
                 (this@widen.to(gap.from(w).get()) * gap.to(w))(q).get()
             }
         }
@@ -76,7 +76,7 @@ suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
 
 suspend fun <W, P> Gap<W, P>.fill(filler: (P)-> Evolving<P>): (W)-> Evolving<W> {
     return { w ->
-        Immediate {
+        Parallel {
             val p = (from * filler)(w).get()
             this@fill.to(w)(p).get()
         }
@@ -85,7 +85,7 @@ suspend fun <W, P> Gap<W, P>.fill(filler: (P)-> Evolving<P>): (W)-> Evolving<W> 
 
 suspend fun <W, P> Gap<W, P>.fill(filler: suspend (P)-> Evolving<P>): (W)-> Evolving<W> {
     return { w ->
-        Immediate {
+        Parallel {
             val p = (from * filler)(w).get()
             this@fill.to(w)(p).get()
         }

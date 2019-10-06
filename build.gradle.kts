@@ -24,6 +24,7 @@ dependencies {
     compile(Config.Dependencies.coroutines)
     compile(kotlin("reflect"))
 
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.3.2")
     testCompile("junit", "junit", "4.12")
 }
 

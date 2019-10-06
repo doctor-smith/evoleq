@@ -18,7 +18,6 @@ package org.drx.evoleq.flow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolveSuspended
@@ -44,7 +43,7 @@ open class SuspendedFlow<D, T>(
     val flow: suspend (D)-> Evolving<D>
 ) : Evolver<D> {
     override suspend fun evolve(data: D): Evolving<D> =
-        scope.immediate {
+        scope.parallel {
             evolveSuspended(
                 initialData = data,
                 conditions = conditions,
@@ -92,7 +91,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: SuspendedFlow<P, T>, conditions: Evoluti
     SuspendedFlow(
         conditions = conditions
     ) {
-            data -> Immediate { this@fill.fill(phi.flow)(data).get() }
+            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
     }
 
 /**
@@ -102,7 +101,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: SuspendedFlow<P, T>): SuspendedFlow<D, T
     SuspendedFlow(
         conditions = this@fill.adapt(phi.conditions)
     ){
-            data -> Immediate { this@fill.fill(phi.flow)(data).get() }
+            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
     }
 
 /**

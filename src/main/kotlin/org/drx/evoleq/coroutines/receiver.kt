@@ -23,7 +23,6 @@ import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.receivingStub
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.stub.ID
 import org.drx.evoleq.stub.toFlow
@@ -124,7 +123,7 @@ class Duplicator<D>(
                     }
                 }
             }
-            is DuplicatorMessage.Terminated -> Immediate{ DuplicatorMessage.Terminated<D>() }
+            is DuplicatorMessage.Terminated -> Parallel{ DuplicatorMessage.Terminated<D>() }
         } }
     }
     private val managerFlow = managerStub.toFlow<DuplicatorMessage<D>, Boolean>(conditions{

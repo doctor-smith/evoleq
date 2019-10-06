@@ -52,21 +52,32 @@ fun <D> lazyAsync(
 }
 
 fun <D> lazyImmediate(
-    block: suspend CoroutineScope.(D) -> D
+    block: CoroutineScope.(D) -> D
 ): LazyImmediate<D> = {
     immediate{
         block(it)
     }
 }
 
+fun <D> lazyOnDemand(
+    block: suspend CoroutineScope.(D) -> D
+): LazyOnDemand<D>  = {
+    onDemand(it) {
+        block(it)
+    }
+}
+
 fun <D> CoroutineScope.immediate(default: D? = null, block: suspend CoroutineScope.()->D) = Immediate(this){ block() }
 
+fun <D> CoroutineScope.onDemand(default : D? = null, block: suspend CoroutineScope.()->D) = OnDemand(this){ block() }
 
 fun <D,E> Evolving<D>.parallel(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Parallel<E> = Parallel(delay, CoroutineScope(this.job),default) { block() }
 
 fun <D,E> Evolving<D>.async(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Async<E> = Async(delay, CoroutineScope(this.job),default) { block() }
 
 fun <D,E> Evolving<D>.immediate(block: suspend CoroutineScope.() -> E): Immediate<E> = Immediate(CoroutineScope(this.job)) { block() }
+
+fun <D,E> Evolving<D>.onDemand(block: suspend CoroutineScope.() -> E): OnDemand<E> = OnDemand(CoroutineScope(this.job)) { block() }
 
 /**
  * Force an evolving to run under a new scope

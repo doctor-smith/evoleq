@@ -16,23 +16,25 @@
 package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.*
+import java.lang.Thread.sleep
 
 /**
  * Immediate: return immediately, blocking the current thread
  */
-class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val default: D? = null, private val block: suspend CoroutineScope.()->D) : Evolving<D> {
+class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val default: D? = null, private val block: suspend CoroutineScope.()->D) : Evolving<D>, Cancellable<D> {
     private var set = false
     private var result: D? = null
 
     override val job: Job
 
     init{
-        job = scope.launch {
-            while(result == null){
+        job = scope.launch { coroutineScope {
+            while (result == null) {
+                //println("Immediate: result = null")
                 delay(1)
             }
             set = true
-        }
+        } }
 
         job.invokeOnCompletion{
             if(result == null){
@@ -40,19 +42,33 @@ class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val defau
             set = true
         } }
 
-
-        result = runBlocking(scope.coroutineContext) {
-            scope+job
-            block()
+        GlobalScope.launch{ coroutineScope{
+            scope + job
+            result = scope.block()
+        } }
+        // delay initialization until result is computed
+        while(!set){
+            sleep(1)
         }
     }
 
     @Suppress("unchecked_cast")
-    override suspend fun get(): D {
+    override suspend fun get(): D = coroutineScope {
         while(!set){
             delay(1)
         }
-        return result!!
+        //println("block executed\n")
+        result!!
+    }
+
+    override fun cancel(d: D): Evolving<D> {
+        scope.cancel()
+        return object : Evolving<D> {
+            override val job: Job
+                get() = this@Immediate.job
+
+            override suspend fun get(): D = d
+        }
     }
 }
 

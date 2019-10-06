@@ -57,7 +57,7 @@ class StubTest {
 
             val state = SimpleIntegerProperty(0)
 
-            evolve{ x -> Immediate{
+            evolve{ x -> Parallel{
                 state.value = x+1
                 val child = child(ChildKey::class) as Stub<String>
                 println(child.toFlow(once()).evolve("").get())
@@ -70,7 +70,7 @@ class StubTest {
 
             child(ChildKey::class,
                 stub<String>{
-                    evolve{ s -> Immediate {
+                    evolve{ s -> Parallel {
                         val parentStub = parent<Int>()
                         val x = parentStub.evolve(0)
                         val res = x.get().toString()
@@ -161,6 +161,7 @@ class StubTest {
 
     @Test
     fun pauseObservingStub() =runBlocking {
+        //withTimeout(30_000){
         class Data(val x: Int, val cnt: Int = 0)
         class ObserverKey
         class OutKey
@@ -181,7 +182,7 @@ class StubTest {
             fun observer() = sibling(ChangeBehaviorKey::class,ObserverKey::class)!! as Stub<Int>
 
 
-            evolve{ data -> Immediate{
+            evolve{ data -> Parallel{
                 val observer = child(ObserverKey::class) as Stub<Int>
                     if(!launched) {
                         launched = true
@@ -204,7 +205,7 @@ class StubTest {
             parentalStub(
                 OutKey::class,
                 stub<String>{
-                    evolve{s-> Immediate{
+                    evolve{s-> Parallel{
                         println(s)
                         s
                     }}
@@ -214,7 +215,7 @@ class StubTest {
             parentalStub(
                 ChangeBehaviorKey::class,
                 stub<Boolean> {
-                    evolve{ b -> Immediate{
+                    evolve{ b -> Parallel{
                         val observer = observer()//child(ObserverKey::class) as Stub<Int>
                         val obs = observer.stubs[ObservePropertyStub::class]!! as Stub<ObservePropertyMessage>
                         var o: Message? = null
@@ -236,8 +237,8 @@ class StubTest {
             child( GlobalScope.observingStub<Int,Int>{
                     id ( ObserverKey::class )
                     gap{
-                        from{ x -> Immediate{ x } }
-                        to{x,y -> Immediate{
+                        from{ x -> Parallel{ x } }
+                        to{x,y -> Parallel{
                             val parentStub = parent<String>()
                             val res = parentStub.evolve("received: $y").get()
                             y
@@ -253,8 +254,8 @@ class StubTest {
             child( ObserveBehaviorKey::class,
                 GlobalScope.observingStub<Boolean,Boolean>{
                     gap{
-                        from{ x -> Immediate{ x } }
-                        to{x,y -> Immediate{
+                        from{ x -> Parallel{ x } }
+                        to{x,y -> Parallel{
                             val parentStub = parent<Boolean>()
                             val res = parentStub.evolve(y).get()
                             y

@@ -41,7 +41,7 @@ class ImmediateTest{
             2
         }
         //one.get()
-
+        delay(1_500)
         Unit
     }
 
@@ -77,5 +77,16 @@ class ImmediateTest{
         val lI: LazyImmediate<Int> = lazyImmediate<Int>{ x  -> x*x }
 
         Unit
+    }
+
+    @Test fun cancellation() = runBlocking{
+        val imm = Immediate{
+            delay(100)
+            Unit
+        }
+        val cancelled = imm.cancel(Unit)
+        println(cancelled.job)
+        delay(100)
+        assert(cancelled.job.isCompleted)
     }
 }

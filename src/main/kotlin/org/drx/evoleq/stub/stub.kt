@@ -17,7 +17,7 @@ package org.drx.evoleq.stub
 
 import kotlinx.coroutines.CoroutineScope
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.dsl.immediate
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.suspendedFlow
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.LazyEvolving
@@ -34,7 +34,7 @@ interface Stub<D> : Evolver<D> {
     val id: KClass<*>
     val stubs: HashMap<KClass<*>, Stub<*>>
 
-    override suspend fun evolve(d: D): Evolving<D> = scope.immediate{ d }
+    override suspend fun evolve(d: D): Evolving<D> = scope.parallel{ d }
 
 }
 

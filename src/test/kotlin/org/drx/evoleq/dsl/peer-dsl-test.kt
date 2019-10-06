@@ -28,7 +28,8 @@ import org.junit.Test
 
 class PeerDslTest {
 
-    @Test fun peerDslBasics() = runBlocking {
+    @Test
+    fun peerDslBasics() = runBlocking {
 
         val peer = peer<Int, String, Boolean>{
             val id = Peer::class
@@ -82,7 +83,8 @@ class PeerDslTest {
     }
 
 
-    @Test fun connectAndDisconnectPeers() = runBlocking{
+    @Test
+    fun connectAndDisconnectPeers() = runBlocking{
         var received = ""
 
         class Peer1
@@ -133,7 +135,7 @@ class PeerDslTest {
         assert(peer1.subscriptions.contains(Peer2::class))
         val message1 = "Hello Peer1"
         peer2.input.send(message1)
-        delay(100)
+        delay(1000)
         assert(received == message1)
         peer1.disconnect(peer2)
         delay(100)
