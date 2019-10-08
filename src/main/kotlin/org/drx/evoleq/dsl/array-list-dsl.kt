@@ -15,6 +15,8 @@
  */
 package org.drx.evoleq.dsl
 
+import kotlinx.coroutines.delay
+
 open class ArrayListConfiguration<T> : Configuration<ArrayList<T>> {
 
     private val list: ArrayList<T> by lazy { arrayListOf<T>() }
@@ -26,3 +28,12 @@ open class ArrayListConfiguration<T> : Configuration<ArrayList<T>> {
 }
 
 fun <T> arrayList(configuration: ArrayListConfiguration<T>.()->Unit): ArrayList<T> = configure(configuration)
+
+suspend fun <T, O> ArrayList<T>.onNext(action: suspend (T)->O): O {
+    while(isEmpty()) {
+        delay(1)
+    }
+    val t = first()
+    removeAt(0)
+    return action(t)
+}
