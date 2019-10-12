@@ -74,7 +74,7 @@ class EvolverTest {
                 get() = this@catchErrors.scope
             override suspend fun evolve(d: ErrorStack<Int>): Evolving<ErrorStack<Int>> =
                 try{
-                    Immediate{ErrorStack(this@catchErrors.evolve(d.data).get(),null)}
+                    Parallel{ErrorStack(this@catchErrors.evolve(d.data).get(),null)}
                 } catch(exception: Exception){
                     Immediate{ErrorStack(d.data, exception)}
                 }

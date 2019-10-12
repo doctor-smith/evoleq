@@ -21,6 +21,7 @@ import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.lazyImmediate
 import org.drx.evoleq.dsl.parallel
 import org.junit.Test
+import java.lang.Thread.sleep
 
 class ImmediateTest{
     @Test fun sequentialInitialization() = runBlocking{
@@ -30,7 +31,7 @@ class ImmediateTest{
             assert(newValue.toInt() > oldValue.toInt())
         }
         val one = Immediate{
-            delay(1000)
+            sleep(1000)
             println(1)
             prop.value = 1
             1
@@ -49,7 +50,7 @@ class ImmediateTest{
     @Test fun immediateBlocksConveniently() = runBlocking {
         val startTime = System.currentTimeMillis()
         val parallel = CoroutineScope(Job()).parallel {
-            immediate { delay(10_000) }
+            immediate { sleep(10_000) }
             println("fhdkjlsa")
         }
         assert(System.currentTimeMillis()-startTime < 1_000)
@@ -63,7 +64,7 @@ class ImmediateTest{
         scope.parallel{
             immediate( 0){
                 job = this.coroutineContext[Job]
-                delay(10_000)
+                sleep(10_000)
                 1
             }
         }
@@ -81,7 +82,7 @@ class ImmediateTest{
 
     @Test fun cancellation() = runBlocking{
         val imm = Immediate{
-            delay(100)
+            sleep(100)
             Unit
         }
         val cancelled = imm.cancel(Unit)

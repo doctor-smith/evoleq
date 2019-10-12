@@ -67,7 +67,7 @@ fun <D> lazyOnDemand(
     }
 }
 
-fun <D> CoroutineScope.immediate(default: D? = null, block: suspend CoroutineScope.()->D) = Immediate(this){ block() }
+fun <D> CoroutineScope.immediate(default: D? = null, block:  CoroutineScope.()->D) = Immediate(this){ block() }
 
 fun <D> CoroutineScope.onDemand(default : D? = null, block: suspend CoroutineScope.()->D) = OnDemand(this){ block() }
 
@@ -75,7 +75,7 @@ fun <D,E> Evolving<D>.parallel(delay: Long = 1,default: E? = null, block: suspen
 
 fun <D,E> Evolving<D>.async(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Async<E> = Async(delay, CoroutineScope(this.job),default) { block() }
 
-fun <D,E> Evolving<D>.immediate(block: suspend CoroutineScope.() -> E): Immediate<E> = Immediate(CoroutineScope(this.job)) { block() }
+fun <D,E> Evolving<D>.immediate(block: CoroutineScope.() -> E): Immediate<E> = Immediate(CoroutineScope(this.job)) { block() }
 
 fun <D,E> Evolving<D>.onDemand(block: suspend CoroutineScope.() -> E): OnDemand<E> = OnDemand(CoroutineScope(this.job)) { block() }
 

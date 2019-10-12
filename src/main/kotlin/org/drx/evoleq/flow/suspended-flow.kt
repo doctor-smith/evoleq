@@ -22,7 +22,6 @@ import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolveSuspended
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.LazyEvolving
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.gap.Gap
@@ -80,7 +79,7 @@ fun <D,T> CoroutineScope.LazyFlow(
  */
 suspend fun <D,T,P> SuspendedFlow<D, T>.enter(gap: Gap<D, P>): Gap<D, P> =
     Gap(
-        from = { d -> Immediate { (flow * gap.from)(d).get() } },
+        from = { d -> Parallel { (flow * gap.from)(d).get() } },
         to = gap.to
     )
 

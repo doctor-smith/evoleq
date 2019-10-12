@@ -22,7 +22,6 @@ import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolve
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
@@ -57,7 +56,7 @@ open class Flow<D, T>(
  */
 suspend fun <D,T,P> Flow<D, T>.enter(gap: Gap<D, P>): Gap<D, P> =
     Gap(
-        from = { d -> Immediate { (flow * gap.from)(d).get() } },
+        from = { d -> Parallel { (flow * gap.from)(d).get() } },
         to = gap.to
     )
 
@@ -69,7 +68,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P, T>, conditions: EvolutionConditi
     Flow(
         conditions = conditions
     ) {
-            data -> Immediate { this@fill.fill(phi.flow)(data).get() }
+            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
     }
 
 /**
@@ -79,7 +78,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P, T>): Flow<D, T> =
     Flow(
         conditions = this@fill.adapt(phi.conditions)
     ){
-            data -> Immediate { this@fill.fill(phi.flow)(data).get() }
+            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
     }
 
 

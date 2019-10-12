@@ -25,6 +25,7 @@ import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
 import org.drx.evoleq.stub.ID
 import org.drx.evoleq.stub.Stub
+import java.lang.Thread.sleep
 import kotlin.reflect.KClass
 
 interface Evolver<D> {
@@ -62,9 +63,16 @@ suspend fun <D,E> Evolver<D>.forkImmediate(other: Evolver<E>) : Evolver<Pair<D,E
     override val scope: CoroutineScope
         get() = s
     override suspend fun evolve(d: Pair<D, E>): Evolving<Pair<D, E>> = scope.immediate {
-        val first =this@forkImmediate.evolve(d.first)
-        val second = other.evolve(d.second)
-        Pair(first.get(),second.get())
+        var result: Pair<D,E>? = null
+        parallel {
+            val first = this@forkImmediate.evolve(d.first)
+            val second = other.evolve(d.second)
+            result = Pair(first.get(), second.get())
+        }
+        while(result == null ) {
+            sleep(1)
+        }
+        result!!
     }
 }
 suspend fun <D,E> Evolver<D>.forkParallel(other: Evolver<E>) : Evolver<Pair<D,E>> = object: Evolver<Pair<D,E>> {
@@ -112,7 +120,7 @@ data class ErrorCatcher<D>(val data: D, val error: Exception? = null)
 fun <D> Evolver<D>.runCatchingErrors() : Evolver<ErrorCatcher<D>> = object: Evolver<ErrorCatcher<D>> {
     override val scope: CoroutineScope
         get() = this@runCatchingErrors.scope
-    override suspend fun evolve(d: ErrorCatcher<D>): Evolving<ErrorCatcher<D>> = scope.immediate {
+    override suspend fun evolve(d: ErrorCatcher<D>): Evolving<ErrorCatcher<D>> = scope.parallel {
         try{
             ErrorCatcher(this@runCatchingErrors.evolve(d.data).get())
         } catch(exception : Exception){

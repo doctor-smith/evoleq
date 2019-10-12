@@ -16,12 +16,11 @@
 package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.*
-import java.lang.Thread.sleep
 
 /**
  * Immediate: return immediately, blocking the current thread
  */
-class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val default: D? = null, private val block: suspend CoroutineScope.()->D) : Evolving<D>, Cancellable<D> {
+class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val default: D? = null, private val block: CoroutineScope.()->D) : Evolving<D>, Cancellable<D> {
     private var set = false
     private var result: D? = null
 
@@ -42,14 +41,19 @@ class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val defau
             set = true
         } }
 
-        GlobalScope.launch{ coroutineScope{
+        //GlobalScope.launch{ coroutineScope{
             scope + job
             result = scope.block()
-        } }
+        //} }
         // delay initialization until result is computed
+
+        /*
         while(!set){
+
             sleep(1)
         }
+
+         */
     }
 
     @Suppress("unchecked_cast")

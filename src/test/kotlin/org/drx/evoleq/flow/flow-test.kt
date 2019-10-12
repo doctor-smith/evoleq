@@ -20,7 +20,6 @@ import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Async
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.stub.DefaultIdentificationKey
 import org.drx.evoleq.stub.lazyStub
@@ -76,7 +75,7 @@ class FlowTest {
                 check{b: Boolean -> b}
                 updateCondition { x: Int -> x <= 0 }
             })
-            flow { x:Int -> Immediate{
+            flow { x:Int -> Parallel{
                 val p1 = Async<Int>{
                     delay(1_000)
                     1

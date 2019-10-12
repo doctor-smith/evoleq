@@ -19,8 +19,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.plus
 import org.drx.evoleq.dsl.immediate
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
 
 
 /**
@@ -40,10 +42,10 @@ fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Ev
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 suspend infix
-fun<D1,D2> Evolving<D1>.lift(f: (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> CoroutineScope(job).immediate { (ev map f).get() } }
+fun<D1,D2> Evolving<D1>.lift(f: (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> CoroutineScope(job).parallel { (ev map f).get() } }
 
 suspend infix
-fun<D1,D2> Evolving<D1>.lift(f: suspend (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> CoroutineScope(job).immediate { (ev map f).get() } }
+fun<D1,D2> Evolving<D1>.lift(f: suspend (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> CoroutineScope(job).parallel { (ev map f).get() } }
 /**
  * Monad
  * =====
@@ -67,7 +69,7 @@ suspend fun <D> muEvolving(evolving: Evolving<Evolving<D>>): Evolving<D> {
 suspend operator
 fun <R,S,T> ( (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : (R)-> Evolving<T> = {
         r ->
-    Immediate { muEvolving(this@times(r) map flow).get() }
+    Parallel { muEvolving(this@times(r) map flow).get() }
 }
 suspend operator
 fun <R,S,T> ( suspend (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : suspend (R)-> Evolving<T> = {

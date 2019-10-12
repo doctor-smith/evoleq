@@ -20,6 +20,7 @@ import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.Parallel
 import org.junit.Test
+import java.lang.Thread.sleep
 
 class CoroutinePlaygraound {
 
@@ -89,7 +90,7 @@ class CoroutinePlaygraound {
         val scope = CoroutineScope(Job())
         with(scope) {
             val startTime = System.currentTimeMillis()
-            val imm = immediate { delay(1000) }
+            val imm = immediate { sleep(1000) }
             val time = System.currentTimeMillis() - startTime
             assert(time >= 1_000)
         }
