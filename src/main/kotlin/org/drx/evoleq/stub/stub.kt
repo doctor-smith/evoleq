@@ -15,11 +15,14 @@
  */
 package org.drx.evoleq.stub
 
+import kotlinx.coroutines.CoroutineScope
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.suspendedFlow
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.LazyEvolving
 import org.drx.evoleq.flow.Evolver
+import org.drx.evoleq.flow.LazyFlow
 import org.drx.evoleq.flow.SuspendedFlow
 import kotlin.reflect.KClass
 
@@ -31,14 +34,40 @@ interface Stub<D> : Evolver<D> {
     val id: KClass<*>
     val stubs: HashMap<KClass<*>, Stub<*>>
 
-    override suspend fun evolve(d: D): Evolving<D> = Immediate{ d }
+    override suspend fun evolve(d: D): Evolving<D> = scope.parallel{ d }
 
 }
+
+/**
+ * Fix stub-functionality, run on different scopes
+ */
+interface LazyStub<D> : Stub<D> {
+    suspend fun lazy(): LazyEvolving<D>
+    override suspend fun evolve(d: D): Evolving<D> = lazy()(scope,d)
+}
+
+
+
 class ParentStubKey
 fun <D,T> Stub<D>.toFlow(conditions: EvolutionConditions<D,T>): SuspendedFlow<D,T> = suspendedFlow {
+    scope(this@toFlow.scope)
     conditions(conditions)
     flow{ d -> this@toFlow.evolve(d) }
 }
+fun <D,T> LazyStub<D>.toLazyFlow(conditions: EvolutionConditions<D,T>): suspend CoroutineScope.()-> Evolver<D> = { LazyFlow(conditions,lazy()) }
+
+fun <D> lazyStub(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+fun <D> Stub<D>.asLazyStub(): LazyStub<D> = this as LazyStub<D>
+fun <D> asLazy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+fun <D> toLazy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+fun <D> lazyfy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+fun <D> free(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+/*
+suspendOnScope fun <D> (suspendOnScope CoroutineScope.()-> Evolver<D>).down(): suspendOnScope CoroutineScope.(D)->Evolving<D> = {
+    d: D -> this@down().evolve(d)
+}
+*/
+
 
 fun Stub<*>.findByKey(key: KClass<*>): Stub<*>? {
     this.stubs.forEach{

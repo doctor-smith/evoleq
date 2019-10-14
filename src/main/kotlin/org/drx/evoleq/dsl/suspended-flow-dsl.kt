@@ -15,6 +15,8 @@
  */
 package org.drx.evoleq.dsl
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.flow.SuspendedFlow
@@ -25,7 +27,13 @@ class SuspendedFlowConfiguration<D,T> : Configuration<SuspendedFlow<D, T>> {
     var conditions: EvolutionConditions<D, T>? = null
     var flow: (suspend (D)-> Evolving<D>)? = null
 
-    override fun configure(): SuspendedFlow<D, T> = SuspendedFlow(conditions!!, flow!!)
+    var scope: CoroutineScope = CoroutineScope(Job())
+
+    override fun configure(): SuspendedFlow<D, T> = SuspendedFlow(conditions!!,scope, flow!!)
+
+    fun scope(scope: CoroutineScope) {
+        this.scope = scope
+    }
 
     fun conditions(conditions: EvolutionConditions<D, T>) {
         this.conditions = conditions

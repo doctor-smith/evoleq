@@ -15,22 +15,17 @@
  */
 package org.drx.evoleq
 
-import kotlinx.coroutines.*
-import org.drx.evoleq.conditions.once
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
-import org.drx.evoleq.math.times
-import org.drx.evoleq.flow.Flow
 import org.drx.evoleq.flow.repeatImmediate
+import org.drx.evoleq.math.times
 import org.junit.Test
 
 class EvolvingTest {
-
-    @Test
-    fun immediateDoesNotBreakParallel() = runBlocking{
-        /* TODO find good test */
-    }
 
     @Test
     fun testTimes() {
@@ -64,31 +59,5 @@ class EvolvingTest {
             assert(x == 10)
         }
     }
-
-    @Test
-    fun testBackPropagationFirstAttempt() {
-
-        val stub = object{
-            fun get(): Int = 3
-        }
-
-        runBlocking {
-            /* TODO implement */
-            val flow = Flow(
-                once()
-            ) { pair: Pair<Int, (Int) -> Int> ->
-                Immediate {
-
-                    val x = repeatImmediate(5, pair.first, pair.second)
-
-                    Pair(x, pair.second)
-                }
-            }
-
-            assert(flow.evolve(Pair(0, {s:Int->s+1})).get().first == 5)
-            assert (stub.get() == 3)
-        }
-    }
-
 
 }

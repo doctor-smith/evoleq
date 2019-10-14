@@ -46,4 +46,17 @@ class AsyncTest {
         val x2 = async2.get()
     }
 
+
+    @Test fun cancel() = runBlocking {
+
+        val async = Async<Int>{
+            delay(1_000)
+            1
+        }
+
+        val res = async.cancel(0)
+        delay(10)
+        assert(async.job.isCancelled)
+        assert(res.get() == 0)
+    }
 }

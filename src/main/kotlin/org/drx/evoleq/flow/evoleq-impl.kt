@@ -15,11 +15,11 @@
  */
 package org.drx.evoleq.flow
 
-import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.conditions.Counter
 import org.drx.evoleq.conditions.counting
 import org.drx.evoleq.evolve
+import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
 
 suspend fun<D> repeatParallel(times: Long,initialData: D, f:(D)->D):D =
     evolve<Pair<D, Long>, Long>(

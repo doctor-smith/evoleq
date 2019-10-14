@@ -16,58 +16,48 @@
 package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.*
-import org.drx.evoleq.coroutines.blockRace
 
 class Async<D>(
-            private val delay: Long = 1,
-            val scope: CoroutineScope = GlobalScope,
-            private val block: suspend Async<D>.() -> D
-) : Evolving<D>, Cancellable<D> {
+    private val delay: Long = 1,
+    val scope: CoroutineScope = DefaultEvolvingScope(),
+    private val default: D? = null,
+    private val block: suspend CoroutineScope.() -> D
+    ) : Evolving<D>, Cancellable<D> {
 
-    private lateinit var deferred: Deferred<D>
+        private lateinit var deferred: Deferred<D>
+        private var returnValue: D?=  null
+        override val job: Job
 
-    private var default: D? = null
-
-    init {
-        scope.launch {
-            deferred = async { this@Async.block() }
-        }
-    }
-
-    override suspend fun get(): D {
-        while (!::deferred.isInitialized) {
-            delay(delay)
+        init {
+            job = scope.launch {
+                deferred = async { block() }
+                returnValue = deferred.await()
+            }
+            scope + job
         }
 
-        return blockRace(
-            scope,
-            { deferred.await() },
-            {
-                while (default == null) {
-                    delay(1)
-                }
+        override suspend fun get(): D = coroutineScope {
+            scope + this.coroutineContext
+            while(returnValue == null && !job.isCancelled){
+                delay(delay)
+            }
+            if(returnValue != null) {
+                returnValue!!
+            } else {
                 default!!
             }
-        ).await()
-    }
-
-    override fun cancel(d: D): Evolving<D> = Immediate {
-        default = d
-        if (::deferred.isInitialized) {
-            deferred.cancel()
-        } else {
-            coroutineScope {
-                var cnt = 0
-                while (cnt < 1000 && !::deferred.isInitialized) {
-                    delay(delay)
-                    cnt++
-                }
-                deferred.cancel()
-            }
         }
 
-        d
+        override fun cancel(d: D): Evolving<D> = object: Evolving<D> {
+            init {
+                returnValue = d
+                job.cancel()
+            }
+            override val job: Job
+                get() = this@Async.job
+            override suspend fun get(): D = d
+        }
     }
 
-    fun job(): Job = deferred
-}
+
+typealias LazyAsync<D> = CoroutineScope.(D)->Async<D>

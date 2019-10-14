@@ -15,17 +15,26 @@
  */
 package org.drx.evoleq.coroutines
 
+
 /**
  * Suspend an ordinary function
  */
 fun <S,T> suspended(f:(S)->T): suspend (S)->T  {
     val suspended: suspend (S)->T
-    suspended = { s -> f(s)}
+    suspended = { s -> f(s) }
     return suspended
 }
+fun <S1, S2 ,T> suspended(lambda: (S1,S2)->T): suspend (S1,S2)->T = { s1, s2-> lambda(s1,s2) }
+fun <S1, S2 ,S3, T> suspended(lambda: (S1,S2,S3)->T): suspend (S1,S2,S3)->T = { s1, s2, s3 -> lambda(s1,s2,s3) }
+fun <S1, S2 ,S3, S4, T> suspended(lambda: (S1,S2,S3,S4)->T): suspend (S1,S2,S3,S4)->T = { s1, s2, s3,s4 -> lambda(s1,s2,s3,s4) }
+
 fun<T> T.suspended(): suspend ()->T  {
     return {this}
 }
+
+
+
+
 
 fun <S, T> suspended(vararg functions: (S)->T): SuspendedFunctions<S,T> = SuspendedFunctions(*functions.map{f -> suspended(f)}.toTypedArray())
 
@@ -41,3 +50,4 @@ class SuspendedFunctions<S,T>(vararg functions: suspend (S)->T) {
         return SuspendedFunctions(*list.toTypedArray())
     }
 }
+

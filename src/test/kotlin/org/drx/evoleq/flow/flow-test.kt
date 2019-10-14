@@ -16,15 +16,15 @@
 package org.drx.evoleq.flow
 
 import javafx.beans.property.SimpleIntegerProperty
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
-import org.drx.evoleq.dsl.conditions
-import org.drx.evoleq.dsl.flow
-import org.drx.evoleq.dsl.suspendedFlow
+import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Async
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.stub.DefaultIdentificationKey
+import org.drx.evoleq.stub.lazyStub
+import org.drx.evoleq.stub.toFlow
+import org.drx.evoleq.stub.toLazyFlow
 import org.junit.Test
 
 class FlowTest {
@@ -38,7 +38,7 @@ class FlowTest {
                 updateCondition { x: Int -> x <= 0 }
             }
             flow  {
-                x:Int -> Immediate{
+                x:Int -> Parallel{
                     val p1 = Parallel<Int>{
                         delay(1_000)
                         1
@@ -75,7 +75,7 @@ class FlowTest {
                 check{b: Boolean -> b}
                 updateCondition { x: Int -> x <= 0 }
             })
-            flow { x:Int -> Immediate{
+            flow { x:Int -> Parallel{
                 val p1 = Async<Int>{
                     delay(1_000)
                     1
@@ -108,18 +108,24 @@ class FlowTest {
         var changes = 0
         property.addListener{_,oV,nV ->
             if(oV == -1) {
-                //println("initial change")
+                println("initial change")
             }
             else if(oV != nV){
-                //println("change: oV = $oV; nV = $nV" )
+                println("change: oV = $oV; nV = $nV" )
                 changes ++
             }
         }
+
+        val scope1 = DefaultStubScope()
+        val scope2 = DefaultStubScope()
+
         val flow = flow<Data, Boolean>{
             conditions(once())
             flow{
-                data -> Immediate{
-                    val parallel1 = Parallel<Int>{
+                data -> parallel{
+                    println("launching main parallel")
+                    val parallel1 = parallel<Int>{
+                        println("   parallel 1")
                         suspendedFlow<Int, Boolean> {
                             setupConditions{
                                 testObject(true)
@@ -127,7 +133,8 @@ class FlowTest {
                                 updateCondition{x -> x <= 10}
                             }
                             flow{
-                                x -> Immediate{
+                                x -> parallel{
+                                    println("       flow 1")
                                     delay(2)
                                     property.value = 1
                                     x + 1
@@ -135,7 +142,8 @@ class FlowTest {
                             }
                         }.evolve(data.x).get()
                     }
-                    val parallel2 = Parallel<String> {
+                    val parallel2 = parallel<String> {
+                        println("   parallel 2")
                         suspendedFlow<String, Boolean> {
                             setupConditions{
                                 testObject(true)
@@ -143,7 +151,8 @@ class FlowTest {
                                 updateCondition{x -> x.length <= 1024}
                             }
                             flow{
-                                s -> Immediate{
+                                s -> parallel{
+                                    println("       flow 2")
                                     delay(2)
                                     property.value = 2
                                     "$s-+$s"
@@ -157,11 +166,114 @@ class FlowTest {
         }
 
         // result doesn't matter
-        flow.evolve(Data(0, "1")).get()
-
+        val res = flow.evolve(Data(0, "1")).get()
+        println("result: $res")
         assert(changes >= 2)
     }
 
+    @Test fun cancelFlowWithScopeInheritedFromUnderlyingStub() = runBlocking {
+        val mainScope = CoroutineScope(Job())
+        var one: Parallel<String>? = null
+        var two: Parallel<String>? = null
+        val flow = mainScope.stub<String>{
+            id(DefaultIdentificationKey::class)
+            /*
+            evolveLazy {
+                string -> parallel(default = "CANCELLED") {
+                    one = parallel{
+                        println("one")
+                        delay(10_000)
+                        string
+                    }
+                    two = parallel{
+                        println("two")
+                        delay(10_000)
+                        string
+                    }
+                    "STOP"
+                }
+            }
 
+             */
+
+            evolve{
+                string -> scope.parallel(default = "CANCELLED") {
+                    one = parallel{
+                        delay(10_000)
+                        string
+                    }
+                    two = parallel{
+                        delay(10_000)
+                        string
+                    }
+                    "STOP"
+                }
+            }
+
+
+        }.toFlow<String,Boolean>(
+            conditions{
+                testObject(true)
+                check{b->b}
+                updateCondition { false }
+            }
+        )
+        GlobalScope.parallel {
+            flow.evolve("START")
+        }
+        delay(1500)
+        assert(one!!.job.isActive)
+        assert(two!!.job.isActive)
+        flow.cancel()
+        delay(1500)
+
+        //assert(one!!.job.isActive)
+        assert(one!!.job.isCancelled)
+        assert(two!!.job.isCancelled)
+    }
+
+    @Test fun cancelNestedLazyFlows() = runBlocking {
+        class Stub
+
+        var job: Job? = null
+
+        val lF0 = lazyStub<Int>(stub{
+            id(Stub::class)
+            evolveLazy { x -> parallel(default = x) {
+                job = this.coroutineContext[Job]!!
+                delay(10_000)
+                x+1
+            } }
+        }).toLazyFlow<Int,Boolean>(
+            conditions{
+                testObject(true)
+                check{b->b}
+                updateCondition { it < 10 }
+            }
+        )
+
+        val lF1 = lazyStub<Int>(stub{
+            id(Stub::class)
+            evolveLazy { x -> parallel(default = x) {
+                lF0().evolve(x).get()
+            } }
+        }).toLazyFlow<Int,Boolean>(
+            conditions{
+                testObject(true)
+                check{b->b}
+                updateCondition { it < 10 }
+            }
+        )
+
+        val scope = CoroutineScope(Job())
+
+        scope.lF1().evolve(1)
+
+        delay(100)
+        scope.cancel()
+        delay(100)
+
+        assert(job!!.isCancelled)
+    }
 
 }

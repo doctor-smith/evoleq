@@ -16,14 +16,12 @@
 package org.drx.evoleq.flow
 
 import javafx.beans.property.SimpleObjectProperty
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolve
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
@@ -37,11 +35,13 @@ import kotlin.reflect.KClass
  * Standard implementation of Evolver
  */
 open class Flow<D, T>(
+
     val conditions: EvolutionConditions<D, T>,
+    override val scope: CoroutineScope = CoroutineScope(Job()),
     val flow: (D)-> Evolving<D>
 ) : Evolver<D> {
     override suspend fun evolve(data: D): Evolving<D> =
-        Immediate {
+        scope.parallel {
             evolve(
                 initialData = data,
                 conditions = conditions
@@ -56,7 +56,7 @@ open class Flow<D, T>(
  */
 suspend fun <D,T,P> Flow<D, T>.enter(gap: Gap<D, P>): Gap<D, P> =
     Gap(
-        from = { d -> Immediate { (this.flow * gap.from)(d).get() } },
+        from = { d -> Parallel { (flow * gap.from)(d).get() } },
         to = gap.to
     )
 
@@ -68,7 +68,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P, T>, conditions: EvolutionConditi
     Flow(
         conditions = conditions
     ) {
-            data -> Immediate { this@fill.fill(phi.flow)(data).get() }
+            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
     }
 
 /**
@@ -78,7 +78,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: Flow<P, T>): Flow<D, T> =
     Flow(
         conditions = this@fill.adapt(phi.conditions)
     ){
-            data -> Immediate { this@fill.fill(phi.flow)(data).get() }
+            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
     }
 
 

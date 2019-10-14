@@ -15,10 +15,14 @@
  */
 package org.drx.evoleq.math
 
-import org.drx.evoleq.coroutines.suspended
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.plus
+import org.drx.evoleq.dsl.immediate
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.util.tail
+import org.drx.evoleq.evolving.Parallel
 
 
 /**
@@ -27,17 +31,21 @@ import org.drx.evoleq.util.tail
  */
 suspend infix
 fun <D1,D2> Evolving<D1>.map(f:  (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
+    override val job: Job
+        get() = this@map.job
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 suspend infix
 fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
+    override val job: Job
+        get() = this@map.job
     override suspend fun get(): D2 = f ( this@map.get() )
 }
 suspend infix
-fun<D1,D2> Evolving<D1>.lift(f: (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> Immediate { (ev map f).get() } }
+fun<D1,D2> Evolving<D1>.lift(f: (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> CoroutineScope(job).parallel { (ev map f).get() } }
 
 suspend infix
-fun<D1,D2> Evolving<D1>.lift(f: suspend (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> Immediate { (ev map f).get() } }
+fun<D1,D2> Evolving<D1>.lift(f: suspend (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> CoroutineScope(job).parallel { (ev map f).get() } }
 /**
  * Monad
  * =====
@@ -47,6 +55,7 @@ fun<D1,D2> Evolving<D1>.lift(f: suspend (D1) -> D2) : (Evolving<D1>) -> Evolving
  */
 fun <D> etaEvolving(data: D): Evolving<D> = Immediate { data }
 
+fun <D> CoroutineScope.etaEvolving(data: D): Evolving<D> = immediate { data }
 /**
  * Multiply evolvings
  */
@@ -60,22 +69,19 @@ suspend fun <D> muEvolving(evolving: Evolving<Evolving<D>>): Evolving<D> {
 suspend operator
 fun <R,S,T> ( (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : (R)-> Evolving<T> = {
         r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+    Parallel { muEvolving(this@times(r) map flow).get() }
 }
 suspend operator
 fun <R,S,T> ( suspend (R)-> Evolving<S>).times(flow: (S)-> Evolving<T>) : suspend (R)-> Evolving<T> = {
-        r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+        r -> muEvolving(this@times(r) map flow)
 }
 suspend operator
 fun <R,S,T> ( suspend (R)-> Evolving<S>).times(flow: suspend (S)-> Evolving<T>) :suspend (R)-> Evolving<T> = {
-        r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+        r -> muEvolving(this@times(r) map flow)
 }
 suspend operator
 fun <R,S,T> (  (R)-> Evolving<S>).times(flow: suspend (S)-> Evolving<T>) :suspend (R)-> Evolving<T> = {
-        r ->
-    Immediate { muEvolving(this(r) map flow).get() }
+        r -> muEvolving(this@times(r) map flow)
 }
 
 fun<S,T> klEvolving(f:(S)->T): (S)->Evolving<T> = {s->Immediate{f(s)}}
@@ -118,4 +124,16 @@ suspend fun <S,T> coklEvolving(f: suspend (S)->T): suspend (Evolving<S>)->T {
     val cokl: suspend (Evolving<S>)-> T =  { evolving -> mapper(evolving).get() }
 
     return cokl
+}
+
+
+fun <D,E> Pair<Evolving<D>,Evolving<E>>.ev(): Evolving<Pair<D,E>> = object: Evolving<Pair<D,E>>{
+
+    val scope = CoroutineScope(Job())+first.job+second.job
+
+    override val job: Job
+        get() = scope.coroutineContext[Job]!!
+
+    override suspend fun get(): Pair<D, E> = Pair(first.get(), second.get())
+
 }

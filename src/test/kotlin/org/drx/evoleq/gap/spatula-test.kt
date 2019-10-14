@@ -19,10 +19,10 @@ import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.conditions.once
-import org.drx.evoleq.dsl.conditions
 import org.drx.evoleq.dsl.flow
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.OnDemand
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.flow.Flow
 import org.junit.Test
@@ -100,7 +100,7 @@ class SpatulaTest {
             conditions(once())
             flow{
                 fillGap -> when(fillGap) {
-                    is FillGapRequest<*,*> -> Immediate{FillGapResponse<Int,String>(
+                    is FillGapRequest<*,*> -> Parallel{FillGapResponse<Int,String>(
                         SideEffect().spatula(0).fill(fillGap.gap as Gap<Int,String>)
                     )}
                     is FillGapResponse<*,*> -> Immediate{fillGap}
@@ -112,7 +112,7 @@ class SpatulaTest {
             conditions(once())
             flow{
                 when (it) {
-                    is FillGapRequest<W,P> -> Immediate{
+                    is FillGapRequest<W,P> -> OnDemand{
                         FillGapResponse<W,P>(
                             spatula.fill(it.gap)
                         )

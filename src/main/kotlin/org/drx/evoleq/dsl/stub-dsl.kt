@@ -15,33 +15,32 @@
  */
 package org.drx.evoleq.dsl
 
-import javafx.beans.property.Property
-import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleObjectProperty
-import javafx.beans.value.ChangeListener
-import kotlinx.coroutines.*
-import org.drx.evoleq.conditions.once
-import org.drx.evoleq.coroutines.BaseReceiver
-import org.drx.evoleq.coroutines.Receiver
-import org.drx.evoleq.coroutines.suspended
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.evolving.Parallel
-import org.drx.evoleq.flow.enter
-import org.drx.evoleq.gap.Gap
-import org.drx.evoleq.gap.fill
-import org.drx.evoleq.message.Message
+import org.drx.evoleq.evolving.LazyEvolving
 import org.drx.evoleq.stub.*
-import org.drx.evoleq.time.TimeoutKey
-import org.drx.evoleq.time.WaitForProperty
-import kotlin.Exception
 import kotlin.reflect.KClass
 
-open class StubConfiguration<D> : Configuration<Stub<D>> {
+@Suppress("FunctionName")
+fun DefaultStubScope() :CoroutineScope =  CoroutineScope(SupervisorJob())
 
-    private var id: KClass<*> = DefaultIdentificationKey::class
+open class StubConfiguration<D>() : Configuration<Stub<D>> {
 
-    protected var evolve: suspend (D)-> Evolving<D> = { d -> Immediate{d} }
+    constructor(scope: CoroutineScope): this(){
+        this.scope  = scope
+    }
+
+    private var isLazyStub = false
+
+    var id: KClass<*> = DefaultIdentificationKey::class
+
+    protected var evolve: suspend (D)-> Evolving<D> = { d -> scope.immediate{d} }
+    protected var lazyEvolving: LazyEvolving<D>? = null
+
+    var scope : CoroutineScope = DefaultStubScope()
     /**
      * Collection of all sub-stubs
      */
@@ -70,18 +69,33 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     override fun configure(): Stub<D> {
 
 
+        val stub: Stub<D> = if(isLazyStub){
+             object : LazyStub<D> {
+                override val scope: CoroutineScope
+                    get() = this@StubConfiguration.scope
 
-        val stub = object : Stub<D> {
+                override val id: KClass<*>
+                    get() = this@StubConfiguration.id
 
-            override val id: KClass<*>
-                get() = this@StubConfiguration.id
+                override suspend fun lazy(): LazyEvolving<D> = this@StubConfiguration.lazyEvolving!!
 
-            override suspend fun evolve(d: D): Evolving<D> = this@StubConfiguration.evolve(d)
+                override val stubs: HashMap<KClass<*>, Stub<*>>
+                    get() = this@StubConfiguration.stubs
+            }
+        } else {
+            object : Stub<D> {
+                override val scope: CoroutineScope
+                    get() = this@StubConfiguration.scope
 
-            override val stubs: HashMap<KClass<*>, Stub<*>>
-                get() = this@StubConfiguration.stubs
+                override val id: KClass<*>
+                    get() = this@StubConfiguration.id
+
+                override suspend fun evolve(d: D): Evolving<D> = this@StubConfiguration.evolve(d)
+
+                override val stubs: HashMap<KClass<*>, Stub<*>>
+                    get() = this@StubConfiguration.stubs
+            }
         }
-
         parentalStubsMap.entries.forEach { entry ->
             val child = stub.stubs[entry.key]
             val parentStub = parentalStubs[entry.value]
@@ -91,21 +105,38 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
         }
         this@StubConfiguration.stub = stub
 
-
         return stub
     }
 
     /**
-     * define the evolve function of the stub
+     * Set the  id of the stub
+     */
+    fun id(id : KClass<*>) {
+        this.id = id
+    }
+    /**
+     * Set the  id of the stub
+     */
+    inline fun <reified ID> id() {
+        this.id = ID::class
+    }
+
+    /**
+     * Define the evolve function of the stub
      */
     open fun evolve( flow:suspend (D)-> Evolving<D> ) {
         this.evolve = flow
     }
 
-    fun id(id : KClass<*>) {
-        this.id = id
+    /**
+     * Define the evolve function of the stub.
+     * This approach guaranties structured concurrency even when
+     * the scope of the stub is changed
+     */
+    open fun evolveLazy(lazyEvolving: LazyEvolving<D>) {
+        this.lazyEvolving = lazyEvolving
+        this.isLazyStub = true
     }
-
 
     /**
      * Access the stub provided by the parent during configuration.
@@ -199,9 +230,9 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
 
 
 
-    fun whenReady(actOn: Stub<D>.()->Unit) = Parallel<Stub<D>>{
-        while(!::stub.isInitialized){
-            kotlinx.coroutines.delay(1)
+    fun whenReady(actOn: Stub<D>.()->Unit) = scope.parallel{
+        while(!this@StubConfiguration::stub.isInitialized){
+            delay(1)
         }
         //println(stub.stubs.keys)
         stub.actOn()
@@ -214,343 +245,10 @@ open class StubConfiguration<D> : Configuration<Stub<D>> {
     /**
      * Find a stub in this stub or in one of its children.
      */
-    fun Stub<*>.find(key: KClass<*>): Stub<*>? = findByKey(key) /*{
-        this.stubs.forEach{
-            if(it.key == key){
-                return it.value
-            }
-        }
-        this.stubs.values.forEach{
-            val stub = it.find(key)
-            if(stub != null){
-                return stub
-            }
-        }
-        return null
-    }
-    */
+    fun Stub<*>.find(key: KClass<*>): Stub<*>? = findByKey(key)
 
 }
 
 fun <D> stub(configuration: StubConfiguration<D>.()->Unit) : Stub<D> = configure(configuration)
+fun <D> CoroutineScope.stub(configuration: StubConfiguration<D>.()->Unit) : Stub<D> = configure(this, configuration) as Stub<D>
 
-class ObservePropertyStub
-sealed class ObservePropertyMessage : Message {
-    object Observe : ObservePropertyMessage()
-    object Pause : ObservePropertyMessage()
-}
-open class ObservingStubConfiguration<D,P> : StubConfiguration<D>() {
-
-    private var preEvolve: suspend (D)-> Evolving<D> = suspended{d: D -> Immediate{d}}
-    private val stack: ArrayList<P> by lazy{ arrayListOf<P>() }
-    private val stackEmpty: SimpleObjectProperty<Boolean> by lazy { SimpleObjectProperty<Boolean>(true) }
-
-    private var gap: Gap<D, P>? = null
-
-
-    private var observedProperty: Property<P>? = null
-
-    /**
-     * Observe a property
-     */
-    fun observe(property: Property<P>) {
-        observedProperty = property
-    }
-
-    /**
-     * The gap to close
-     */
-    fun gap(configuration: GapConfiguration<D, P>.()->Unit) {
-        this.gap = configure(configuration)
-    }
-
-    /**
-     * Define the pre-evolve function of the stub.
-     * In principle it is not necessary to use this function during usage
-     */
-    override fun evolve( flow:suspend (D)-> Evolving<D> ) {
-        this.preEvolve = flow
-    }
-
-    override fun configure(): Stub<D> {
-        // add new values to stack
-        val observing = SimpleBooleanProperty(true)
-        val listener = ChangeListener<P>{ _, _, newValue ->
-            if(observing.value) {
-                //println("adding $newValue to stack")
-                stack.add(newValue)
-                stackEmpty.value = false
-            }
-            else{
-                //println("observing = false")
-            }
-        }
-
-        observedProperty!!.addListener(listener)
-
-        super.stubs[ObservePropertyStub::class] = stub<ObservePropertyMessage>{
-            evolve { message ->
-                when (message) {
-                    is ObservePropertyMessage.Observe -> Parallel {
-                        observing.value = true
-                        message
-                    }
-                    is ObservePropertyMessage.Pause -> Parallel {
-                        observing.value = false
-                        message
-                    }
-                }
-            }
-        }
-
-
-        // configure evolution function
-        var setupDone: Boolean = false
-        GlobalScope.launch {
-            // view evolution function as
-            // flow and make it enter the gap
-            val flowGap = suspendedFlow<D,Boolean> {
-                conditions(once())
-                flow { d:D ->preEvolve(d) }
-            }.enter(gap!!)
-            // define the side-effect.
-            // Have to distinguish the cases of empty and non-empty stack
-            val sideEffect = suspended { p:P -> Parallel<P> {
-                //println(stack.size)
-                when (stack.isEmpty()) {
-                    true -> {
-                        val x = WaitForProperty(stackEmpty).toChange().get()
-                        val first = stack.first()
-                        stack.removeAt(0)
-                        if (stack.isEmpty()) {
-                            stackEmpty.value = true
-                        }
-                        first
-                    }
-                    false -> {
-                        val first = stack.first()
-                        stack.removeAt(0)
-                        if (stack.isEmpty()) {
-                            stackEmpty.value = true
-                        }
-                        first
-                    }
-                }
-            }}
-            super.evolve = suspended( flowGap.fill( sideEffect ))
-            setupDone = true
-        }
-        // await configuration to be done
-        while(!setupDone) {
-            Thread.sleep(0,1)
-        }
-        return  super.configure()
-
-    }
-}
-
-/**
- * Configure an observing stub
- * Important: The stub will not work unless a gap is defined
- */
-fun <D,P> observingStub(configuration: ObservingStubConfiguration<D,P>.()->Unit) : Stub<D> = configure(configuration)
-/**
- *
- */
-open class RacingStubConfiguration<D,P> : ObservingStubConfiguration<D,P?>() {
-    private val property = SimpleObjectProperty<P?>()
-    private var cnt = 0
-    private var numberOfNullResponses = 0
-    private var timeout: Long  = Long.MAX_VALUE
-    private val cancellables: ArrayList<Parallel<Evolving<P?>>> by lazy { ArrayList<Parallel<Evolving<P?>>>() }
-    /**
-     * Add a new driver to the race
-     */
-    fun driver(stub: Stub<P?>) {
-        child(Keys[cnt]!!,
-            stub<P?>{
-                evolve{p: P? ->
-                    val result = stub.evolve(p).get()
-                    if(result != null) {
-                        property.value = result
-                    } else {
-                        numberOfNullResponses++
-                        if(numberOfNullResponses == cnt){
-                            property.value = result
-                        }
-                    }
-                    Immediate{result}
-                }
-            }
-        )
-        cnt++
-    }
-
-    /**
-     * Add a new driver to the race
-     */
-    fun driver(stub: suspend (P?)-> Evolving<P?>) {
-        val driver = stub<P?>{ evolve(stub) }
-        driver(driver)
-    }
-
-    /**
-     * Set a timeout
-     */
-    fun timeout(millis: Long){
-        timeout = millis
-    }
-
-    override fun configure(): Stub<D> {
-        var setup = true
-        GlobalScope.launch { async{
-            observe(property)
-            property.addListener{_,_,nV -> cancellables.forEach{it.cancel(Immediate{null})}}
-            child(
-                TimeoutKey::class,
-                stub<Unit> {
-                    evolve {
-                        Parallel {
-                            delay(timeout)
-                            property.value = null
-                        }
-                    }
-                }
-            )
-            evolve { data ->
-                Immediate {
-                    IntRange(0, cnt - 1).forEach {
-                        cancellables.add( Parallel { (child(Keys[it]!!) as Stub<P?>).evolve(null) })
-                    }
-                    Parallel<Unit> { (child(TimeoutKey::class) as Stub<Unit>).evolve(Unit) }
-                    data
-                }
-            }}.await()
-            setup = false
-        }
-        while(setup){
-            Thread.sleep(0,1)
-        }
-        return super.configure()
-    }
-}
-
-/**
- * Configure a race between certain stubs
- * Important: You need to configure a gap for the underlying observing flow
- */
-fun <D,P> racingStub(configuration: RacingStubConfiguration<D,P>.()->Unit) = configure(configuration)
-
-
-class ReceivingStub
-sealed class ReceivingStubMessage {
-    sealed class Request : ReceivingStubMessage() {
-        object Observe : Request()
-        object Ignore : Request()
-        object Close : Request()
-    }
-    sealed class Response: ReceivingStubMessage() {
-        object Observing : Response()
-        object Ignoring : Response()
-        object Closed : Response()
-    }
-    object Empty: ReceivingStubMessage()
-}
-
-/**
- * ReceivingStub configuration
- */
-open class ReceivingStubConfiguration<W, P> : StubConfiguration<W>() {
-    private var preEvolve: suspend (W)-> Evolving<W> = suspended{d: W -> Immediate{d}}
-    lateinit var gap: Gap<W,P>
-    lateinit var receiver: BaseReceiver<P>
-    /**
-     * The gap to close
-     */
-    fun gap(configuration: GapConfiguration<W, P>.()->Unit) {
-        this.gap = configure(configuration)
-    }
-
-    fun receiver(receiver: BaseReceiver<P>) {
-        this.receiver = receiver
-    }
-
-    /**
-     * Define the pre-evolve function of the stub.
-     * In principle it is not necessary to use this function during usage
-     */
-    override fun evolve( flow:suspend (W)-> Evolving<W> ) {
-        this.preEvolve = flow
-    }
-
-    override fun configure(): Stub<W> {
-        var setupDone = false
-        GlobalScope.launch {
-            var observing = true
-            val stack = arrayListOf<P>()
-            Parallel<Unit> {
-                for(p in receiver.channel) {
-                    if (observing) {
-                        //println("added $p to stack")
-                        stack.add(p)
-                    }
-                }
-            }
-
-            val flowGap = suspendedFlow<W,Boolean> {
-                conditions(once())
-                flow { d:W ->preEvolve(d) }
-            }.enter(gap)
-            val sideEffect = suspended { p: P ->
-                Parallel<P> {
-                    if(!observing) {
-                        stack.clear()
-                    }
-                    while(stack.isEmpty()){
-                        kotlinx.coroutines.delay(1)
-                    }
-                    val pNew = stack.first()
-                    stack.removeAt(0)
-                    pNew
-                }
-            }
-
-            super.stubs[ReceivingStub::class] = stub<ReceivingStubMessage>{
-                id(ReceivingStub::class)
-                evolve{
-                    message -> when (message){
-                    is ReceivingStubMessage.Request -> when(message){
-                        is ReceivingStubMessage.Request.Observe -> Parallel{
-                            observing = true
-                            ReceivingStubMessage.Response.Observing
-                        }
-                        is ReceivingStubMessage.Request.Ignore -> Parallel{
-                            observing = false
-                            ReceivingStubMessage.Response.Ignoring
-                        }
-                        is ReceivingStubMessage.Request.Close -> Parallel{
-                            try {
-                                receiver.actor.close()
-                            }catch(exception: Exception){}
-                            ReceivingStubMessage.Response.Closed
-                        }
-                    }
-                    else -> Parallel{ReceivingStubMessage.Empty}
-                }
-            } }
-
-            super.evolve = suspended(flowGap.fill(sideEffect))
-            setupDone = true
-        }
-        // await configuration to be done
-        while(!setupDone) {
-            Thread.sleep(0,1)
-        }
-        return super.configure()
-    }
-}
-
-/**
- * Configure a receiving stub
- */
-fun <W,P> receivingStub(configuration : ReceivingStubConfiguration<W,P>.()->Unit): Stub<W> = configure(configuration)

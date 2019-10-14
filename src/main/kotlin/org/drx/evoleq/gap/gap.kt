@@ -15,8 +15,10 @@
  */
 package org.drx.evoleq.gap
 
+import kotlinx.coroutines.CoroutineScope
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.Evolving
-import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.math.times
 
 /**
@@ -31,24 +33,41 @@ data class Gap<W,P>(
     val to: (W)->(P)-> Evolving<W>
 )
 
+/**
+ * Suppose you have
+ * a gap g1 Gap<Pair<A,Pair<B,C>>,Pair<B,C>> and
+ * a gap g2 Gap<Pair<B,C>,C>
+ * Then you can deepen the gap g1 by g2 to obtain a gap
+ * Gap<Pair<A,Pair<B,C>>,C>.
+ *
+ * This way you can use functions f:(C)->Evolving<C> to manipulate C
+ * on Pair<A,Pair<B,C>>
+ */
 suspend fun <W,P,Q> Gap<W, P>.deepen(gap: Gap<P, Q>): Gap<W, Q> {
     val newFrom = from*gap.from
     val newTo= {w:W->
         {q:Q ->
-            Immediate {
-                (gap.to(from(w).get()) * to(w))(q).get()
+            Parallel {
+                (gap.to(from(w).get()) * this@deepen.to(w))(q).get()
             }
         }
     }
     return Gap(newFrom, newTo)
 }
 
+/**
+ * Suppose you have
+ * a gap g1: Gap<Pair<B,C>,C> and
+ * a gap g2 Gap<Pair<A,Pair<B,C>>,Pair<B,C>>
+ * Then you can widen the gap g1 by g2 to obtain a gap
+ * Gap<Pair<A,Pair<B,C>>,C>.
+ */
 suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
     val newFrom = gap.from*from
     val newTo= {w:W->
         {q:Q ->
-            Immediate {
-                (to(gap.from(w).get()) * gap.to(w))(q).get()
+            Parallel {
+                (this@widen.to(gap.from(w).get()) * gap.to(w))(q).get()
             }
         }
     }
@@ -57,18 +76,29 @@ suspend fun <W,P,Q> Gap<P, Q>.widen(gap: Gap<W, P>): Gap<W, Q> {
 
 suspend fun <W, P> Gap<W, P>.fill(filler: (P)-> Evolving<P>): (W)-> Evolving<W> {
     return { w ->
-        Immediate {
+        Parallel {
             val p = (from * filler)(w).get()
-            to(w)(p).get()
+            this@fill.to(w)(p).get()
         }
     }
 }
 
 suspend fun <W, P> Gap<W, P>.fill(filler: suspend (P)-> Evolving<P>): (W)-> Evolving<W> {
     return { w ->
-        Immediate {
+        Parallel {
             val p = (from * filler)(w).get()
-            to(w)(p).get()
+            this@fill.to(w)(p).get()
+        }
+    }
+}
+
+
+suspend fun <W, P> Gap<W, P>.fill(filler: suspend  CoroutineScope.(P)-> Evolving<P>): CoroutineScope.(W)-> Evolving<W> {
+    return { w ->
+        parallel {
+            val f: suspend (P)->Evolving<P> = {p:P -> this.filler(p)}
+            val p = (from * f)(w).get()
+            this@fill.to(w)(p).get()
         }
     }
 }

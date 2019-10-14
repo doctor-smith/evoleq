@@ -16,7 +16,6 @@
 package org.drx.evoleq.evolving
 
 import kotlinx.coroutines.*
-import org.drx.evoleq.coroutines.blockRace
 
 /**
  * Evolution type parallel:
@@ -25,55 +24,46 @@ import org.drx.evoleq.coroutines.blockRace
  */
 class Parallel<D>(
     private val delay: Long = 1,
-    val scope: CoroutineScope = GlobalScope,
-    private val block: suspend Parallel<D>.() -> D
+    val scope: CoroutineScope = DefaultEvolvingScope(),
+    private val default: D? = null,
+    private val block: suspend CoroutineScope.() -> D
 ) : Evolving<D>, Cancellable<D> {
 
     private lateinit var deferred: Deferred<D>
-
-    private var default: D? = null
+    private var returnValue: D?=  null
+    override val job: Job
 
     init {
-        scope.launch {
-            coroutineScope {
-                deferred = async { this@Parallel.block() }
+        job = scope.launch {
+         coroutineScope {
+                deferred = async { block() }
+                returnValue = deferred.await()
             }
         }
+        scope + job
     }
 
-    override suspend fun get(): D {
-        while (!::deferred.isInitialized) {
+    override suspend fun get(): D = coroutineScope {
+        scope + this.coroutineContext
+        while(returnValue == null && !job.isCancelled){
             delay(delay)
         }
-
-        return blockRace(
-            scope,
-            { deferred.await() },
-            {
-                while (default == null) {
-                    delay(1)
-                }
-                default!!
-            }
-        ).await()
-    }
-
-    override fun cancel(d: D): Evolving<D> = Immediate {
-        default = d
-        if (::deferred.isInitialized) {
-            deferred.cancel()
+        if(returnValue != null) {
+            returnValue!!
         } else {
-            coroutineScope {
-                var cnt = 0
-                while (cnt < 1000 && !::deferred.isInitialized) {
-                    delay(delay)
-                    cnt++
-                }
-                deferred.cancel()
-            }
+            default!!
         }
-        d
     }
 
-    fun job(): Job = deferred
+    override fun cancel(d: D): Evolving<D> = object: Evolving<D> {
+        init {
+            returnValue = d
+            job.cancel()
+        }
+        override val job: Job
+            get() = this@Parallel.job
+        override suspend fun get(): D = d
+    }
 }
+
+typealias LazyParallel<D> = CoroutineScope.(D)->Parallel<D>

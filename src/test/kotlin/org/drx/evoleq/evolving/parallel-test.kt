@@ -15,8 +15,11 @@
  */
 package org.drx.evoleq.evolving
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.actor
+import org.drx.evoleq.dsl.lazyParallel
+import org.drx.evoleq.dsl.onScope
+import org.drx.evoleq.dsl.parallel
 import org.junit.Test
 
 class ParallelTest {
@@ -97,5 +100,141 @@ class ParallelTest {
         val y = parallel.get()
 
         assert(x == y)
+    }
+
+    @Test fun cancellation() = runBlocking {
+        var inner: Parallel<Int>? = null
+        val parallel = parallel<String>(){
+            inner = parallel{
+                delay(10_000)
+                1
+            }// as Parallel<Int>
+            delay(5000)
+            "parallel"
+        }
+
+        while(inner == null){
+            delay(100)
+        }
+        //delay(1_000)
+
+
+        val x = parallel.cancel("parallel_cancelled")
+        val y =parallel.get()
+        //assert(x==y)
+        assert(parallel.job.isCancelled)
+        assert(inner!!.job.isCancelled)
+        assert(x.get() == "parallel_cancelled")
+        Unit
+    }
+
+
+    @Test fun scope() = runBlocking {
+        val x = parallel{
+            actor<Int> {
+
+            }
+        }
+        Unit
+    }
+
+
+
+    @Test fun lazyParallelTest() =runBlocking {
+        val x: LazyParallel<Int> = lazyParallel{d->
+            delay(10_000)
+            d*d
+        }
+
+        val s1 = CoroutineScope(Job())
+        val r1 = s1.x(5)
+
+        s1.cancel()
+        delay(1_000)
+        assert(r1.job.isCancelled)
+        assert(r1.get() == 5)
+
+        val y: LazyParallel<Int> = lazyParallel{d->
+            d*d
+        }
+
+        val s2 = CoroutineScope(Job())
+        val r2 = s2.y(10)
+        val r = r2.get()
+        assert(r == 100)
+
+    }
+
+    @Test fun evolvingOnScope() = runBlocking {
+        val ev = CoroutineScope(Job()).parallel(1,1) {
+            delay(10_000)
+            2
+        }
+
+        val evS = ev.onScope(GlobalScope)
+
+        assert(ev.job.isActive)
+        assert(evS.job.isActive)
+
+        evS.job.cancel()
+
+        delay(100)
+        assert(evS.job.isCancelled)
+        assert(ev.job.isCancelled)
+        //println(ev.job.isActive)
+
+        //println(ev.job.isCancelled)
+
+        val r = ev.get()
+        assert(r == 1)
+
+        val rS = evS.get()
+        assert(rS == 1)
+    }
+
+    @Test fun evolvingOnScope2() = runBlocking {
+        val scope = CoroutineScope(Job())
+        val ev = scope.parallel(1,1) {
+            delay(10_000)
+            2
+        }
+
+        val evS = ev.onScope(GlobalScope)
+
+        assert(ev.job.isActive)
+        assert(evS.job.isActive)
+
+        scope.cancel()
+
+        delay(100)
+        assert(evS.job.isCancelled)
+        assert(ev.job.isCancelled)
+        //println(ev.job.isActive)
+
+        //println(ev.job.isCancelled)
+
+        val r = ev.get()
+        assert(r == 1)
+
+        val rS = evS.get()
+        assert(rS == 1)
+    }
+
+
+    @Test fun lazyParallelToParallelRemindsScope(){
+        val x: LazyParallel<Int> = lazyParallel{d->
+            delay(10_000)
+            d*d
+        }
+
+        val s1 = CoroutineScope(Job())
+
+        val y = {t: Int -> x(s1,t)}
+
+        val res = y(1)
+
+        s1.cancel()
+
+        assert(res.job.isCancelled)
     }
 }

@@ -18,19 +18,34 @@ package org.drx.evoleq.stub
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.once
 import org.drx.evoleq.coroutines.BaseReceiver
-import org.drx.evoleq.coroutines.Receiver
 import org.drx.evoleq.dsl.*
-import org.drx.evoleq.evolving.Immediate
-import org.drx.evoleq.evolving.Parallel
+import org.drx.evoleq.evolving.*
 import org.drx.evoleq.message.Message
 import org.junit.Test
 import java.lang.Thread.sleep
+import kotlin.reflect.KClass
 
 class StubTest {
+
+    @Test fun typeOfStub() {
+        class Stub
+        val stub = stub<Int>{
+            id(Stub::class)
+            evolve{x -> scope.parallel{2*x}}
+        }
+
+        assert(stub !is LazyStub<*>)
+
+        val lazyStub = stub<Int>{
+            id(Stub::class)
+            evolveLazy(lazyParallel { x -> x*x })
+        }
+
+        assert(lazyStub is LazyStub)
+    }
 
     @Test
     fun stubWithParent() = runBlocking {
@@ -42,7 +57,7 @@ class StubTest {
 
             val state = SimpleIntegerProperty(0)
 
-            evolve{ x -> Immediate{
+            evolve{ x -> Parallel{
                 state.value = x+1
                 val child = child(ChildKey::class) as Stub<String>
                 println(child.toFlow(once()).evolve("").get())
@@ -55,7 +70,7 @@ class StubTest {
 
             child(ChildKey::class,
                 stub<String>{
-                    evolve{ s -> Immediate {
+                    evolve{ s -> Parallel {
                         val parentStub = parent<Int>()
                         val x = parentStub.evolve(0)
                         val res = x.get().toString()
@@ -72,19 +87,19 @@ class StubTest {
         assert(flow.get() == 2)
     }
 
-    @Test
+    //@Test
     fun observingStub() = runBlocking {
         val prop = SimpleStringProperty()//SimpleObjectProperty<String>()
         val change = SimpleObjectProperty<String>()
-        val stub = observingStub<Int,String>{
+        val stub = GlobalScope.observingStub<Int,String>{
             observe(prop)
 
-            evolve { x -> Immediate{
+            evolve { x -> parallel{
                 x
             }}
             gap{
-                from{ x -> Immediate{ "$x" } }
-                to{ x , y -> Immediate{
+                from{ x -> parallel{ "$x" } }
+                to{ x , y -> parallel{
                     change.value = "$x"+y
                     ("$x"+y).length
                 }}
@@ -109,7 +124,7 @@ class StubTest {
         val property = SimpleObjectProperty<Request>()
         val observingStub = observingStub<Data,Request> {
             gap{
-                from {data -> Immediate{Request("waiting",data.x)}}
+                from {data -> parallel{Request("waiting",data.x)}}
                 to{data, request -> Immediate{
                     Data(data.x+1, request.message, request.clientId)}
                 }
@@ -146,6 +161,7 @@ class StubTest {
 
     @Test
     fun pauseObservingStub() =runBlocking {
+        //withTimeout(30_000){
         class Data(val x: Int, val cnt: Int = 0)
         class ObserverKey
         class OutKey
@@ -166,7 +182,7 @@ class StubTest {
             fun observer() = sibling(ChangeBehaviorKey::class,ObserverKey::class)!! as Stub<Int>
 
 
-            evolve{ data -> Immediate{
+            evolve{ data -> Parallel{
                 val observer = child(ObserverKey::class) as Stub<Int>
                     if(!launched) {
                         launched = true
@@ -189,7 +205,7 @@ class StubTest {
             parentalStub(
                 OutKey::class,
                 stub<String>{
-                    evolve{s-> Immediate{
+                    evolve{s-> Parallel{
                         println(s)
                         s
                     }}
@@ -199,7 +215,7 @@ class StubTest {
             parentalStub(
                 ChangeBehaviorKey::class,
                 stub<Boolean> {
-                    evolve{ b -> Immediate{
+                    evolve{ b -> Parallel{
                         val observer = observer()//child(ObserverKey::class) as Stub<Int>
                         val obs = observer.stubs[ObservePropertyStub::class]!! as Stub<ObservePropertyMessage>
                         var o: Message? = null
@@ -218,11 +234,11 @@ class StubTest {
 
             // children
             // Process observing the observed property
-            child( observingStub<Int,Int>{
+            child( GlobalScope.observingStub<Int,Int>{
                     id ( ObserverKey::class )
                     gap{
-                        from{ x -> Immediate{ x } }
-                        to{x,y -> Immediate{
+                        from{ x -> Parallel{ x } }
+                        to{x,y -> Parallel{
                             val parentStub = parent<String>()
                             val res = parentStub.evolve("received: $y").get()
                             y
@@ -236,10 +252,10 @@ class StubTest {
 
             // Process looking for changes of the observe property.
             child( ObserveBehaviorKey::class,
-                observingStub<Boolean,Boolean>{
+                GlobalScope.observingStub<Boolean,Boolean>{
                     gap{
-                        from{ x -> Immediate{ x } }
-                        to{x,y -> Immediate{
+                        from{ x -> Parallel{ x } }
+                        to{x,y -> Parallel{
                             val parentStub = parent<Boolean>()
                             val res = parentStub.evolve(y).get()
                             y
@@ -352,28 +368,28 @@ class StubTest {
     */
 
 
-    @Test
+    //@Test
     fun racingStubTest() = runBlocking {
 
-        val stub = racingStub<Int,Int> {
+        val stub = GlobalScope.racingStub<Int,Int> {
             timeout (1_000 )
             // drivers
-            driver{ Immediate{
+            driver{ parallel{
                 delay(150)
                 1
             }}
-            driver{ Immediate{
+            driver{ parallel{
                 delay(100)
                 2
             }}
-            driver{ Immediate{
+            driver{ parallel{
                 delay(10)
                 3
             }}
             // gap
             gap{
-                from{ Immediate{ null } }
-                to{x , y-> Immediate{
+                from{ parallel{ null } }
+                to{x , y-> parallel{
                     when(y==null){
                         true -> x
                         false ->x+y
@@ -438,7 +454,7 @@ class StubTest {
 
         val receiver: BaseReceiver<Int> = receiver<Int>() {}
 
-        val actorStub = receivingStub<Int, Int> {
+        val actorStub = GlobalScope.receivingStub<Int, Int> {
             gap {
                 from { x -> Immediate { x } }
                 to { x, y -> Immediate { x + y } }
@@ -465,8 +481,8 @@ class StubTest {
             check { b -> b }
             updateCondition { x -> x <= N*(N+1) / 2 }
         })
-        Parallel<Unit>{
-            (1..(N+1)).forEach{Parallel<Unit>{receiver.send(it)}}
+        parallel<Unit>{
+            (1..(N+1)).forEach{parallel<Unit>{receiver.send(it)}}
 
         }
         val res = flow.evolve(0)
@@ -476,5 +492,89 @@ class StubTest {
         assert(receiver.actor.isClosedForSend)
         //receiver.receiver.close()
         Unit
+    }
+
+
+    @Test fun lazyStub() = runBlocking {
+
+        fun  lP():LazyParallel<Int> =  lazyParallel{
+            x ->
+                delay(1_000)
+                x*x
+        }
+
+        val lazyStub: LazyStub<Int> = object: LazyStub<Int> {
+            val s = CoroutineScope(Job())
+            val st = HashMap<ID,Stub<*>>()
+            override val scope: CoroutineScope
+                get() = s
+            override val stubs: HashMap<KClass<*>, Stub<*>>
+                get() = st
+            override val id: KClass<*>
+                get() = CoroutineScope::class
+            override suspend fun lazy(): LazyEvolving<Int> = lP()
+        }
+
+        fun <D> LazyStub<D>.changeScope(newScope: CoroutineScope) = object: LazyStub<D> {
+            override val scope: CoroutineScope
+                get() = newScope
+            override val stubs: HashMap<KClass<*>, Stub<*>>
+                get() = this@changeScope.stubs
+            override val id: KClass<*>
+                get() = this@changeScope.id
+            override suspend fun lazy(): LazyEvolving<D> = this@changeScope.lazy()
+        }
+
+
+        val res1 = lazyStub.evolve(2).get()
+        println(res1)
+        assert(res1 == 4)
+
+        val parent = Job()
+        val scope = CoroutineScope(SupervisorJob(parent))
+        //currentJob = null
+        val lazyStub2 = lazyStub.changeScope(scope)
+        var res: Evolving<Int>? = null
+        parallel {
+            res = lazyStub2.evolve(3)
+        }
+        scope.cancel()
+        delay(300)
+        println(res!!.get())
+        assert(res!!.get() == 3)
+        delay(100)
+        assert(res!!.job.isCancelled)
+
+        delay(1_000)
+    }
+
+    @Test fun lazyStubToLazyFlow() = runBlocking {
+        class Stub
+        var job: Job? = null
+        val lS: LazyStub<Int> = lazyStub( stub{
+            id(Stub::class)
+            evolveLazy {
+                x -> parallel(default = x) {
+                    job = coroutineContext[Job]!!
+                    delay(1_000)
+                    x * x
+                }
+            }
+        } )
+        val lF = lS.toLazyFlow<Int,Boolean>(
+            conditions{
+                testObject(true)
+                check{b->b}
+                updateCondition { it < 100 }
+            }
+        )
+        val scope = CoroutineScope(Job())
+        val f = scope.lF()
+        val res = f.evolve(2)
+        delay(100)
+
+        scope.cancel()
+        delay(500)
+        assert(job!!.isCancelled)
     }
 }

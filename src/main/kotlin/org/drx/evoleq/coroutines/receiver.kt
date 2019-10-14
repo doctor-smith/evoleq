@@ -15,15 +15,19 @@
  */
 package org.drx.evoleq.coroutines
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import org.drx.evoleq.dsl.conditions
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.receivingStub
 import org.drx.evoleq.dsl.stub
-import org.drx.evoleq.evolving.Immediate
+import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.stub.ID
 import org.drx.evoleq.stub.toFlow
+import org.drx.evoleq.time.Later
+import org.drx.evoleq.time.await
 
 interface Receiver<in D>{
     suspend fun send(data: D): Unit
@@ -39,11 +43,34 @@ open class InputAdapter<in I, D>(open val receiver: Receiver<D>,open  val transf
 infix fun <I, D> Receiver<D>.input(transform: (I)->D): InputAdapter<I, D> = InputAdapter(this){ input ->transform(input) }
 fun <D> Receiver<D>.input(): InputAdapter<D,D> = input{ d -> d }
 
+fun <D> BaseReceiver<D>.onNext(scope: CoroutineScope, action: suspend CoroutineScope.(D)->Unit ): BaseReceiver<D> {
+    scope.parallel {
+        for (message in this@onNext.channel) {
+            action(message)
+        }
+    }
+    return this
+}
+
+fun <D> BaseReceiver<D>.interrupt(evolving: Evolving<D>): Evolving<D> {
+    val later = Later<D>()
+    Parallel{
+        this@interrupt.onNext(this){
+            d -> later.value = d
+        }
+    }
+    Parallel{
+        later.value = evolving.get()
+    }
+    return later.await()
+}
+
 sealed class DuplicatorMessage<D> {
     class Wait<D> : DuplicatorMessage<D>()
     data class Subscribe<D>(val id: ID, val receiver: Receiver<D>) : DuplicatorMessage<D>()
     data class UnSubscribe<D>(val id: ID) : DuplicatorMessage<D>()
-    class Terminate<D> : DuplicatorMessage<D>()
+    data class Terminate<D>(val senderId: ID) : DuplicatorMessage<D>()
+    class Terminated<D> : DuplicatorMessage<D>()
 }
 
 /**
@@ -52,13 +79,14 @@ sealed class DuplicatorMessage<D> {
 class Duplicator<D>(
     override val actor: SendChannel<D>,
     val subscriptionPort: BaseReceiver<DuplicatorMessage<D>>,
-    val receivers: HashMap<ID, Receiver<D>> = HashMap()
+    private val receivers: HashMap<ID, Receiver<D>> = HashMap(),
+    private val owner: ID? = null
 ) : BaseReceiver<D>(actor,Channel()){
 
     private val manager = receivingStub<DuplicatorMessage<D>, DuplicatorMessage<D>> {
         gap{
-            from{ Immediate{it} }
-            to{ _, message -> Immediate{message} }
+            from{ Parallel{it} }
+            to{ _, message -> Parallel{message} }
         }
         receiver(subscriptionPort)
     }
@@ -67,26 +95,47 @@ class Duplicator<D>(
         evolve{ message -> when(message) {
             is DuplicatorMessage.Subscribe -> Parallel{
                 receivers[message.id] = message.receiver
-                DuplicatorMessage.Wait()
+                DuplicatorMessage.Wait<D>()
             }
             is DuplicatorMessage.UnSubscribe -> Parallel{
                 receivers.remove(message.id)
-                DuplicatorMessage.Wait()
+                DuplicatorMessage.Wait<D>()
             }
             is DuplicatorMessage.Wait -> manager.evolve(message)
-            is DuplicatorMessage.Terminate -> Immediate{ DuplicatorMessage.Terminate<D>() }
+            is DuplicatorMessage.Terminate -> Parallel{
+                when(owner){
+                    null -> {
+                        // terminate all processes
+                        subscriptionPort.actor.close()
+                        actor.close()
+                        receivers.clear()
+                        DuplicatorMessage.Terminated<D>()
+                    }
+                    else -> when(message.senderId){
+                        owner ->{
+                            // terminate all processes
+                            subscriptionPort.actor.close()
+                            actor.close()
+                            receivers.clear()
+                            DuplicatorMessage.Terminated<D>()
+                        }
+                        else -> DuplicatorMessage.Wait<D>()
+                    }
+                }
+            }
+            is DuplicatorMessage.Terminated -> Parallel{ DuplicatorMessage.Terminated<D>() }
         } }
     }
     private val managerFlow = managerStub.toFlow<DuplicatorMessage<D>, Boolean>(conditions{
         testObject(true)
         check{b->b}
-        updateCondition { message -> message !is DuplicatorMessage.Terminate<D> }
+        updateCondition { message -> message !is DuplicatorMessage.Terminated<D> }
     })
 
     init{
         Parallel<Unit> {
             val message = managerFlow.evolve(DuplicatorMessage.Wait()).get()
-            assert(message is DuplicatorMessage.Terminate)
+            assert(message is DuplicatorMessage.Terminated)
         }
 
     }

@@ -1,4 +1,4 @@
-[ ![Download](https://api.bintray.com/packages/drx/maven/evoleq/images/download.svg?version=1.0.3) ](https://bintray.com/drx/maven/evoleq/1.0.3/link)
+[ ![Download](https://api.bintray.com/packages/drx/maven/evoleq/images/download.svg?version=1.1.0) ](https://bintray.com/drx/maven/evoleq/1.1.0/link)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 # Evoleq
 
@@ -13,14 +13,14 @@ Functional programming in terms of dynamical systems. A declarative approach to 
 Evoleq is hosted on bintray/jcenter
 ### Gradle
 ```kotlin
-compile( "org.drx:evoleq:1.0.3" )
+compile( "org.drx:evoleq:1.1.0" )
 ```
 ### Maven
 ```xml
 <dependency>
     <groupId>org.drx</groupId>
     <artifactId>evoleq</artifactId>
-    <version>1.0.3</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 ### Notes
@@ -57,6 +57,9 @@ The main idea behind the following data type is to provide a uniform way to trea
 package org.drx.evoleq.evolving
 
 interface Evolving<out D> {
+
+    val job: Job
+
     suspend fun get() : D
 }
 ```
@@ -106,8 +109,8 @@ val stub = racingStub<Int,Int> {
     }}
     // gap
     gap{
-        from{ Immediate{ null } }
-        to{x , y-> Immediate{
+        from{ OnDemand{ null } }
+        to{x , y-> OnDemand{
             when(y==null){
                 true -> x
                 false -> y
@@ -135,15 +138,15 @@ val appStub = stub<Message> {
             gap{
                 from { message -> Parallel{ Dialog.Show } }
                 to { message, dialog -> when(dialog) {
-                    is Dialog.Ok -> Immediate{ Message.CloseResponse }
-                    is Dialog.Cancel -> Immediate{ Message.Resume }
-                    else -> Immediate{ Message.Resume }
+                    is Dialog.Ok -> OnDemand{ Message.CloseResponse }
+                    is Dialog.Cancel -> OnDemand{ Message.Resume }
+                    else -> OnDemand{ Message.Resume }
                 } }
             }     
        )
              
        is Message.Resume -> TODO()
-       is Mesage.CloseResponse -> Immediate{ message }
+       is Mesage.CloseResponse -> OnDemand{ message }
     } }
 }    
 /**
@@ -210,8 +213,8 @@ class Data<D>(val d: D, val message: Message = EmptyMessage)
 val receiver = receivingStub<Data,Message>{
     receiver(port)
     gap{
-        from { data: Data -> Immediate{ data.message } } 
-        to { data, message -> Immediate{ data.copy( message= message) }}
+        from { data: Data -> OnDemand{ data.message } } 
+        to { data, message -> OnDemand{ data.copy( message= message) }}
     }
 }
 
