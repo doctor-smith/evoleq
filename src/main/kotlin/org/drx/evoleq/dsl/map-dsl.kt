@@ -30,3 +30,6 @@ open class HashMapConfiguration<K,V> : Configuration<HashMap<K, V>> {
         map.putAll(from)
     }
 }
+
+@Suppress("unused")
+fun <T, K, V> HashMapConfiguration<K,V>.from(obj: T, properties: T.()->Unit) = obj.properties()
