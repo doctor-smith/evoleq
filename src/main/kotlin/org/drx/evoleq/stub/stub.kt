@@ -67,8 +67,10 @@ suspendOnScope fun <D> (suspendOnScope CoroutineScope.()-> Evolver<D>).down(): s
     d: D -> this@down().evolve(d)
 }
 */
-
-
+/**
+ * Find stub by key.
+ */
+@Suppress("unchecked_cast")
 fun Stub<*>.findByKey(key: KClass<*>): Stub<*>? {
     this.stubs.forEach{
         if(it.key == key){
@@ -83,3 +85,29 @@ fun Stub<*>.findByKey(key: KClass<*>): Stub<*>? {
     }
     return null
 }
+
+/**
+ * Find stub by id and return typed result
+ */
+@Suppress("unchecked_cast")
+fun <D> Stub<*>.find(id: ID): Stub<D>? {
+    this.stubs.forEach{
+        if(it.key == id){
+            return try{
+                it.value as Stub<D>
+            } catch(ignored : Throwable) {
+                null
+            }
+        }
+    }
+    this.stubs.values.forEach{
+        val stub = it.find<D>(id)
+        if(stub != null){
+            return stub
+        }
+    }
+    return null
+}
+
+@Suppress("unchecked_cast")
+fun <D> Stub<*>.data(): Stub<D> = this as Stub<D>
