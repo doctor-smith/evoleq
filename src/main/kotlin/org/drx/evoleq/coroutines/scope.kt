@@ -16,10 +16,6 @@
 package org.drx.evoleq.coroutines
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.plus
-import org.drx.evoleq.evolving.Parallel
-import kotlin.coroutines.CoroutineContext
 
 fun <S> onScope(f:()->S): CoroutineScope.()->S = { f() }
 fun <S,T> onScope(f:(S)->T): CoroutineScope.(S)->T = { d -> f(d) }
@@ -34,7 +30,20 @@ fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,T> onScope(f:(S1,S2,S3,S4,S5,S6,S7,S8,S9)->T): C
 fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,T> onScope(f:(S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T): CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T = { s1, s2, s3, s4, s5, s6, s7, s8, s9, s10 -> f(s1,s2,s3,s4,s5,s6,s7,s8,s9,s10) }
 
 
+
+fun <S> onScopeSuspended(f: suspend ()->S): suspend CoroutineScope.()->S = { f() }
+fun <S,T> onScopeSuspended(f: suspend (S)->T): suspend CoroutineScope.(S)->T = { d -> f(d) }
+fun <S1,S2,T> onScopeSuspended(f: suspend (S1,S2)->T): suspend CoroutineScope.(S1,S2)->T = { s1, s2 -> f(s1,s2) }
+fun <S1,S2,S3,T> onScopeSuspended(f: suspend (S1,S2,S3)->T): suspend CoroutineScope.(S1,S2,S3)->T = { s1, s2, s3 -> f(s1,s2,s3) }
+fun <S1,S2,S3,S4,T> onScopeSuspended(f: suspend (S1,S2,S3,S4)->T): suspend CoroutineScope.(S1,S2,S3,S4)->T = { s1, s2, s3, s4 -> f(s1,s2,s3,s4) }
+fun <S1,S2,S3,S4,S5,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5)->T = { s1, s2, s3, s4, s5 -> f(s1,s2,s3,s4, s5) }
+fun <S1,S2,S3,S4,S5,S6,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6)->T = { s1, s2, s3, s4, s5, s6 -> f(s1,s2,s3,s4,s5,s6) }
+fun <S1,S2,S3,S4,S5,S6,S7,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6,S7)->T = { s1, s2, s3, s4, s5, s6, s7 -> f(s1,s2,s3,s4,s5,s6,s7) }
+fun <S1,S2,S3,S4,S5,S6,S7,S8,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7,S8)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8)->T = { s1, s2, s3, s4, s5, s6, s7, s8 -> f(s1,s2,s3,s4,s5,s6,s7,s8) }
+fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7,S8,S9)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8,S9)->T = { s1, s2, s3, s4, s5, s6, s7, s8, s9 -> f(s1,s2,s3,s4,s5,s6,s7,s8,s9) }
+fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T = { s1, s2, s3, s4, s5, s6, s7, s8, s9, s10 -> f(s1,s2,s3,s4,s5,s6,s7,s8,s9,s10) }
 /*
+
 fun <S,T> CoroutineScope.onScope(f: (CoroutineContext)-> (S)->T): CoroutineScope.(CoroutineContext, S)->T =
     { context, s -> this@onScope + context; f(context)( s ) }
 
