@@ -15,7 +15,10 @@
  */
 package org.drx.evoleq.dsl
 
+import javafx.beans.property.SimpleBooleanProperty
 import kotlinx.coroutines.delay
+import org.drx.evoleq.coroutines.blockWhileEmpty
+import java.util.function.Predicate
 
 open class ArrayListConfiguration<T> : Configuration<ArrayList<T>> {
 
@@ -30,10 +33,102 @@ open class ArrayListConfiguration<T> : Configuration<ArrayList<T>> {
 fun <T> arrayList(configuration: ArrayListConfiguration<T>.()->Unit): ArrayList<T> = configure(configuration)
 
 suspend fun <T, O> ArrayList<T>.onNext(action: suspend (T)->O): O {
-    while(isEmpty()) {
+    while (isEmpty()) {
         delay(1)
     }
     val t = first()
     removeAt(0)
     return action(t)
 }
+
+open class SmartArrayList<T> : ArrayList<T>() {
+
+    private val isEmptyPrivate = SimpleBooleanProperty(true)
+    val isEmpty = SimpleBooleanProperty(true)
+    init{
+        isEmpty.bind(isEmptyPrivate)
+    }
+
+    override fun add(element: T): Boolean =with(super.add(element)) {
+        isEmptyPrivate.value = false
+        this
+    }
+
+
+    override fun add(index: Int, element: T) = with(super.add(index, element)) {
+        isEmptyPrivate.value = false
+    }
+
+    override fun addAll(elements: Collection<T>): Boolean = with(super.addAll(elements)) {
+        if(elements.isNotEmpty()) {
+            isEmptyPrivate.value = false
+        }
+        this
+    }
+
+    override fun addAll(index: Int, elements: Collection<T>): Boolean = with(super.addAll(index, elements)) {
+        if(elements.isNotEmpty()) {
+            isEmptyPrivate.value = false
+        }
+        this
+    }
+
+    override fun remove(element: T): Boolean = with(super.remove(element)) {
+        isEmptyPrivate.value = isEmpty()
+        this
+    }
+
+    override fun removeAt(index: Int): T = with(super.removeAt(index)) {
+        isEmptyPrivate.value = isEmpty()
+        this
+    }
+
+    override fun removeAll(elements: Collection<T>): Boolean = with(removeAll(elements)){
+        isEmptyPrivate.value = isEmpty()
+        this
+    }
+
+    override fun removeIf(filter: Predicate<in T>): Boolean = with(super.removeIf(filter)) {
+        isEmptyPrivate.value = isEmpty()
+        this
+    }
+
+    override fun removeRange(fromIndex: Int, toIndex: Int) = with(super.removeRange(fromIndex, toIndex)) {
+        isEmptyPrivate.value = isEmpty()
+        this
+    }
+}
+
+fun <T> smartArrayListOf(vararg elements: T) : SmartArrayList<T> {
+    val list = SmartArrayList<T>()
+    list.addAll(elements)
+    return list
+}
+
+inline fun <S, reified T> SmartArrayList<S>.map(f: (S)->T): SmartArrayList<T> = smartArrayListOf(
+    *(this as ArrayList<S>).map(f).toTypedArray()
+)
+
+suspend fun <T, O> SmartArrayList<T>.onNext(action: suspend (T)->O): O {
+    blockWhileEmpty()
+    val t = first()
+    removeAt(0)
+    return action(t)
+}
+
+open class SmartArrayListConfiguration<T> : Configuration<SmartArrayList<T>> {
+
+    private val list: SmartArrayList<T> by lazy { smartArrayListOf<T>() }
+
+    override fun configure(): SmartArrayList<T> = list
+
+    @Suppress("unused")
+    fun SmartArrayListConfiguration<T>.item(t: T) = list.add(t)
+
+    @Suppress("unused")
+    suspend fun SmartArrayListConfiguration<T>.itemSuspended(t: T) = list.add(t)
+}
+
+fun <T> smartArrayList(configuration: SmartArrayListConfiguration<T>.()->Unit): SmartArrayList<T> = configure(configuration)
+
+suspend fun <T> smartArrayList(configuration:suspend  SmartArrayListConfiguration<T>.()->Unit): SmartArrayList<T> = configureSuspended(configuration)

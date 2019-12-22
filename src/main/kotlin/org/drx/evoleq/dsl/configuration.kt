@@ -22,6 +22,8 @@ import kotlin.reflect.full.createInstance
 interface Configuration<out D>
 {
     fun configure() : D
+
+    suspend fun configureSuspended(): D = configure()
 }
 
 interface ConfigurationPhase : Phase
@@ -37,6 +39,11 @@ inline fun <D, reified C: Configuration<D>> configure(noinline sideEffect:  C.()
     val c = C::class.createInstance()
     c.sideEffect()
     return c.configure()
+}
+suspend inline fun <D, reified C: Configuration<D>> configureSuspended(noinline sideEffect: suspend C.()->Unit) : D {
+    val c = C::class.createInstance()
+    c.sideEffect()
+    return c.configureSuspended()
 }
 
 inline fun <D,  reified C: Configuration<D>, reified Data> configure(data: Data, noinline sideEffect:  C.()->Unit) : D {
@@ -87,9 +94,10 @@ inline fun <reified C> C.reconfigure(block:C.()->C): C {
 interface SuspendedConfiguration<out D> {
     suspend  fun configure(): Evolving<D>
 }
-
+/*
 suspend inline fun <D, reified C: SuspendedConfiguration<D>> configureSuspended(noinline  sideEffect: suspend C.()->Unit) : Evolving<D> {
     val c = C::class.createInstance()
     c.sideEffect()
     return c.configure()
 }
+ */
