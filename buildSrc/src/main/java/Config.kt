@@ -12,7 +12,7 @@ object Config {
          *  - Lazy evolvings, stubs, flows, etc
          *  - breaking: Refactored block in Immediate: Its type is no longer suspending
          */
-        val version = "1.1.0"
+        val version = "1.1.1"
         val artifactId = "evoleq"
     }
 
