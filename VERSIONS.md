@@ -1,4 +1,5 @@
 ## Versions
+1.1.1: Block coroutine execution while a property has a certain value
 1.1.0: Evolving DSL + Structured concurrency
    * OnDemand<D> : Evolving<D>: block execution is delayed until get-method is called
    * Background flow
