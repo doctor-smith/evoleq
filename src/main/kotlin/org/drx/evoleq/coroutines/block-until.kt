@@ -23,13 +23,15 @@ import javafx.collections.ListChangeListener
 import kotlinx.coroutines.*
 import org.drx.evoleq.dsl.SmartArrayList
 
+/**
+ * Block coroutine execution until a property has the right value
+ */
 suspend fun <T : Any> blockUntil(property: Property<T>, predicate: (T)-> Boolean) =
     if(property.value == null || !predicate(property.value)) {
         try {
             val eternity: Deferred<Unit> = CoroutineScope(Job()).async {
-                    delay(Long.MAX_VALUE)
-                }
-
+                delay(Long.MAX_VALUE)
+            }
             lateinit var listener: ChangeListener<T>
             fun removeListener() {
                 property.removeListener(listener)
@@ -41,8 +43,6 @@ suspend fun <T : Any> blockUntil(property: Property<T>, predicate: (T)-> Boolean
                 }
             }
             property.addListener(listener)
-            //eternity.await()
-
             if(property.value == null || !predicate(property.value)) {
                 eternity.await()
             } else {
@@ -52,17 +52,17 @@ suspend fun <T : Any> blockUntil(property: Property<T>, predicate: (T)-> Boolean
         } catch (exception: Exception) { }
     }  else { Unit }
 
+/**
+ * Block coroutine execution while a list is empty
+ */
 suspend fun <T> ArrayList<T>.blockWhileEmpty(): Unit {
     if(isEmpty()) {
-
         val isNotEmpty = SimpleBooleanProperty(false)
         lateinit var listener: ListChangeListener<T>
         CoroutineScope(Job()).launch {coroutineScope{
             val observableList = FXCollections.observableList(this@blockWhileEmpty)
             listener = ListChangeListener<T> { change ->
-
                 while (change.next()) {
-
                     if (change.wasAdded()) {
                         isNotEmpty.value = true
                         observableList.removeListener(listener)
@@ -70,21 +70,21 @@ suspend fun <T> ArrayList<T>.blockWhileEmpty(): Unit {
                 }
             }
             observableList.addListener(listener)
-            //println("change listener added")
         } }
         blockUntil(isNotEmpty) { value -> value == true }
-
     }
 }
 
+/**
+ * Block coroutine execution while a [SmartArrayList] is empty
+ */
 suspend fun <T> SmartArrayList<T>.blockWhileEmpty() {
-    blockUntil(isEmpty) {value -> value == false}
+    blockUntil(isEmpty) {value -> !value}
 }
 
-fun <T> ArrayList<T>.onAdd(f: ()->Unit): ArrayList<T> = object: ArrayList<T>() {
-    override fun add(element: T): Boolean {
-        val ret = super.add(element)
-        f()
-        return ret
-    }
+/**
+ * Block coroutine execution while a [SmartArrayList] is empty
+ */
+suspend fun <T> SmartArrayList<T>.blockWhileNonEmpty() {
+    blockUntil(isEmpty) {value -> value}
 }

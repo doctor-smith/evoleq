@@ -20,7 +20,6 @@ import javafx.collections.ListChangeListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.coroutines.blockUntil
-import org.drx.evoleq.coroutines.onAdd
 import org.junit.Test
 
 class ArrayListDslTest {
@@ -82,9 +81,6 @@ class ArrayListDslTest {
         oList.add(3)
         list.add(6)
         delay(1000)
-
-        list.onAdd<Int>{println("Added")}.add(7)
-        Unit
     }
 
     @Test fun smartArrayList() = runBlocking {
