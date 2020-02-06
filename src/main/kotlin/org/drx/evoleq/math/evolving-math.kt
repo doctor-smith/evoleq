@@ -20,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.plus
 import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
+import org.drx.evoleq.evolving.DefaultEvolvingScope
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
@@ -40,6 +41,12 @@ fun <D1,D2> Evolving<D1>.map(f: suspend (D1) -> D2) : Evolving<D2> = object : Ev
     override val job: Job
         get() = this@map.job
     override suspend fun get(): D2 = f ( this@map.get() )
+}
+suspend
+fun <D1,D2> Evolving<D1>.map(scope: CoroutineScope = DefaultEvolvingScope(),f: suspend CoroutineScope.(D1) -> D2) : Evolving<D2> = object : Evolving<D2> {
+    override val job: Job
+        get() = this@map.job
+    override suspend fun get(): D2 = scope.f ( this@map.get() )
 }
 suspend infix
 fun<D1,D2> Evolving<D1>.lift(f: (D1) -> D2) : (Evolving<D1>) -> Evolving<D2> = { ev -> CoroutineScope(job).parallel { (ev map f).get() } }
@@ -63,6 +70,7 @@ suspend fun <D> muEvolving(evolving: Evolving<Evolving<D>>): Evolving<D> {
     return evolving.get()
 }
 
+suspend fun <D> Evolving<Evolving<D>>.mu(): Evolving<D> = muEvolving(this)
 /**
  * Fish operator / multiplication on kleisli arrows
  */
