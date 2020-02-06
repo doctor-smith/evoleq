@@ -15,9 +15,13 @@
  */
 package org.drx.evoleq.dsl
 
+import javafx.beans.property.Property
 import javafx.beans.property.SimpleBooleanProperty
 import kotlinx.coroutines.delay
+import org.drx.evoleq.coroutines.blockUntil
 import org.drx.evoleq.coroutines.blockWhileEmpty
+import org.drx.evoleq.util.and
+import org.drx.evoleq.util.valueIsNull
 import java.util.function.Predicate
 
 open class ArrayListConfiguration<T> : Configuration<ArrayList<T>> {
@@ -110,7 +114,17 @@ inline fun <S, reified T> SmartArrayList<S>.map(f: (S)->T): SmartArrayList<T> = 
 )
 
 suspend fun <T, O> SmartArrayList<T>.onNext(action: suspend (T)->O): O {
-    blockWhileEmpty()
+        blockWhileEmpty()
+        val t = first()
+        removeAt(0)
+        return action(t)
+}
+
+suspend fun <T, O> SmartArrayList<T>.onNext(cancel: Property<O>, action: suspend (T)->O): O {
+    blockUntil(cancel.valueIsNull() and isEmpty){value -> !value}
+    ifEmpty {
+        return cancel.value
+    }
     val t = first()
     removeAt(0)
     return action(t)
