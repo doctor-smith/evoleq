@@ -16,25 +16,31 @@
 package org.drx.evoleq.util
 
 import javafx.beans.property.*
+import javafx.beans.value.WritableValue
+import org.drx.evoleq.dsl.EvoleqDsl
 
 typealias IntProperty = Property<Int>
 
 @Suppress("unchecked_cast")
+@EvoleqDsl
 fun intProperty(initialValue: Int? = null): IntProperty = when(initialValue){
     null -> SimpleIntegerProperty()
     else -> SimpleIntegerProperty(initialValue)
 } as IntProperty
 
+@EvoleqDsl
 fun doubleProperty(initialValue: Double? = null): SimpleDoubleProperty = when(initialValue){
     null -> SimpleDoubleProperty()
     else -> SimpleDoubleProperty(initialValue)
 }
+@EvoleqDsl
 
 fun stringProperty(initialValue: String? = null): SimpleStringProperty = when(initialValue) {
     null -> SimpleStringProperty()
     else -> SimpleStringProperty(initialValue)
 }
 
+@EvoleqDsl
 fun booleanProperty(initialValue: Boolean? = null): SimpleBooleanProperty = when(initialValue) {
     null -> SimpleBooleanProperty()
     else -> SimpleBooleanProperty(initialValue)
@@ -46,21 +52,25 @@ fun booleanProperty(initialValue: Boolean? = null): SimpleBooleanProperty = when
  *
  **********************************************************************************************************************/
 
+@EvoleqDsl
 infix fun BooleanProperty.and(other: BooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(AndBinding(this@and,other))
     this
 }
 
+@EvoleqDsl
 infix fun BooleanProperty.or(other: BooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(OrBinding(this@or,other))
     this
 }
 
+@EvoleqDsl
 operator fun BooleanProperty.not(): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(NegationBinding(this@not))
     this
 }
 
+@EvoleqDsl
 infix fun BooleanProperty.xor(other: BooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(XorBinding(this@xor,other))
     this
@@ -72,54 +82,120 @@ infix fun BooleanProperty.xor(other: BooleanProperty): ReadOnlyBooleanProperty =
  *
  **********************************************************************************************************************/
 
+@EvoleqDsl
 operator fun Property<Double>.plus(other: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(PlusDoubleBinding(this@plus, other))
     this
 }
 
+@EvoleqDsl
 operator fun Property<Double>.minus(other: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(MinusDoubleBinding(this@minus, other))
     this
 }
 
+@EvoleqDsl
 operator fun Property<Double>.times(other: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(TimesDoubleBinding(this@times, other))
     this
 }
 
+@EvoleqDsl
 operator fun Property<Double>.div(denominator: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(DivideDoubleBinding(this@div, denominator))
     this
 }
 
+@EvoleqDsl
 infix fun Property<Double>.toThe(exponent: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(PowerDoubleBinding(this@toThe, exponent))
     this
 }
 
+@EvoleqDsl
 fun max(property1: Property<Double>, property2: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(MaxDoubleBinding(property1, property2))
     this
 }
 
+@EvoleqDsl
 fun min(property1: Property<Double>, property2: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(MinDoubleBinding(property1, property2))
     this
 }
 
+@EvoleqDsl
 operator fun Property<Double>.unaryMinus(): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(InverseDoubleBinding(this@unaryMinus))
     this
 }
 
+@EvoleqDsl
 fun Property<Double>.reciprocal(): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(ReciprocalDoubleBinding(this@reciprocal))
     this
 }
 
+@EvoleqDsl
 operator fun Double.div(property: Property<Double>) : ReadOnlyDoubleProperty = property.reciprocal()
 
+@EvoleqDsl
 infix fun Property<Double>.apply(f:(Double)->Double): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(FunctionDoubleBinding(this@apply, f))
     this
 }
+
+
+/**********************************************************************************************************************
+ *
+ * Functional JavaFX Properties
+ *
+ **********************************************************************************************************************/
+
+/**
+ * Functional FxProperty setter
+ */
+@EvoleqDsl
+fun <T> WritableValue<T>.setNullSave(update: T?.()->T): WritableValue<T> = with(this) {
+    value = value.update()
+    this
+}
+
+@EvoleqDsl
+fun <T> WritableValue<T>.set(update: T.()->T): WritableValue<T> = with(this) {
+    value = value.update()
+    this
+}
+
+@EvoleqDsl
+fun <S,T> Property<S>.bind(f: S.()->T): Property<T> {
+
+    val property = SimpleObjectProperty<T>()
+
+    addListener { _, _, newValue ->
+        property.value = value.f()
+    }
+    return property
+}
+
+@EvoleqDsl
+fun <T> Property<T>.valueIsNull(): BooleanProperty {
+    val property = booleanProperty()
+    property.value = value == null
+    addListener { _,_,newValue ->
+        property.set{ newValue == null }
+    }
+    return property
+}
+
+@EvoleqDsl
+fun <T> Property<T>.valueIsNotNull(): BooleanProperty
+{
+    val property = booleanProperty()
+    property.value = value != null
+    addListener { _,_,newValue ->
+        property.set{ newValue != null }
+    }
+    return property
+}
+

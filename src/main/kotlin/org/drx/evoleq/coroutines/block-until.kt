@@ -16,16 +16,16 @@
 package org.drx.evoleq.coroutines
 
 import javafx.beans.property.Property
-import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.ReadOnlyProperty
 import javafx.beans.value.ChangeListener
-import javafx.collections.FXCollections
-import javafx.collections.ListChangeListener
 import kotlinx.coroutines.*
+import org.drx.evoleq.dsl.EvoleqDsl
 import org.drx.evoleq.dsl.SmartArrayList
 
 /**
  * Block coroutine execution until a property has the right value
  */
+@EvoleqDsl
 suspend fun <T : Any> blockUntil(property: Property<T>, predicate: (T)-> Boolean) =
     if(property.value == null || !predicate(property.value)) {
         try {
@@ -51,10 +51,41 @@ suspend fun <T : Any> blockUntil(property: Property<T>, predicate: (T)-> Boolean
             }
         } catch (exception: Exception) { }
     }  else { Unit }
+/**
+ * Block coroutine execution until a property has the right value
+ */
+@EvoleqDsl
+suspend fun <T : Any> blockUntil(readOnlyProperty: ReadOnlyProperty<T>, predicate: (T)-> Boolean) =
+    if(readOnlyProperty.value == null || !predicate(readOnlyProperty.value)) {
+        try {
+            val eternity: Deferred<Unit> = CoroutineScope(Job()).async {
+                delay(Long.MAX_VALUE)
+            }
+            lateinit var listener: ChangeListener<T>
+            fun removeListener() {
+                readOnlyProperty.removeListener(listener)
+            }
+            listener = ChangeListener { _, _, newValue ->
+                if (predicate(newValue)) {
+                    removeListener()
+                    eternity.cancel()
+                }
+            }
+            readOnlyProperty.addListener(listener)
+            if(readOnlyProperty.value == null || !predicate(readOnlyProperty.value)) {
+                eternity.await()
+            } else {
+                removeListener()
+                eternity.cancel()
+            }
+        } catch (exception: Exception) { }
+    }  else { Unit }
 
 /**
  * Block coroutine execution while a list is empty
  */
+/*
+@EvoleqDsl
 suspend fun <T> ArrayList<T>.blockWhileEmpty(): Unit {
     if(isEmpty()) {
         val isNotEmpty = SimpleBooleanProperty(false)
@@ -75,9 +106,12 @@ suspend fun <T> ArrayList<T>.blockWhileEmpty(): Unit {
     }
 }
 
+
+ */
 /**
  * Block coroutine execution while a [SmartArrayList] is empty
  */
+@EvoleqDsl
 suspend fun <T> SmartArrayList<T>.blockWhileEmpty() {
     blockUntil(isEmpty) {value -> !value}
 }
@@ -85,6 +119,7 @@ suspend fun <T> SmartArrayList<T>.blockWhileEmpty() {
 /**
  * Block coroutine execution while a [SmartArrayList] is empty
  */
+@EvoleqDsl
 suspend fun <T> SmartArrayList<T>.blockWhileNonEmpty() {
     blockUntil(isEmpty) {value -> value}
 }

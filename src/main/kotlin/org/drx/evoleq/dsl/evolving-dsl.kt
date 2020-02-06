@@ -20,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.plus
 import org.drx.evoleq.evolving.*
 
+@EvoleqDsl
 fun <D> CoroutineScope.parallel(
     delay: Long = 1,
     default: D? = null,
@@ -34,8 +35,7 @@ fun <D> lazyParallel(
          block(it)
     }
 }
-
-
+@EvoleqDsl
 fun <D> CoroutineScope.asynq(
     delay: Long = 1,
     default: D? = null,
@@ -66,9 +66,9 @@ fun <D> lazyOnDemand(
         block(it)
     }
 }
-
+@EvoleqDsl
 fun <D> CoroutineScope.immediate(default: D? = null, block:  CoroutineScope.()->D) = Immediate(this){ block() }
-
+@EvoleqDsl
 fun <D> CoroutineScope.onDemand(default : D? = null, block: suspend CoroutineScope.()->D) = OnDemand(this){ block() }
 
 fun <D,E> Evolving<D>.parallel(delay: Long = 1,default: E? = null, block: suspend CoroutineScope.() -> E): Parallel<E> = Parallel(delay, CoroutineScope(this.job),default) { block() }

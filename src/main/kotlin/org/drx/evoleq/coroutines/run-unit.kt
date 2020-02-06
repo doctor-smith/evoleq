@@ -16,14 +16,17 @@
 package org.drx.evoleq.coroutines
 
 import javafx.beans.property.Property
+import javafx.beans.property.ReadOnlyProperty
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.value.ChangeListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import org.drx.evoleq.dsl.EvoleqDsl
 
-suspend fun <C: Any,T> runUntil(property: Property<C>, predicate: (C)->Boolean, block: suspend CoroutineScope.()-> T): T? = try{
+@EvoleqDsl
+suspend fun <C: Any,T> runUntil(property: ReadOnlyProperty<C>, predicate: (C)->Boolean, block: suspend CoroutineScope.()-> T): T? = try{
     if(property.value == null || !predicate(property.value)) {
         val scope = CoroutineScope(Job())
         var result: T? = null
@@ -56,37 +59,64 @@ suspend fun <C: Any,T> runUntil(property: Property<C>, predicate: (C)->Boolean, 
 /**
  * Auxiliary function
  */
+@EvoleqDsl
 fun <T> CoroutineScope.run(block: suspend CoroutineScope.()->T): suspend CoroutineScope.()->T = block
 
 /**
  * Auxiliary function
  */
+@EvoleqDsl
 suspend fun <C: Any, T> (suspend CoroutineScope.()->T).until(property: Property<C>, predicate: (C)->Boolean): T?
         = runUntil(property,predicate,this)
 
 /**
  * Auxiliary function
  */
-suspend infix fun <C: Any, T> (suspend CoroutineScope.()->T).until(condition: Pair<Property<C>, (C)->Boolean>): T?
+@EvoleqDsl
+suspend infix fun <C: Any, T> (suspend CoroutineScope.()->T).until(condition: Pair<ReadOnlyProperty<C>, (C)->Boolean>): T?
         = runUntil(condition.first,condition.second,this)
 
 /**
  * Auxiliary function
  */
-suspend infix fun <C: Any, T> (suspend CoroutineScope.()->T).asLongAs(condition: Pair<Property<C>, (C)->Boolean>): T?
+@EvoleqDsl
+suspend infix fun <C: Any, T> (suspend CoroutineScope.()->T).asLongAs(condition: Pair<ReadOnlyProperty<C>, (C)->Boolean>): T?
         = runUntil(condition.first,{c -> !condition.second(c)},this)
 
 /**
  * Auxiliary function
  */
+@EvoleqDsl
 infix fun <C:Any> Property<C>.fulfills(predicate: (C) -> Boolean): Pair<Property<C>, (C)->Boolean> = Pair(this,predicate)
 
 /**
  * Auxiliary function
  */
-fun Property<Boolean>.isTrue(): Pair<Property<Boolean>, (Boolean)->Boolean> = this fulfills { x -> x }
+@EvoleqDsl
+infix fun ReadOnlyProperty<Boolean>.fulfills(predicate: (Boolean) -> Boolean): Pair<ReadOnlyProperty<Boolean>, (Boolean)->Boolean> = Pair(this,predicate)
 
 /**
  * Auxiliary function
  */
-fun Property<Boolean>.isFalse(): Pair<Property<Boolean>, (Boolean)->Boolean> = this fulfills { x -> !x }
+@EvoleqDsl
+fun Property<Boolean>.isTrue(): Pair<ReadOnlyProperty<Boolean>, (Boolean) -> Boolean> = this fulfills { x -> x }
+
+/**
+ * Auxiliary function
+ */
+@EvoleqDsl
+fun Property<Boolean>.isFalse(): Pair<ReadOnlyProperty<Boolean>, (Boolean) -> Boolean> = this fulfills { x -> !x }
+
+
+/**
+ * Auxiliary function
+ */
+@EvoleqDsl
+fun ReadOnlyProperty<Boolean>.isTrue(): Pair<ReadOnlyProperty<Boolean>, (Boolean)->Boolean> = this fulfills { x -> x }
+
+/**
+ * Auxiliary function
+ */
+@EvoleqDsl
+fun ReadOnlyProperty<Boolean>.isFalse(): Pair<ReadOnlyProperty<Boolean>, (Boolean)->Boolean> = this fulfills { x -> !x }
+

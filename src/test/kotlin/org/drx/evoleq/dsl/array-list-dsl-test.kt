@@ -20,6 +20,7 @@ import javafx.collections.ListChangeListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.coroutines.blockUntil
+import org.drx.evoleq.util.intProperty
 import org.junit.Test
 
 class ArrayListDslTest {
@@ -131,5 +132,26 @@ class ArrayListDslTest {
             }
         }
         delay(1_100)
+    }
+
+    @Test fun cancelOnNextOnSmartArrayList() = runBlocking {
+        val list = smartArrayListOf<Int>()
+        var next:Int = 0
+        parallel{
+            delay(1_000)
+            list.add(1)
+        }
+        val intProp = intProperty()
+        parallel{
+            list.onNext(intProp) {
+                assert(it == -1)
+                it
+            }
+        }
+        parallel{
+            intProp.value = -1
+            println(intProp.value)
+        }
+        delay(2_000)
     }
 }

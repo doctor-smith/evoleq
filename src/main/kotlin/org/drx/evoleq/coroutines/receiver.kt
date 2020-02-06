@@ -18,10 +18,7 @@ package org.drx.evoleq.coroutines
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import org.drx.evoleq.dsl.conditions
-import org.drx.evoleq.dsl.parallel
-import org.drx.evoleq.dsl.receivingStub
-import org.drx.evoleq.dsl.stub
+import org.drx.evoleq.dsl.*
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.stub.ID
@@ -40,9 +37,12 @@ open class InputAdapter<in I, D>(open val receiver: Receiver<D>,open  val transf
     override suspend fun send(data: I) = receiver.send(transform(data))
 }
 
+@EvoleqDsl
 infix fun <I, D> Receiver<D>.input(transform: (I)->D): InputAdapter<I, D> = InputAdapter(this){ input ->transform(input) }
+@EvoleqDsl
 fun <D> Receiver<D>.input(): InputAdapter<D,D> = input{ d -> d }
 
+@EvoleqDsl
 fun <D> BaseReceiver<D>.onNext(scope: CoroutineScope, action: suspend CoroutineScope.(D)->Unit ): BaseReceiver<D> {
     scope.parallel {
         for (message in this@onNext.channel) {
@@ -52,6 +52,7 @@ fun <D> BaseReceiver<D>.onNext(scope: CoroutineScope, action: suspend CoroutineS
     return this
 }
 
+@EvoleqDsl
 fun <D> BaseReceiver<D>.interrupt(evolving: Evolving<D>): Evolving<D> {
     val later = Later<D>()
     Parallel{

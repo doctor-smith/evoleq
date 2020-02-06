@@ -73,7 +73,7 @@ class RunUntilTest {
     }
 
     @Test fun isTrue() = runBlocking {
-        val condition: BooleanProperty = booleanProperty(false)
+        val condition = booleanProperty(false)
         parallel {
             delay(500)
             condition.value = true

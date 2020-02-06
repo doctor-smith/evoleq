@@ -19,6 +19,7 @@ import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.dsl.parallel
+import org.drx.evoleq.dsl.smartArrayListOf
 import org.junit.Test
 
 class BlockUntilTest {
@@ -37,7 +38,7 @@ class BlockUntilTest {
     }
 
     @Test fun blockWhileEmpty() = runBlocking {
-        val list = arrayListOf<String>()
+        val list = smartArrayListOf<String>()
         parallel{
             delay(1_000)
             list.add("NEXT")
