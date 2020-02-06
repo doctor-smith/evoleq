@@ -82,33 +82,6 @@ suspend fun <T : Any> blockUntil(readOnlyProperty: ReadOnlyProperty<T>, predicat
     }  else { Unit }
 
 /**
- * Block coroutine execution while a list is empty
- */
-/*
-@EvoleqDsl
-suspend fun <T> ArrayList<T>.blockWhileEmpty(): Unit {
-    if(isEmpty()) {
-        val isNotEmpty = SimpleBooleanProperty(false)
-        lateinit var listener: ListChangeListener<T>
-        CoroutineScope(Job()).launch {coroutineScope{
-            val observableList = FXCollections.observableList(this@blockWhileEmpty)
-            listener = ListChangeListener<T> { change ->
-                while (change.next()) {
-                    if (change.wasAdded()) {
-                        isNotEmpty.value = true
-                        observableList.removeListener(listener)
-                    }
-                }
-            }
-            observableList.addListener(listener)
-        } }
-        blockUntil(isNotEmpty) { value -> value == true }
-    }
-}
-
-
- */
-/**
  * Block coroutine execution while a [SmartArrayList] is empty
  */
 @EvoleqDsl

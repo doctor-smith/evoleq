@@ -60,4 +60,4 @@ class Async<D>(
     }
 
 
-typealias LazyAsync<D> = CoroutineScope.(D)->Async<D>
+typealias LazyAsync<D> = suspend CoroutineScope.(D)->Async<D>

@@ -42,6 +42,9 @@ fun <S1,S2,S3,S4,S5,S6,S7,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7)-
 fun <S1,S2,S3,S4,S5,S6,S7,S8,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7,S8)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8)->T = { s1, s2, s3, s4, s5, s6, s7, s8 -> f(s1,s2,s3,s4,s5,s6,s7,s8) }
 fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7,S8,S9)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8,S9)->T = { s1, s2, s3, s4, s5, s6, s7, s8, s9 -> f(s1,s2,s3,s4,s5,s6,s7,s8,s9) }
 fun <S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,T> onScopeSuspended(f: suspend (S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T): suspend CoroutineScope.(S1,S2,S3,S4,S5,S6,S7,S8,S9,S10)->T = { s1, s2, s3, s4, s5, s6, s7, s8, s9, s10 -> f(s1,s2,s3,s4,s5,s6,s7,s8,s9,s10) }
+
+fun <S, T> on(scope: CoroutineScope, block: suspend CoroutineScope.(S)->T): suspend (S)->T = {s -> scope.block(s)}
+
 /*
 
 fun <S,T> CoroutineScope.onScope(f: (CoroutineContext)-> (S)->T): CoroutineScope.(CoroutineContext, S)->T =

@@ -37,12 +37,12 @@ fun <Input, Data> outputs(configure: Outputs<Input, Data>.()->Outputs<Input,Data
     this
 }
 
-
+@Suppress("unchecked_cast")
 suspend fun <Data, Part> Outputs<Nothing, Data>.update(id: ID, function: suspend Part.()->Part) = with(get(id)) {
     try{ (this as Output.Update<Data, Part>).update(function) } catch(ignored : Exception){}
 }
 
-
+@Suppress("unchecked_cast")
 suspend fun <Input> Outputs<Input, Nothing>.input(id: ID, input: Input) = with(get(id)) {
     try{ (this as Output.Input<Input>).input(input) } catch(ignored : Exception){}
 }

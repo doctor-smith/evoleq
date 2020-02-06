@@ -17,8 +17,8 @@ package org.drx.evoleq.flow
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import org.drx.evoleq.annotation.Experimental
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolveSuspended
 import org.drx.evoleq.evolving.Evolving
@@ -42,17 +42,16 @@ open class SuspendedFlow<D, T>(
     val flow: suspend (D)-> Evolving<D>
 ) : Evolver<D> {
     override suspend fun evolve(data: D): Evolving<D> =
-        scope.parallel {
             evolveSuspended(
                 initialData = data,
                 conditions = conditions,
-                scope = this
+                scope = scope
             ) {
                     data -> flow(data)
             }
-        }
-}
 
+}
+@Experimental
 @Suppress("FunctionName")
 fun <D,T> CoroutineScope.LazyFlow(
     conditions: EvolutionConditions<D, T>,
@@ -62,7 +61,6 @@ fun <D,T> CoroutineScope.LazyFlow(
         get() = this@LazyFlow
 
     override suspend fun lazy(): LazyEvolving<D> = { d: D ->
-        this@LazyFlow.parallel(default = d) {
             evolveSuspended(
                 d,
                 conditions,
@@ -70,7 +68,6 @@ fun <D,T> CoroutineScope.LazyFlow(
             ) {
                 data -> flow(data)
             }
-        }
     }
 }
 

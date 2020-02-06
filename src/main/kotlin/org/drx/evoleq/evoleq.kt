@@ -21,6 +21,7 @@ import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.conditions.ok
 import org.drx.evoleq.conditions.update
 import org.drx.evoleq.evolving.Evolving
+import org.drx.evoleq.math.etaEvolving
 
 /**
  * A cancellable scope enforcing structured concurrency
@@ -37,8 +38,8 @@ tailrec suspend fun <D, T> evolve(
     conditions: EvolutionConditions<D, T>,
     scope: CoroutineScope = DefaultEvolutionScope(),
     flow: (D) -> Evolving<D>
-) : D = when( conditions.ok() ) {
-    false -> initialData
+) : Evolving<D> = when( conditions.ok() ) {
+    false -> etaEvolving( initialData )
     true -> {
         val evolvedData: D = flow ( initialData ).get()
         evolve(
@@ -59,8 +60,8 @@ tailrec suspend fun <D, T> evolveSuspended(
     conditions: EvolutionConditions<D, T>,
     scope: CoroutineScope = DefaultEvolutionScope(),
     flow: suspend CoroutineScope.(D) -> Evolving<D>
-) : D = when( conditions.ok() ) {
-    false -> initialData
+) : Evolving<D> = when( conditions.ok() ) {
+    false -> etaEvolving( initialData )
     true -> {
         val evolvedData: D = scope.flow ( initialData ).get( )
         evolveSuspended(
@@ -92,6 +93,59 @@ tailrec fun <D,T> evolveSeq(
         }
     }
 }
+/*
+suspend fun <D, T> muEvolve(
+    initialData: D,
+    conditions: EvolutionConditions<D, T>,
+    scope: CoroutineScope = DefaultEvolutionScope(),
+    flow: suspend CoroutineScope.(D)->Evolving<D>
+): Evolving<D> = when(conditions.ok()) {
+    false -> etaEvolving(initialData)
+    true -> scope.flow(initialData).map(scope){ data ->
+        muEvolve(
+            data,
+            conditions.update(data)
+        ) {
+                d -> flow(d)
+        }
+    }.mu()
+}
+
+suspend fun <D, T> mEvolve(
+    initialData: D,
+    conditions: EvolutionConditions<D, T>,
+    scope: CoroutineScope = DefaultEvolutionScope(),
+    flow: suspend CoroutineScope.(D)->Evolving<D>
+): Evolving<D> = when(conditions.ok()) {
+    false -> etaEvolving(initialData)
+    true -> scope.flow(initialData).map(scope){ data ->
+        mEvolve(
+            data,
+            conditions.update(data)
+        ) {
+                d -> flow(d)
+        }
+    }.mu()
+}
+
+tailrec suspend fun <D, T> evolveMonadic(
+    initialData: D,
+    conditions: EvolutionConditions<D, T>,
+    scope: CoroutineScope = DefaultEvolutionScope(),
+    flow: suspend CoroutineScope.(D)->Evolving<D>
+): Evolving<D> = when(conditions.ok()) {
+    false -> etaEvolving(initialData)
+    true -> {
+        val evolvedData = scope.flow(initialData).get()
+        evolveMonadic(
+            evolvedData,
+            conditions.update(evolvedData)
+        ) {
+                data -> flow( data )
+        }
+    }
+}
+*/
 
 /*
 tailrec suspendOnScope fun <D,T> coEvolve(

@@ -16,6 +16,7 @@
 package org.drx.evoleq.stub
 
 import kotlinx.coroutines.CoroutineScope
+import org.drx.evoleq.annotation.Experimental
 import org.drx.evoleq.conditions.EvolutionConditions
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.suspendedFlow
@@ -41,6 +42,7 @@ interface Stub<D> : Evolver<D> {
 /**
  * Fix stub-functionality, run on different scopes
  */
+@Experimental
 interface LazyStub<D> : Stub<D> {
     suspend fun lazy(): LazyEvolving<D>
     override suspend fun evolve(d: D): Evolving<D> = lazy()(scope,d)
@@ -49,24 +51,28 @@ interface LazyStub<D> : Stub<D> {
 
 
 class ParentStubKey
+
 fun <D,T> Stub<D>.toFlow(conditions: EvolutionConditions<D,T>): SuspendedFlow<D,T> = suspendedFlow {
     scope(this@toFlow.scope)
     conditions(conditions)
     flow{ d -> this@toFlow.evolve(d) }
 }
+@Experimental
 fun <D,T> LazyStub<D>.toLazyFlow(conditions: EvolutionConditions<D,T>): suspend CoroutineScope.()-> Evolver<D> = { LazyFlow(conditions,lazy()) }
-
+@Experimental
 fun <D> lazyStub(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+@Experimental
 fun <D> Stub<D>.asLazyStub(): LazyStub<D> = this as LazyStub<D>
+@Experimental
 fun <D> asLazy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+@Experimental
 fun <D> toLazy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+@Experimental
 fun <D> lazyfy(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
+@Experimental
 fun <D> free(stub: Stub<D>): LazyStub<D> = stub as LazyStub<D>
-/*
-suspendOnScope fun <D> (suspendOnScope CoroutineScope.()-> Evolver<D>).down(): suspendOnScope CoroutineScope.(D)->Evolving<D> = {
-    d: D -> this@down().evolve(d)
-}
-*/
+
+
 /**
  * Find stub by key.
  */

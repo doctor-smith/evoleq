@@ -25,11 +25,12 @@ import org.drx.evoleq.evolving.Immediate
 import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.stub.Keys
 import org.drx.evoleq.stub.Stub
-import org.drx.evoleq.time.TimeoutKey
 
 /**
  *
  */
+
+class TimeoutKey
 open class RacingStubConfiguration<D,P>() : ObservingStubConfiguration<D,P?>() {
 
     constructor(scope: CoroutineScope) : this(){

@@ -66,4 +66,6 @@ class Parallel<D>(
     }
 }
 
-typealias LazyParallel<D> = CoroutineScope.(D)->Parallel<D>
+typealias LazyParallel<D> = suspend CoroutineScope.(D)->Parallel<D>
+
+fun <D> LazyParallel(arrow: suspend CoroutineScope.(D)->Parallel<D>): LazyParallel<D> = arrow

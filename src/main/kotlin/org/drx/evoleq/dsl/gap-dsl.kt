@@ -35,5 +35,6 @@ open class GapConfiguration<W,P> : Configuration<Gap<W,P>> {
 
     override fun configure(): Gap<W, P> = Gap(from!!, to!!)
 
+
 }
 fun <W, P> gap(configuration: GapConfiguration<W, P>.()->Unit): Gap<W, P> = configure(configuration)

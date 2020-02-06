@@ -38,5 +38,5 @@ interface Evolving<out D> {
     suspend fun get() : D
 }
 
-typealias LazyEvolving<D> = CoroutineScope.(D)->Evolving<D>
+typealias LazyEvolving<D> = suspend CoroutineScope.(D)->Evolving<D>
 

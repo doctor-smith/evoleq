@@ -18,7 +18,6 @@ package org.drx.evoleq.flow
 import javafx.beans.property.SimpleObjectProperty
 import kotlinx.coroutines.*
 import org.drx.evoleq.conditions.EvolutionConditions
-import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolve
 import org.drx.evoleq.evolving.Evolving
@@ -40,15 +39,13 @@ open class Flow<D, T>(
     override val scope: CoroutineScope = CoroutineScope(Job()),
     val flow: (D)-> Evolving<D>
 ) : Evolver<D> {
-    override suspend fun evolve(data: D): Evolving<D> =
-        scope.parallel {
+    override suspend fun evolve(d: D): Evolving<D> =
             evolve(
-                initialData = data,
+                initialData = d,
                 conditions = conditions
             ) {
                     data -> flow(data)
             }
-        }
 }
 
 /**

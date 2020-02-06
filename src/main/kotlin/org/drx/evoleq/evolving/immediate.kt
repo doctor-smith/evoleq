@@ -76,4 +76,4 @@ class Immediate<D>(val scope: CoroutineScope = DefaultEvolvingScope(), val defau
     }
 }
 
-typealias LazyImmediate<D> = CoroutineScope.(D)->Immediate<D>
+typealias LazyImmediate<D> = suspend CoroutineScope.(D)->Immediate<D>

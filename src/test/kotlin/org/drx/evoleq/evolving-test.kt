@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.Parallel
-import org.drx.evoleq.flow.repeatImmediate
 import org.drx.evoleq.math.times
 import org.junit.Test
 
@@ -50,14 +49,5 @@ class EvolvingTest {
         GlobalScope.launch { (f*g)("1") }.invokeOnCompletion {  }
     }
 
-
-    @Test
-    fun testRepetition() {
-        runBlocking {
-            val f = {s: Int -> s + 1}
-            val x = repeatImmediate(10, 0, f)
-            assert(x == 10)
-        }
-    }
 
 }

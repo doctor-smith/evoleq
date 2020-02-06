@@ -17,9 +17,11 @@ package org.drx.evoleq.gap
 
 import kotlinx.coroutines.*
 import org.drx.evoleq.coroutines.onScope
+import org.drx.evoleq.coroutines.onScopeSuspended
 import org.drx.evoleq.coroutines.suspendOnScope
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.DefaultEvolvingScope
+import org.drx.evoleq.evolving.Evolving
 import org.junit.Test
 
 class LazyGapTest {
@@ -32,7 +34,7 @@ class LazyGapTest {
 
         var job :Job? = null
         var sc : CoroutineScope? = null
-        val filler = onScope { s: String -> parallel{
+        val filler:suspend CoroutineScope.(String)-> Evolving<String> = onScopeSuspended { s: String -> parallel{
             //job = this.coroutineContext[Job]
             sc = this
             delay(5_000)

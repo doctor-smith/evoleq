@@ -13,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.drx.evoleq.time
+package org.drx.evoleq.annotation
 
-class TimeoutKey
-/*
-class Timeout(val millis: Long) : Evolver<Unit> {
-    override suspendOnScope fun evolve(d: Unit): Evolving<Unit> = Parallel {
-        kotlinx.coroutines.delay(millis)
-        return@Parallel d
-    }
-}
-
- */
+annotation class Experimental

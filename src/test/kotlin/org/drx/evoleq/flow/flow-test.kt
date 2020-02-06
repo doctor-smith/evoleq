@@ -239,9 +239,9 @@ class FlowTest {
 
         val lF0 = lazyStub<Int>(stub{
             id(Stub::class)
-            evolveLazy { x -> parallel(default = x) {
+            evolveLazy { x -> this.parallel(default = x) {
                 job = this.coroutineContext[Job]!!
-                delay(10_000)
+                delay(1_000)
                 x+1
             } }
         }).toLazyFlow<Int,Boolean>(
@@ -254,7 +254,7 @@ class FlowTest {
 
         val lF1 = lazyStub<Int>(stub{
             id(Stub::class)
-            evolveLazy { x -> parallel(default = x) {
+            evolveLazy { x -> this.parallel(default = x) {
                 lF0().evolve(x).get()
             } }
         }).toLazyFlow<Int,Boolean>(

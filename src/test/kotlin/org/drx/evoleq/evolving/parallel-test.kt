@@ -221,7 +221,7 @@ class ParallelTest {
     }
 
 
-    @Test fun lazyParallelToParallelRemindsScope(){
+    @Test fun lazyParallelToParallelRemindsScope() = runBlocking{
         val x: LazyParallel<Int> = lazyParallel{d->
             delay(10_000)
             d*d
@@ -229,7 +229,7 @@ class ParallelTest {
 
         val s1 = CoroutineScope(Job())
 
-        val y = {t: Int -> x(s1,t)}
+        val y: suspend (Int) -> Parallel<Int> = {t: Int -> x(s1,t)}
 
         val res = y(1)
 

@@ -38,8 +38,8 @@ tailrec suspend fun <D, T> evolve(
     initialData: D,
     conditions: EvolutionConditions<D, T>,
     flow: (D) -> Evolving<D>
-) : D = when( conditions.ok() ) {
-    false -> initialData
+) : Evolving<D> = when( conditions.ok() ) {
+    false -> etaEvolving( initialData )
     true -> {
         val evolvedData: D = flow ( initialData ).get()
         evolve(
@@ -146,7 +146,7 @@ val appStub = stub<Message> {
        )
              
        is Message.Resume -> TODO()
-       is Mesage.CloseResponse -> OnDemand{ message }
+       is Message.CloseResponse -> OnDemand{ message }
     } }
 }    
 /**

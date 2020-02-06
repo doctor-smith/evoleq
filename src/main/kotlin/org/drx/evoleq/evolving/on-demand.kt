@@ -49,4 +49,4 @@ class OnDemand<D>(
 }
 
 
-typealias LazyOnDemand<D> = CoroutineScope.(D)->OnDemand<D>
+typealias LazyOnDemand<D> = suspend CoroutineScope.(D)->OnDemand<D>

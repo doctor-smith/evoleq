@@ -63,11 +63,7 @@ open class StubConfiguration<D>() : Configuration<Stub<D>> {
 
     private lateinit var stub: Stub<D>
 
-    init{
-
-    }
     override fun configure(): Stub<D> {
-
 
         val stub: Stub<D> = if(isLazyStub){
              object : LazyStub<D> {
