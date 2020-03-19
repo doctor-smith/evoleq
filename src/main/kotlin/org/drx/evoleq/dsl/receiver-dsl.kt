@@ -37,7 +37,7 @@ fun <D> CoroutineScope.receiver(
     onCompletion: CompletionHandler? = null,
     block: suspend ActorScope<D>.(D) -> Unit = {}
 ): BaseReceiver<D> {
-    val c: Channel<D> = Channel()
+    val c: Channel<D> = Channel(capacity = capacity)
     val actor = this@receiver.actor<D>(context, capacity, start, onCompletion){
         for(d in channel){
             c.send(d)

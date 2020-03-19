@@ -17,6 +17,9 @@ package org.drx.evoleq.dsl
 
 import org.drx.evoleq.stub.ID
 
+
+
+
 sealed class Output<out Input,out Data>{
     data class Input<Input>(val input: suspend (Input)->Unit) : Output<Input, Nothing>()
     data class Update<Data, Part>(val update: suspend (suspend Part.()->Part)->Unit): Output<Nothing,Data>()

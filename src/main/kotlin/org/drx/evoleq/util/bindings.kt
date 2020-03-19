@@ -17,7 +17,8 @@ package org.drx.evoleq.util
 
 import javafx.beans.binding.BooleanBinding
 import javafx.beans.binding.DoubleBinding
-import javafx.beans.property.Property
+import javafx.beans.property.ReadOnlyBooleanProperty
+import javafx.beans.property.ReadOnlyDoubleProperty
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -29,7 +30,7 @@ import kotlin.math.pow
  *
  **********************************************************************************************************************/
 
-class NegationBinding(private val property: Property<Boolean>): BooleanBinding(){
+class NegationBinding(private val property: ReadOnlyBooleanProperty): BooleanBinding(){
     init{
         super.bind(property)
     }
@@ -41,7 +42,8 @@ class NegationBinding(private val property: Property<Boolean>): BooleanBinding()
     override fun computeValue(): Boolean = !property.value.fix()
 }
 
-class AndBinding(private val property1: Property<Boolean>,private val property2: Property<Boolean>): BooleanBinding(){
+class AndBinding(private val property1: ReadOnlyBooleanProperty,private val property2: ReadOnlyBooleanProperty): BooleanBinding(){
+    //constructor(property1: Property<Boolean>,property2: Property<Boolean>) : this(property1, property2)
     init{
         super.bind(property1, property2)
     }
@@ -53,7 +55,7 @@ class AndBinding(private val property1: Property<Boolean>,private val property2:
     override fun computeValue(): Boolean = property1.value.fix() && property2.value.fix()
 }
 
-class OrBinding(private val property1: Property<Boolean>,private val property2: Property<Boolean>): BooleanBinding(){
+class OrBinding(private val property1: ReadOnlyBooleanProperty,private val property2: ReadOnlyBooleanProperty): BooleanBinding(){
     init{
         super.bind(property1, property2)
     }
@@ -65,7 +67,7 @@ class OrBinding(private val property1: Property<Boolean>,private val property2: 
     override fun computeValue(): Boolean = property1.value.fix() || property2.value.fix()
 }
 
-class XorBinding(private val property1: Property<Boolean>, private val property2: Property<Boolean>): BooleanBinding() {
+class XorBinding(private val property1: ReadOnlyBooleanProperty, private val property2: ReadOnlyBooleanProperty): BooleanBinding() {
     init{
         super.bind(property1,property2)
     }
@@ -97,8 +99,8 @@ fun Double?.fix(): Double = when(this) {
     else -> this
 }
 
-class PlusDoubleBinding(private val property: Property<Double>, vararg properties: Property<Double>) : DoubleBinding() {
-    private val props: Sequence<Property<Double>>
+class PlusDoubleBinding(private val property: ReadOnlyDoubleProperty, vararg properties: ReadOnlyDoubleProperty) : DoubleBinding() {
+    private val props: Sequence<ReadOnlyDoubleProperty>
     init{
         super.bind(*properties)
         props = sequenceOf(property,*properties)
@@ -110,7 +112,7 @@ class PlusDoubleBinding(private val property: Property<Double>, vararg propertie
     override fun computeValue(): Double = props.map{p->p.value.fix()}.reduce{ v1, v2 -> v1 + v2 }
 }
 
-class MinusDoubleBinding(private val property1: Property<Double>, private val property2: Property<Double>): DoubleBinding() {
+class MinusDoubleBinding(private val property1: ReadOnlyDoubleProperty, private val property2: ReadOnlyDoubleProperty): DoubleBinding() {
     init {
         super.bind(property1, property2)
     }
@@ -121,8 +123,8 @@ class MinusDoubleBinding(private val property1: Property<Double>, private val pr
     override fun computeValue(): Double = property1.value.fix() - property2.value.fix()
 }
 
-class TimesDoubleBinding(private val property: Property<Double>, vararg properties: Property<Double>) : DoubleBinding() {
-    private val props: Sequence<Property<Double>>
+class TimesDoubleBinding(private val property: ReadOnlyDoubleProperty, vararg properties: ReadOnlyDoubleProperty) : DoubleBinding() {
+    private val props: Sequence<ReadOnlyDoubleProperty>
     init{
         super.bind(*properties)
         props = sequenceOf(property,*properties)
@@ -134,7 +136,7 @@ class TimesDoubleBinding(private val property: Property<Double>, vararg properti
     override fun computeValue(): Double = props.map{p->p.value.fix()}.reduce{ v1, v2 -> v1 * v2 }
 }
 
-class DivideDoubleBinding(private val numerator: Property<Double>, private val denominator: Property<Double>): DoubleBinding() {
+class DivideDoubleBinding(private val numerator: ReadOnlyDoubleProperty, private val denominator: ReadOnlyDoubleProperty): DoubleBinding() {
     init {
         super.bind(numerator, denominator)
     }
@@ -145,7 +147,7 @@ class DivideDoubleBinding(private val numerator: Property<Double>, private val d
     override fun computeValue(): Double = numerator.value.fix() / denominator.value.fix()
 }
 
-class PowerDoubleBinding(private val base: Property<Double>, private val exponent: Property<Double>): DoubleBinding() {
+class PowerDoubleBinding(private val base: ReadOnlyDoubleProperty, private val exponent: ReadOnlyDoubleProperty): DoubleBinding() {
     init {
         super.bind(base, exponent)
     }
@@ -156,7 +158,7 @@ class PowerDoubleBinding(private val base: Property<Double>, private val exponen
     override fun computeValue(): Double = base.value.fix().pow(exponent.value.fix())
 }
 
-class MaxDoubleBinding(private val property1: Property<Double>, private val property2: Property<Double>): DoubleBinding() {
+class MaxDoubleBinding(private val property1: ReadOnlyDoubleProperty, private val property2: ReadOnlyDoubleProperty): DoubleBinding() {
     init {
         super.bind(property1, property2)
     }
@@ -168,7 +170,7 @@ class MaxDoubleBinding(private val property1: Property<Double>, private val prop
 }
 
 
-class MinDoubleBinding(private val property1: Property<Double>, private val property2: Property<Double>): DoubleBinding() {
+class MinDoubleBinding(private val property1: ReadOnlyDoubleProperty, private val property2: ReadOnlyDoubleProperty): DoubleBinding() {
     init {
         super.bind(property1, property2)
     }
@@ -179,7 +181,7 @@ class MinDoubleBinding(private val property1: Property<Double>, private val prop
     override fun computeValue(): Double = min(property1.value.fix(),property2.value.fix())
 }
 
-class InverseDoubleBinding(private val property: Property<Double>) : DoubleBinding() {
+class InverseDoubleBinding(private val property: ReadOnlyDoubleProperty) : DoubleBinding() {
     init{
         super.bind(property)
     }
@@ -190,7 +192,7 @@ class InverseDoubleBinding(private val property: Property<Double>) : DoubleBindi
     override fun computeValue(): Double = -property.value.fix()
 }
 
-class ReciprocalDoubleBinding(private val property: Property<Double>) : DoubleBinding() {
+class ReciprocalDoubleBinding(private val property: ReadOnlyDoubleProperty) : DoubleBinding() {
     init{
         super.bind(property)
     }
@@ -201,7 +203,7 @@ class ReciprocalDoubleBinding(private val property: Property<Double>) : DoubleBi
     override fun computeValue(): Double = 1/property.value.fix()
 }
 
-class FunctionDoubleBinding(private val property: Property<Double>,private val  f: (Double)->Double): DoubleBinding() {
+class FunctionDoubleBinding(private val property: ReadOnlyDoubleProperty,private val  f: (Double)->Double): DoubleBinding() {
     init{
         super.bind(property)
     }

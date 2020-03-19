@@ -53,25 +53,25 @@ fun booleanProperty(initialValue: Boolean? = null): SimpleBooleanProperty = when
  **********************************************************************************************************************/
 
 @EvoleqDsl
-infix fun BooleanProperty.and(other: BooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
+infix fun ReadOnlyBooleanProperty.and(other: ReadOnlyBooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(AndBinding(this@and,other))
     this
 }
 
 @EvoleqDsl
-infix fun BooleanProperty.or(other: BooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
+infix fun ReadOnlyBooleanProperty.or(other: ReadOnlyBooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(OrBinding(this@or,other))
     this
 }
 
 @EvoleqDsl
-operator fun BooleanProperty.not(): ReadOnlyBooleanProperty = with(booleanProperty()) {
+operator fun ReadOnlyBooleanProperty.not(): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(NegationBinding(this@not))
     this
 }
 
 @EvoleqDsl
-infix fun BooleanProperty.xor(other: BooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
+infix fun ReadOnlyBooleanProperty.xor(other: ReadOnlyBooleanProperty): ReadOnlyBooleanProperty = with(booleanProperty()) {
     bind(XorBinding(this@xor,other))
     this
 }
@@ -83,64 +83,64 @@ infix fun BooleanProperty.xor(other: BooleanProperty): ReadOnlyBooleanProperty =
  **********************************************************************************************************************/
 
 @EvoleqDsl
-operator fun Property<Double>.plus(other: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
+operator fun ReadOnlyDoubleProperty.plus(other: ReadOnlyDoubleProperty): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(PlusDoubleBinding(this@plus, other))
     this
 }
 
 @EvoleqDsl
-operator fun Property<Double>.minus(other: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
+operator fun ReadOnlyDoubleProperty.minus(other: ReadOnlyDoubleProperty): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(MinusDoubleBinding(this@minus, other))
     this
 }
 
 @EvoleqDsl
-operator fun Property<Double>.times(other: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
+operator fun ReadOnlyDoubleProperty.times(other: ReadOnlyDoubleProperty): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(TimesDoubleBinding(this@times, other))
     this
 }
 
 @EvoleqDsl
-operator fun Property<Double>.div(denominator: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
+operator fun ReadOnlyDoubleProperty.div(denominator: ReadOnlyDoubleProperty): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(DivideDoubleBinding(this@div, denominator))
     this
 }
 
 @EvoleqDsl
-infix fun Property<Double>.toThe(exponent: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()){
+infix fun ReadOnlyDoubleProperty.toThe(exponent: ReadOnlyDoubleProperty): ReadOnlyDoubleProperty = with(doubleProperty()){
     bind(PowerDoubleBinding(this@toThe, exponent))
     this
 }
 
 @EvoleqDsl
-fun max(property1: Property<Double>, property2: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()) {
+fun max(property1: ReadOnlyDoubleProperty, property2: ReadOnlyDoubleProperty): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(MaxDoubleBinding(property1, property2))
     this
 }
 
 @EvoleqDsl
-fun min(property1: Property<Double>, property2: Property<Double>): ReadOnlyDoubleProperty = with(doubleProperty()) {
+fun min(property1: ReadOnlyDoubleProperty, property2: ReadOnlyDoubleProperty): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(MinDoubleBinding(property1, property2))
     this
 }
 
 @EvoleqDsl
-operator fun Property<Double>.unaryMinus(): ReadOnlyDoubleProperty = with(doubleProperty()) {
+operator fun ReadOnlyDoubleProperty.unaryMinus(): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(InverseDoubleBinding(this@unaryMinus))
     this
 }
 
 @EvoleqDsl
-fun Property<Double>.reciprocal(): ReadOnlyDoubleProperty = with(doubleProperty()) {
+fun ReadOnlyDoubleProperty.reciprocal(): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(ReciprocalDoubleBinding(this@reciprocal))
     this
 }
 
 @EvoleqDsl
-operator fun Double.div(property: Property<Double>) : ReadOnlyDoubleProperty = property.reciprocal()
+operator fun Double.div(property: ReadOnlyDoubleProperty) : ReadOnlyDoubleProperty = property.reciprocal()
 
 @EvoleqDsl
-infix fun Property<Double>.apply(f:(Double)->Double): ReadOnlyDoubleProperty = with(doubleProperty()) {
+infix fun ReadOnlyDoubleProperty.apply(f:(Double)->Double): ReadOnlyDoubleProperty = with(doubleProperty()) {
     bind(FunctionDoubleBinding(this@apply, f))
     this
 }
@@ -161,8 +161,23 @@ fun <T> WritableValue<T>.setNullSave(update: T?.()->T): WritableValue<T> = with(
     this
 }
 
+/**
+ * Functional FxProperty setter
+ */
+@EvoleqDsl
+suspend fun <T> WritableValue<T>.setNullSaveSuspended(update: suspend T?.()->T): WritableValue<T> = with(this) {
+    value = value.update()
+    this
+}
+
 @EvoleqDsl
 fun <T> WritableValue<T>.set(update: T.()->T): WritableValue<T> = with(this) {
+    value = value.update()
+    this
+}
+
+@EvoleqDsl
+suspend fun <T> WritableValue<T>.setSuspended(update: suspend T.()->T): WritableValue<T> = with(this) {
     value = value.update()
     this
 }

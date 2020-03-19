@@ -122,14 +122,15 @@ tasks {
     val javadocJar by creating(Jar::class) {
         dependsOn(JavaPlugin.JAVADOC_TASK_NAME)
         classifier = "javadoc"
-        from(tasks["javadoc"])
+        from(getByName("javadoc"))
     }
+
 
     val dokkaJar by creating(Jar::class) {
         group = JavaBasePlugin.DOCUMENTATION_GROUP
         description = "Assembles Kotlin docs with Dokka"
         classifier = "javadoc"
-        from(tasks["dokka"])
+        from(getByName("dokka"))
     }
 
     artifacts {

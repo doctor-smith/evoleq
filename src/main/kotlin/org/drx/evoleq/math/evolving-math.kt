@@ -18,7 +18,6 @@ package org.drx.evoleq.math
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.plus
-import org.drx.evoleq.dsl.immediate
 import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.evolving.DefaultEvolvingScope
 import org.drx.evoleq.evolving.Evolving
@@ -60,9 +59,9 @@ fun<D1,D2> Evolving<D1>.lift(f: suspend (D1) -> D2) : (Evolving<D1>) -> Evolving
 /**
  * Enter the monad
  */
-fun <D> etaEvolving(data: D): Evolving<D> = Immediate { data }
+fun <D> etaEvolving(data: D): Evolving<D> = Parallel { data }
 
-fun <D> CoroutineScope.etaEvolving(data: D): Evolving<D> = immediate { data }
+fun <D> CoroutineScope.etaEvolving(data: D): Evolving<D> = parallel { data }
 /**
  * Multiply evolvings
  */
@@ -92,7 +91,15 @@ fun <R,S,T> (  (R)-> Evolving<S>).times(flow: suspend (S)-> Evolving<T>) :suspen
         r -> muEvolving(this@times(r) map flow)
 }
 
+suspend operator
+fun <R,S,T> (suspend CoroutineScope.(R)-> Evolving<S>).times(flow: suspend CoroutineScope.(S)-> Evolving<T>) :suspend CoroutineScope.(R)-> Evolving<T> = {
+        r -> muEvolving(this@times(r).map(this){s -> flow(s)})
+}
+
+
 fun<S,T> klEvolving(f:(S)->T): (S)->Evolving<T> = {s->Immediate{f(s)}}
+
+
 
 /**
  * Comonad

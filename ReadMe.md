@@ -71,7 +71,7 @@ Evoleq is inspired by the theory of __dynamical systems__.
 Roughly speaking, a (discrete) dynamical system can be described as follows: 
 if you have an invertible map 
 T: X->X, 
-where a is a set, 
+where X is a set, 
 then T induces a map
 &Phi; : Z x X -> X: (n,x)->T<sup>n</sup>(x) on X (here, Z is the set of integers) 
 with the following properties:
@@ -83,7 +83,7 @@ Further, mathematicians would say that X __evolves__ under the flow of T.
 
 The requirement on T in being invertible is too strong for our purposes.
 We will keep the terminology but allow all transformations T: X->X. Doing so, we end up with a somehow monoidal version
-of flows &Phi;: N x X -> X, (n, x)->T<sup>n</sup>(x), where N is the set of non-negative integers.
+of flows &Phi;: N x X -> X: (n, x)->T<sup>n</sup>(x), where N is the set of non-negative integers.
 
 
 

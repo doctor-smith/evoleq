@@ -19,13 +19,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.drx.evoleq.annotation.Experimental
 import org.drx.evoleq.conditions.EvolutionConditions
+import org.drx.evoleq.dsl.parallel
 import org.drx.evoleq.dsl.stub
 import org.drx.evoleq.evolveSuspended
 import org.drx.evoleq.evolving.Evolving
 import org.drx.evoleq.evolving.LazyEvolving
-import org.drx.evoleq.evolving.Parallel
 import org.drx.evoleq.gap.Gap
 import org.drx.evoleq.gap.fill
+import org.drx.evoleq.math.map
 import org.drx.evoleq.math.times
 import org.drx.evoleq.stub.DefaultIdentificationKey
 import org.drx.evoleq.stub.Stub
@@ -41,14 +42,16 @@ open class SuspendedFlow<D, T>(
     override val scope: CoroutineScope = CoroutineScope(Job()),
     val flow: suspend (D)-> Evolving<D>
 ) : Evolver<D> {
-    override suspend fun evolve(data: D): Evolving<D> =
+    override suspend fun evolve(d: D): Evolving<D> =
+        scope.parallel {
             evolveSuspended(
-                initialData = data,
+                initialData = d,
                 conditions = conditions,
-                scope = scope
+                scope = this
             ) {
-                    data -> flow(data)
+                data -> flow(data)
             }
+        }.map(scope){parallel -> parallel.get()}
 
 }
 @Experimental
@@ -76,7 +79,7 @@ fun <D,T> CoroutineScope.LazyFlow(
  */
 suspend fun <D,T,P> SuspendedFlow<D, T>.enter(gap: Gap<D, P>): Gap<D, P> =
     Gap(
-        from = { d -> Parallel { (flow * gap.from)(d).get() } },
+        from = { d -> scope.parallel  { (flow * gap.from)(d).get() } },
         to = gap.to
     )
 
@@ -87,7 +90,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: SuspendedFlow<P, T>, conditions: Evoluti
     SuspendedFlow(
         conditions = conditions
     ) {
-            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
+            data -> phi.scope.parallel  { this@fill.fill(phi.flow)(data).get() }
     }
 
 /**
@@ -97,7 +100,7 @@ suspend fun <D,T,P> Gap<D, P>.fill(phi: SuspendedFlow<P, T>): SuspendedFlow<D, T
     SuspendedFlow(
         conditions = this@fill.adapt(phi.conditions)
     ){
-            data -> Parallel { this@fill.fill(phi.flow)(data).get() }
+            data -> phi.scope.parallel  { this@fill.fill(phi.flow)(data).get() }
     }
 
 /**
@@ -107,7 +110,7 @@ suspend fun <D,T,P> Gap<D, P>.fillParallel(phi: SuspendedFlow<P, T>, conditions:
     Flow(
         conditions = conditions
     ) {
-            data -> Parallel { this@fillParallel.fill(phi.flow)(data).get() }
+            data -> phi.scope.parallel { this@fillParallel.fill(phi.flow)(data).get() }
     }
 
 fun <D,T> SuspendedFlow<D,T>.toStub(id: KClass<*> = DefaultIdentificationKey::class): Stub<D> = stub<D>{

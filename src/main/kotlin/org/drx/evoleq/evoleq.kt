@@ -61,7 +61,7 @@ tailrec suspend fun <D, T> evolveSuspended(
     scope: CoroutineScope = DefaultEvolutionScope(),
     flow: suspend CoroutineScope.(D) -> Evolving<D>
 ) : Evolving<D> = when( conditions.ok() ) {
-    false -> etaEvolving( initialData )
+    false -> scope.etaEvolving( initialData )
     true -> {
         val evolvedData: D = scope.flow ( initialData ).get( )
         evolveSuspended(
